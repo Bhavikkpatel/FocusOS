@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskItem } from "./task-item";
 import { TaskDialog } from "./task-dialog";
 import { KanbanBoard } from "./kanban-board";
-import { TaskListSkeleton } from "./task-skeleton";
+import { TaskListSkeleton, TaskExpandedSkeleton } from "./task-skeleton";
 
 import { TaskExpandedView } from "./task-expanded-view";
 import { AnimatePresence, motion } from "framer-motion";
@@ -487,13 +487,15 @@ export function TaskList() {
                     </div>
 
                     <AnimatePresence>
-                        {taskToDisplay && (
+                        {taskToDisplay ? (
                             <TaskExpandedView
                                 task={taskToDisplay}
                                 onClose={handleCloseTask}
                                 onDelete={(id) => deleteTask(id)}
                             />
-                        )}
+                        ) : selectedTaskId ? (
+                            <TaskExpandedSkeleton onClose={handleCloseTask} />
+                        ) : null}
                     </AnimatePresence>
 
                     <TaskDialog
