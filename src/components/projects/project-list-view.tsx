@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { ProjectWithStats } from "@/hooks/use-projects";
 import { TaskItem } from "@/components/tasks/task-item";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
+import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTags } from "@/hooks/use-tags";
 import { TaskDialog } from "@/components/tasks/task-dialog";
@@ -214,12 +215,14 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
             </div>
 
             <AnimatePresence>
-                {liveSelectedTask && (
+                {liveSelectedTask ? (
                     <TaskExpandedView
                         task={liveSelectedTask}
                         onClose={() => setSelectedTaskId(null)}
                     />
-                )}
+                ) : selectedTaskId ? (
+                    <TaskExpandedSkeleton onClose={() => setSelectedTaskId(null)} />
+                ) : null}
             </AnimatePresence>
 
             <TaskDialog

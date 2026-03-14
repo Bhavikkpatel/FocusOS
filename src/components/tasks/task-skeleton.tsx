@@ -83,3 +83,97 @@ export function TaskListSkeleton() {
         </div>
     );
 }
+
+export function TaskExpandedSkeleton({ onClose }: { onClose: () => void }) {
+    return (
+        <div className="absolute inset-0 z-40 flex flex-col bg-background shadow-2xl border-l border-slate-200 dark:border-slate-800 animate-pulse">
+            <div className="flex h-full flex-col">
+                {/* Header Top Bar */}
+                <div className="flex flex-col gap-4 border-b p-4 sm:p-6 bg-background">
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3">
+                            {/* Breadcrumbs Skeleton */}
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-16 rounded" />
+                                <Skeleton className="h-4 w-24 rounded" />
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                                {/* Difficulty Badge */}
+                                <Skeleton className="h-6 w-16 rounded-full" />
+                                {/* Priority Select */}
+                                <Skeleton className="h-7 w-28 rounded-md" />
+                                {/* Calendar Button */}
+                                <Skeleton className="h-7 w-28 rounded-md" />
+                                {/* Status Badge */}
+                                <Skeleton className="h-7 w-24 rounded-full" />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <div className="cursor-pointer" onClick={onClose}>
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Areas */}
+                <div className="flex flex-1 overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] w-full overflow-hidden">
+
+                        {/* Left Column: Details, Subtasks & Progress */}
+                        <div className="flex flex-col border-r h-full bg-background/50">
+                            <div className="p-8 pb-4 space-y-4">
+                                {/* Title Skeleton */}
+                                <Skeleton className="h-10 w-3/4 rounded-lg" />
+                                {/* Description Skeleton */}
+                                <Skeleton className="h-24 w-full rounded-xl" />
+                            </div>
+
+                            {/* Subtasks & Notes Grid */}
+                            <div className="px-8 py-4 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                {/* Subtasks Section */}
+                                <div className="rounded-2xl border bg-card shadow-sm h-64 p-4">
+                                    <Skeleton className="h-6 w-32 rounded-md mb-6" />
+                                    <div className="space-y-4">
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <Skeleton className="h-5 w-5 rounded-md" />
+                                                <Skeleton className="h-5 flex-1 rounded-md" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Persistent Notes */}
+                                <div className="rounded-2xl border bg-card shadow-sm h-64 p-4">
+                                    <Skeleton className="h-6 w-32 rounded-md mb-4" />
+                                    <Skeleton className="h-full w-full rounded-xl" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Timer & Analytics */}
+                        <div className="hidden lg:flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/20">
+                            <div className="p-6 space-y-6">
+                                {/* Timer Skeleton */}
+                                <Skeleton className="h-64 w-full rounded-2xl" />
+                                
+                                {/* Quick Stats Skeleton */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

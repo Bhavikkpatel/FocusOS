@@ -31,6 +31,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2, Circle, Loader2, Eye, CheckCircle
 import { cn } from "@/lib/utils";
 import { KanbanCard } from "@/components/tasks/kanban-card";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
+import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
 import { AnimatePresence } from "framer-motion";
 import {
     DropdownMenu,
@@ -448,7 +449,6 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
             {
                 onSuccess: () => {
                     setNewColumnName("");
-                    setIsAddingColumn(false);
                     queryClient.invalidateQueries({
                         queryKey: ["project", project.id],
                     });
@@ -527,7 +527,7 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
             </DndContext>
 
             <AnimatePresence>
-                {fullSelectedTask && (
+                {fullSelectedTask ? (
                     <TaskExpandedView
                         task={fullSelectedTask}
                         onClose={() => setSelectedTaskId(null)}
@@ -535,7 +535,9 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
                             deleteTask(id);
                         }}
                     />
-                )}
+                ) : selectedTaskId ? (
+                    <TaskExpandedSkeleton onClose={() => setSelectedTaskId(null)} />
+                ) : null}
             </AnimatePresence>
         </>
     );

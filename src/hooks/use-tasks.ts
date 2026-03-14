@@ -131,11 +131,13 @@ export function useCreateTask() {
             }
             return response.json() as Promise<Task>;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.all });
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            queryClient.invalidateQueries({ queryKey: ["project"] });
+        onSuccess: async () => {
             toast.success("Task created");
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+                queryClient.invalidateQueries({ queryKey: ["projects"] }),
+                queryClient.invalidateQueries({ queryKey: ["project"] })
+            ]);
         },
         onError: (error) => {
             toast.error(`Error: ${error.message}`);
@@ -248,10 +250,12 @@ export function useUpdateTask() {
             }
             toast.error(err.message || "Failed to update task");
         },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.all });
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            queryClient.invalidateQueries({ queryKey: ["project"] });
+        onSettled: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+                queryClient.invalidateQueries({ queryKey: ["projects"] }),
+                queryClient.invalidateQueries({ queryKey: ["project"] })
+            ]);
         },
     });
 }
@@ -267,10 +271,12 @@ export function useDeleteTask() {
             if (!res.ok) throw new Error("Failed to delete task");
             return res.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.all });
-            queryClient.invalidateQueries({ queryKey: ["project"] });
+        onSuccess: async () => {
             toast.success("Task deleted");
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+                queryClient.invalidateQueries({ queryKey: ["project"] })
+            ]);
         },
         onError: (error) => {
             toast.error(`Failed to delete task: ${error.message}`);
@@ -305,11 +311,12 @@ export function useRateSession() {
             if (!res.ok) throw new Error("Failed to rate session");
             return res.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: ["project"] });
-            // Invalidate specific task details if you knew the task ID, but lists/project handles most views
+        onSuccess: async () => {
             toast.success("Focus rated successfully");
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: taskKeys.lists() }),
+                queryClient.invalidateQueries({ queryKey: ["project"] })
+            ]);
         },
         onError: () => {
             toast.error("Failed to save rating");
