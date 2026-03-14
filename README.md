@@ -118,13 +118,4 @@ MIT
 
 ---
 
-Built with ❤️ for focused developers.
-oduction-ready application. Contributions welcome!
-
-## License
-
-MIT
-
----
-
-Built with ❤️ using Next.js, TypeScript, and modern web technologies.
+Built with ❤️ for focused developers.
