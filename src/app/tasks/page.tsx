@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { TaskList } from "@/components/tasks/task-list";
+import { TaskListSkeleton } from "@/components/tasks/task-skeleton";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export default function TasksPage() {
     return (
         <DashboardLayout>
-            <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading tasks...</div>}>
+            <Suspense fallback={<TaskListSkeleton />}>
                 <TaskList />
             </Suspense>
         </DashboardLayout>

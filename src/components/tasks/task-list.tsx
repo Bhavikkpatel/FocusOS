@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskItem } from "./task-item";
 import { TaskDialog } from "./task-dialog";
 import { KanbanBoard } from "./kanban-board";
+import { TaskListSkeleton } from "./task-skeleton";
 
 import { TaskExpandedView } from "./task-expanded-view";
 import { AnimatePresence, motion } from "framer-motion";
@@ -202,7 +203,7 @@ export function TaskList() {
     }, [sortedTasks, groupBy]);
 
     if (!isMounted || isLoading) {
-        return <div className="p-8 text-center text-muted-foreground">Loading tasks...</div>;
+        return <TaskListSkeleton />;
     }
 
     if (error) {
