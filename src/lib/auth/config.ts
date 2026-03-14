@@ -62,43 +62,45 @@ export const authOptions: NextAuthOptions = {
             });
 
             // Create default presets for new user
-            await prisma.pomodoroPreset.createMany({
-                data: [
-                    {
-                        name: "Classic Pomodoro",
-                        focusDuration: 25 * 60,  // 25 minutes in seconds
-                        shortBreakDuration: 5 * 60,  // 5 minutes in seconds
-                        longBreakDuration: 15 * 60,  // 15 minutes in seconds
-                        sessionsUntilLongBreak: 4,
-                        autoStartBreaks: true,
-                        autoStartFocus: false,
-                        isDefault: true,
-                        userId: user.id,
-                    },
-                    {
-                        name: "Deep Work",
-                        focusDuration: 50 * 60,  // 50 minutes in seconds
-                        shortBreakDuration: 10 * 60,  // 10 minutes in seconds
-                        longBreakDuration: 30 * 60,  // 30 minutes in seconds
-                        sessionsUntilLongBreak: 3,
-                        autoStartBreaks: true,
-                        autoStartFocus: false,
-                        isDefault: false,
-                        userId: user.id,
-                    },
-                    {
-                        name: "Flow State",
-                        focusDuration: 90 * 60,  // 90 minutes in seconds
-                        shortBreakDuration: 15 * 60,  // 15 minutes in seconds
-                        longBreakDuration: 30 * 60,  // 30 minutes in seconds
-                        sessionsUntilLongBreak: 2,
-                        autoStartBreaks: false,
-                        autoStartFocus: false,
-                        isDefault: false,
-                        userId: user.id,
-                    },
-                ],
-            });
+            const defaultPresets = [
+                {
+                    name: "Classic Pomodoro",
+                    focusDuration: 25,
+                    shortBreakDuration: 5,
+                    longBreakDuration: 15,
+                    sessionsUntilLongBreak: 4,
+                    autoStartBreaks: true,
+                    autoStartFocus: false,
+                    isDefault: true,
+                    userId: user.id,
+                },
+                {
+                    name: "Deep Work",
+                    focusDuration: 50,
+                    shortBreakDuration: 10,
+                    longBreakDuration: 30,
+                    sessionsUntilLongBreak: 3,
+                    autoStartBreaks: true,
+                    autoStartFocus: false,
+                    isDefault: false,
+                    userId: user.id,
+                },
+                {
+                    name: "Flow State",
+                    focusDuration: 90,
+                    shortBreakDuration: 15,
+                    longBreakDuration: 30,
+                    sessionsUntilLongBreak: 2,
+                    autoStartBreaks: false,
+                    autoStartFocus: false,
+                    isDefault: false,
+                    userId: user.id,
+                },
+            ];
+
+            for (const preset of defaultPresets) {
+                await prisma.pomodoroPreset.create({ data: preset });
+            }
         },
     },
 };
