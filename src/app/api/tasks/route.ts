@@ -23,6 +23,7 @@ const createTaskSchema = z.object({
     recurrenceType: z.enum(["DAILY", "WEEKLY", "MONTHLY", "CUSTOM"]).optional().nullable(),
     recurrenceInterval: z.number().int().min(1).optional().nullable(),
     recurrenceDays: z.string().optional().nullable(),
+    status: z.enum(["TODO", "IN_PROGRESS", "READY_FOR_REVIEW", "COMPLETED", "ON_HOLD", "ARCHIVED"]).optional(),
 });
 
 export async function GET(req: Request) {
@@ -175,7 +176,7 @@ export async function POST(req: Request) {
                 } : undefined,
                 dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
                 sortOrder: newOrder,
-                status: "TODO",
+                status: validatedData.status || "TODO",
                 isRecurring: validatedData.isRecurring,
                 recurrenceType: validatedData.recurrenceType,
                 recurrenceInterval: validatedData.recurrenceInterval,

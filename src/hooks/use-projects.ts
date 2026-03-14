@@ -67,8 +67,8 @@ export function useCreateProject() {
             if (!res.ok) throw new Error("Failed to create project");
             return res.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["projects"] });
         },
     });
 }
@@ -94,12 +94,12 @@ export function useUpdateProject() {
             if (!res.ok) throw new Error("Failed to update project");
             return res.json();
         },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            queryClient.invalidateQueries({
-                queryKey: ["project", variables.id],
-            });
-            queryClient.invalidateQueries({ queryKey: ["project"] });
+        onSuccess: async (_, variables) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["projects"] }),
+                queryClient.invalidateQueries({ queryKey: ["project", variables.id] }),
+                queryClient.invalidateQueries({ queryKey: ["project"] })
+            ]);
         },
     });
 }
@@ -122,9 +122,11 @@ export function useDeleteProject() {
             if (!res.ok) throw new Error("Failed to delete project");
             return res.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["projects"] }),
+                queryClient.invalidateQueries({ queryKey: ["tasks"] })
+            ]);
         },
     });
 }
