@@ -17,6 +17,7 @@ import {
     TouchSensor,
     useDroppable,
 } from "@dnd-kit/core";
+import { useRef } from "react";
 import {
     SortableContext,
     useSortable,
@@ -151,10 +152,10 @@ function KanbanColumn({
     projectId: string;
     onSelectTask: (task: any) => void;
 }) {
-    const [isAdding, setIsAdding] = useState(false);
     const [newTitle, setNewTitle] = useState("");
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState(column.name);
+    const inputRef = useRef<HTMLInputElement>(null);
     const createTask = useCreateTask();
     const updateColumn = useUpdateColumn();
     const deleteColumn = useDeleteColumn();
@@ -176,7 +177,6 @@ function KanbanColumn({
             {
                 onSuccess: () => {
                     setNewTitle("");
-                    setIsAdding(false);
                     queryClient.invalidateQueries({ queryKey: ["project", projectId] });
                 },
             }
@@ -234,7 +234,7 @@ function KanbanColumn({
                             <Icon className="h-4 w-4 text-muted-foreground" />
                             <h3
                                 className="text-sm font-semibold cursor-pointer hover:text-foreground"
-                                onDoubleClick={() => setIsEditingName(true)}
+                                onClick={() => setIsEditingName(true)}
                             >
                                 {column.name}
                             </h3>
@@ -249,7 +249,7 @@ function KanbanColumn({
                 </div>
                 <div className="flex items-center gap-0.5">
                     <button
-                        onClick={() => setIsAdding(true)}
+                        onClick={() => inputRef.current?.focus()}
                         className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
                     >
                         <Plus className="h-4 w-4" />
@@ -293,53 +293,38 @@ function KanbanColumn({
                     ))}
                 </SortableContext>
 
-                {column.tasks.length === 0 && !isAdding && (
-                    <div className="flex items-center justify-center h-20 text-xs text-muted-foreground/30 border-2 border-dashed rounded-lg">
-                        Drop tasks here
-                    </div>
-                )}
-
-                {/* Inline Add Task */}
-                {isAdding && (
-                    <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border shadow-sm">
-                        <Input
-                            value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
-                            placeholder="Task title..."
-                            className="h-8 text-sm mb-2"
-                            autoFocus
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") handleAddTask();
-                                if (e.key === "Escape") {
-                                    setIsAdding(false);
-                                    setNewTitle("");
-                                }
-                            }}
-                        />
-                        <div className="flex gap-1">
-                            <button
-                                onClick={handleAddTask}
-                                disabled={createTask.isPending}
-                                className="px-2 py-1 text-xs font-medium rounded bg-primary text-primary-foreground flex items-center gap-1 min-w-[50px] justify-center"
-                            >
-                                {createTask.isPending ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                    "Add"
-                                )}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsAdding(false);
-                                    setNewTitle("");
+                {/* Persistent Quick Add Task */}
+                <div className="mt-2 p-1.5 rounded-lg border border-dashed border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all group/add">
+                    <div className="flex items-center gap-2 px-1">
+                        <div className="flex-1 relative">
+                            <Input
+                                ref={inputRef}
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                                placeholder="Add task..."
+                                className="h-7 text-xs bg-transparent border-none shadow-none focus-visible:ring-0 p-0 placeholder:text-muted-foreground/40"
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleAddTask();
+                                    if (e.key === "Escape") setNewTitle("");
                                 }}
-                                className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-                            >
-                                Cancel
-                            </button>
+                                disabled={createTask.isPending}
+                            />
+                            {createTask.isPending && (
+                                <div className="absolute right-0 top-1">
+                                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+                                </div>
+                            )}
                         </div>
+                        {newTitle && !createTask.isPending && (
+                            <button 
+                                onClick={handleAddTask}
+                                className="text-[10px] font-bold text-primary hover:text-primary/80 shrink-0"
+                            >
+                                <Plus className="h-3 w-3" />
+                            </button>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
@@ -354,7 +339,6 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
     const [activeTask, setActiveTask] = useState<any>(null);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [newColumnName, setNewColumnName] = useState("");
-    const [isAddingColumn, setIsAddingColumn] = useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -492,58 +476,41 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
                         />
                     ))}
 
-                    {/* Add Column */}
+                    {/* Persistent Add Column */}
                     <div className="w-72 min-w-[288px] flex-shrink-0 snap-start">
-                        {isAddingColumn ? (
-                            <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border">
+                        <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 group/addcol hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Plus className="h-4 w-4 text-muted-foreground group-focus-within/addcol:text-primary" />
+                                <h3 className="text-sm font-semibold text-muted-foreground group-focus-within/addcol:text-foreground">New Column</h3>
+                            </div>
+                            <div className="relative">
                                 <Input
                                     value={newColumnName}
                                     onChange={(e) =>
                                         setNewColumnName(e.target.value)
                                     }
                                     placeholder="Column name..."
-                                    className="h-8 text-sm mb-2"
-                                    autoFocus
+                                    className="h-8 text-sm bg-transparent border-none shadow-none focus-visible:ring-0 p-0 placeholder:text-muted-foreground/30"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") handleAddColumn();
-                                        if (e.key === "Escape") {
-                                            setIsAddingColumn(false);
-                                            setNewColumnName("");
-                                        }
                                     }}
+                                    disabled={createColumn.isPending}
                                 />
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={handleAddColumn}
-                                        disabled={createColumn.isPending}
-                                        className="px-3 py-1 text-xs font-medium rounded bg-primary text-primary-foreground flex items-center gap-1 min-w-[60px] justify-center"
-                                    >
-                                        {createColumn.isPending ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            "Add"
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsAddingColumn(false);
-                                            setNewColumnName("");
-                                        }}
-                                        className="px-3 py-1 text-xs text-muted-foreground"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
+                                {createColumn.isPending && (
+                                    <div className="absolute right-0 top-2">
+                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/50" />
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingColumn(true)}
-                                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-muted-foreground hover:text-foreground border-2 border-dashed rounded-lg hover:border-primary/30 transition-colors"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Add Column
-                            </button>
-                        )}
+                            {newColumnName && !createColumn.isPending && (
+                                <button 
+                                    onClick={handleAddColumn}
+                                    className="mt-2 w-full py-1 text-xs font-bold text-primary hover:bg-primary/10 rounded transition-colors"
+                                >
+                                    Add Column
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 

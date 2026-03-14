@@ -8,8 +8,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTags } from "@/hooks/use-tags";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Task } from "@prisma/client";
-import { PlusSquare, ArrowDownUp } from "lucide-react";
+import { PlusSquare, ArrowDownUp, Plus, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCreateTask } from "@/hooks/use-tasks";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ProjectListView({ project }: { project: ProjectWithStats }) {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -18,7 +20,24 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
     const [tagFilter, setTagFilter] = useState<string>("ALL");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
+    const [quickTitle, setQuickTitle] = useState("");
     const { data: tags = [] } = useTags();
+    const createTask = useCreateTask();
+    const queryClient = useQueryClient();
+
+    const handleQuickCreate = () => {
+        if (!quickTitle.trim()) return;
+        createTask.mutate({
+            title: quickTitle.trim(),
+            projectId: project.id,
+            status: "TODO",
+        }, {
+            onSuccess: () => {
+                setQuickTitle("");
+                queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+            }
+        });
+    };
 
     const handleEdit = (task: Task) => {
         setTaskToEdit(task);
@@ -125,6 +144,28 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
             </div>
 
             <div className="space-y-4">
+                {/* Rapid Quick Add Row */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center gap-3 shadow-sm group focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all">
+                    <div className="h-6 w-6 rounded-full border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0">
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    </div>
+                    <input
+                        value={quickTitle}
+                        onChange={(e) => setQuickTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleQuickCreate();
+                            }
+                        }}
+                        placeholder="Type a task and press Enter to save instantly..."
+                        className="bg-transparent border-none shadow-none focus:outline-none p-0 h-auto text-sm flex-1 placeholder:text-muted-foreground/50"
+                        disabled={createTask.isPending}
+                    />
+                    {createTask.isPending && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/30" />
+                    )}
+                </div>
+
                 {sortedActiveTasks.length > 0 ? (
                     sortedActiveTasks.map((task) => (
                         <TaskItem
@@ -134,7 +175,7 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
                             onSelect={(t) => setSelectedTaskId(t.id)}
                         />
                     ))
-                ) : (
+                ) : !quickTitle && (
                     <div
                         role="button"
                         tabIndex={0}
