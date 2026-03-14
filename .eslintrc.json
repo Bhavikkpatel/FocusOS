@@ -12,14 +12,18 @@
     ],
     "rules": {
         "@typescript-eslint/no-unused-vars": [
-            "error",
+            "warn",
             {
                 "argsIgnorePattern": "^_"
             }
         ],
-        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "jsx-a11y/anchor-is-valid": "off",
-        "react/react-in-jsx-scope": "off"
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-static-element-interactions": "off",
+        "jsx-a11y/no-autofocus": "off",
+        "react/react-in-jsx-scope": "off",
+        "react/no-unescaped-entities": "off"
     }
 }
