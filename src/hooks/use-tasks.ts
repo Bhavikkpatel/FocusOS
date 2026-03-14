@@ -132,7 +132,8 @@ export function useCreateTask() {
             return response.json() as Promise<Task>;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: taskKeys.all });
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
             queryClient.invalidateQueries({ queryKey: ["project"] });
             toast.success("Task created");
         },
@@ -248,7 +249,8 @@ export function useUpdateTask() {
             toast.error(err.message || "Failed to update task");
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: taskKeys.all });
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
             queryClient.invalidateQueries({ queryKey: ["project"] });
         },
     });

@@ -319,9 +319,14 @@ function KanbanColumn({
                         <div className="flex gap-1">
                             <button
                                 onClick={handleAddTask}
-                                className="px-2 py-1 text-xs font-medium rounded bg-primary text-primary-foreground"
+                                disabled={createTask.isPending}
+                                className="px-2 py-1 text-xs font-medium rounded bg-primary text-primary-foreground flex items-center gap-1 min-w-[50px] justify-center"
                             >
-                                Add
+                                {createTask.isPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                    "Add"
+                                )}
                             </button>
                             <button
                                 onClick={() => {
@@ -510,9 +515,14 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
                                 <div className="flex gap-1">
                                     <button
                                         onClick={handleAddColumn}
-                                        className="px-3 py-1 text-xs font-medium rounded bg-primary text-primary-foreground"
+                                        disabled={createColumn.isPending}
+                                        className="px-3 py-1 text-xs font-medium rounded bg-primary text-primary-foreground flex items-center gap-1 min-w-[60px] justify-center"
                                     >
-                                        Add
+                                        {createColumn.isPending ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            "Add"
+                                        )}
                                     </button>
                                     <button
                                         onClick={() => {

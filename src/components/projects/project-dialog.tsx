@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 const PROJECT_COLORS = [
     "#3B82F6", // blue
@@ -158,6 +159,9 @@ export function ProjectDialog({
                                 updateProject.isPending
                             }
                         >
+                            {(createProject.isPending || updateProject.isPending) && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             {isEdit ? "Save Changes" : "Create Project"}
                         </Button>
                     </div>

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Flag, Timer, Minus, Plus, Repeat } from "lucide-react";
+import { CalendarIcon, Flag, Timer, Minus, Plus, Repeat, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
@@ -145,14 +145,17 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
                 id: taskToEdit.id,
                 ...taskData,
                 projectId: values.project || null,
+            }, {
+                onSuccess: () => onOpenChange(false)
             });
         } else {
             createTask.mutate({
                 ...taskData,
                 projectId: values.project || null,
+            }, {
+                onSuccess: () => onOpenChange(false)
             });
         }
-        onOpenChange(false);
     };
 
     return (
@@ -623,8 +626,12 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
                                 </Button>
                                 <Button
                                     type="submit"
+                                    disabled={createTask.isPending || updateTask.isPending}
                                     className="rounded-full h-10 px-6 bg-primary hover:bg-primary/90 text-white shadow-sm"
                                 >
+                                    {(createTask.isPending || updateTask.isPending) && (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
                                     {taskToEdit ? "Save Changes" : "Create Task"}
                                 </Button>
                             </div>
