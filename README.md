@@ -12,15 +12,19 @@ A modern, offline-first Pomodoro productivity application with task management, 
 - ✅ **Advanced Calendar**: FullCalendar integration with drag-to-create scheduling and live time indicator
 - ✅ **Intelligent Scheduling**: Automatic Pomodoro duration calculation factoring in short and long breaks
 
-### Phase 2 (Integrations) - IN PROGRESS
+### Phase 2 (Recent Features & Refinements) - ✅ COMPLETE
+- ✅ **Cloudflare R2 Object Storage**: Integrated robust cloud file storage for attachments, replacing ephemeral local uploads.
+- ✅ **Advanced Tagging System**: Global tag management (Settings -> Tags) with full CRUD operations, usage tracking, and integrated creation directly from Kanban and List views.
+- ✅ **High-Contrast "Focus" Theming**: Refined Light and Dark modes with specialized tokens for Kanban columns, persistent project colors, and distraction-free "Immersive" task views.
+- ✅ **Zero-Lag Architecture**: Added `nextjs-toploader` for seamless page transitions and instantaneous "toast" loading states across all database mutations.
+- ✅ **Fluid UI/UX**: Custom scrollbars, fixed header overlaps, unified Kanban board sync, and optimized layouts for edge-to-edge focus.
+
+### Phase 3 (Integrations & AI) - IN PROGRESS / PLANNED
 - 🚧 **Analytics**: Daily, weekly, monthly productivity insights
 - 🚧 **Cloud Sync**: Supabase production database with connection pooling
 - 🚧 **Offline Cache**: IndexedDB-based offline support (Partial)
-
-### Phase 3 (Collaboration / AI) - PLANNED
-- Study rooms and shared timers
-- Adaptive session recommendations
-- Burnout detection
+- 📅 **Collaboration**: Study rooms and shared timers
+- 📅 **AI Insights**: Adaptive session recommendations & burnout detection
 
 ## Tech Stack
 
