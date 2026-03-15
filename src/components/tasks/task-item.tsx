@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import { TagBadge } from "./tags/tag-badge";
+import { TagSelector } from "./tags/tag-selector";
 import { DifficultyBadge } from "./difficulty-badge";
 import {
     DropdownMenu,
@@ -347,10 +348,16 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                     </div>
 
                                     {/* Tags */}
+                                    <TagSelector
+                                        selectedTags={task.tags || []}
+                                        onTagsChange={(tagIds) => updateTask.mutate({ id: task.id, tags: tagIds })}
+                                        align="start"
+                                    />
+
                                     {task.tags && task.tags.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {task.tags.map((tag: any) => (
-                                                typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-sm bg-slate-50 dark:bg-slate-800 text-[9px] py-0 h-4" /> : null
+                                                typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-sm text-[9px] py-0 h-4" /> : null
                                             ))}
                                         </div>
                                     )}

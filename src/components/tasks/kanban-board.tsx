@@ -19,10 +19,8 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { TaskWithSessions, useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
-import { TaskExpandedView } from "./task-expanded-view";
+import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
 import { KanbanCard } from "./kanban-card";
-import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
     Circle,
@@ -39,7 +37,7 @@ const COLUMNS = [
         label: "To Do",
         icon: Circle,
         color: "border-t-slate-400",
-        bg: "bg-slate-50 dark:bg-slate-900/50",
+        bg: "bg-[hsl(var(--column-todo))]",
         badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
     },
     {
@@ -47,7 +45,7 @@ const COLUMNS = [
         label: "In Progress",
         icon: Loader2,
         color: "border-t-blue-500",
-        bg: "bg-blue-50/50 dark:bg-blue-950/20",
+        bg: "bg-[hsl(var(--column-inprogress))]",
         badge: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
     },
     {
@@ -55,7 +53,7 @@ const COLUMNS = [
         label: "Review",
         icon: Eye,
         color: "border-t-amber-500",
-        bg: "bg-amber-50/50 dark:bg-amber-950/20",
+        bg: "bg-[hsl(var(--column-review))]",
         badge: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
     },
     {
@@ -63,7 +61,7 @@ const COLUMNS = [
         label: "Done",
         icon: CheckCircle2,
         color: "border-t-green-500",
-        bg: "bg-green-50/50 dark:bg-green-950/20",
+        bg: "bg-[hsl(var(--column-completed))]",
         badge: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
     },
     {
@@ -71,7 +69,7 @@ const COLUMNS = [
         label: "On Hold",
         icon: PauseCircle,
         color: "border-t-purple-500",
-        bg: "bg-purple-50/50 dark:bg-purple-950/20",
+        bg: "bg-[hsl(var(--column-onhold))]",
         badge: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
     },
 ] as const;
@@ -142,13 +140,15 @@ function KanbanColumn({
 
 interface KanbanBoardProps {
     tasks: TaskWithSessions[];
+    onSelectTask: (id: string | null) => void;
 }
 
-export function KanbanBoard({ tasks }: KanbanBoardProps) {
+export function KanbanBoard({ 
+    tasks,
+    onSelectTask
+}: KanbanBoardProps) {
     const { mutate: updateTask } = useUpdateTask();
-    const { mutate: deleteTask } = useDeleteTask();
     const [activeTask, setActiveTask] = useState<TaskWithSessions | null>(null);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -168,9 +168,6 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
         }
         return grouped;
     }, [tasks]);
-
-    // Derive live task from fresh data
-    const liveSelectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) || null : null;
 
     const handleDragStart = (event: DragStartEvent) => {
         const task = tasks.find(t => t.id === event.active.id);
@@ -226,7 +223,7 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
                             key={column.id}
                             column={column}
                             tasks={tasksByStatus[column.id] || []}
-                            onSelect={(t) => setSelectedTaskId(t.id)}
+                            onSelect={(t) => onSelectTask(t.id)}
                         />
                     ))}
                 </div>
@@ -242,16 +239,6 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
                     ) : null}
                 </DragOverlay>
             </DndContext>
-
-            <AnimatePresence>
-                {liveSelectedTask && (
-                    <TaskExpandedView
-                        task={liveSelectedTask}
-                        onClose={() => setSelectedTaskId(null)}
-                        onDelete={(id) => deleteTask(id)}
-                    />
-                )}
-            </AnimatePresence>
         </>
     );
 }

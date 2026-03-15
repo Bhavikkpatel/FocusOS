@@ -16,7 +16,7 @@ export function TagBadge({ tag, className, onRemove }: TagBadgeProps) {
                 "flex items-center gap-1.5 px-2 py-0.5 text-xs font-normal border-muted-foreground/20",
                 className
             )}
-            style={tag.color ? { backgroundColor: `${tag.color}15`, borderColor: `${tag.color}30`, color: tag.color } : undefined}
+            style={tag.color ? { backgroundColor: `${tag.color}25`, borderColor: `${tag.color}40`, color: tag.color } : undefined}
         >
             <span
                 className="h-2 w-2 rounded-full"

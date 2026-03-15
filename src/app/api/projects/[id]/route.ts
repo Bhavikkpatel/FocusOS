@@ -38,6 +38,7 @@ export async function GET(
                             orderBy: { columnOrder: "asc" },
                             include: {
                                 subtasks: true,
+                                tags: true,
                                 pomodoroSessions: {
                                     where: { type: "FOCUS" },
                                     select: { duration: true },

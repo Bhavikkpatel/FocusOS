@@ -3,9 +3,7 @@
 import { useState, useMemo } from "react";
 import { ProjectWithStats } from "@/hooks/use-projects";
 import { TaskItem } from "@/components/tasks/task-item";
-import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
-import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTags } from "@/hooks/use-tags";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Task } from "@prisma/client";
@@ -14,8 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function ProjectListView({ project }: { project: ProjectWithStats }) {
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+export function ProjectListView({ 
+    project, 
+    selectedTaskId, 
+    onSelectTask 
+}: { 
+    project: ProjectWithStats;
+    selectedTaskId: string | null;
+    onSelectTask: (id: string | null) => void;
+}) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | undefined>(undefined);
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
@@ -92,9 +97,6 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
     }, [filteredActiveTasks, sortBy]);
-
-    // Live selected task
-    const liveSelectedTask = selectedTaskId ? allTasks.find((t) => t.id === selectedTaskId) || null : null;
 
     return (
         <motion.div
@@ -173,7 +175,7 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
                             key={task.id}
                             task={task}
                             onEdit={handleEdit}
-                            onSelect={(t) => setSelectedTaskId(t.id)}
+                            onSelect={(t) => onSelectTask(t.id)}
                         />
                     ))
                 ) : !quickTitle && (
@@ -206,24 +208,13 @@ export function ProjectListView({ project }: { project: ProjectWithStats }) {
                                     key={task.id}
                                     task={task}
                                     onEdit={handleEdit}
-                                    onSelect={(t) => setSelectedTaskId(t.id)}
+                                    onSelect={(t) => onSelectTask(t.id)}
                                 />
                             ))}
                         </div>
                     </div>
                 )}
             </div>
-
-            <AnimatePresence>
-                {liveSelectedTask ? (
-                    <TaskExpandedView
-                        task={liveSelectedTask}
-                        onClose={() => setSelectedTaskId(null)}
-                    />
-                ) : selectedTaskId ? (
-                    <TaskExpandedSkeleton onClose={() => setSelectedTaskId(null)} />
-                ) : null}
-            </AnimatePresence>
 
             <TaskDialog
                 open={isDialogOpen}

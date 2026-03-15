@@ -7,6 +7,7 @@ import { Calendar, Clock, GripVertical, Repeat } from "lucide-react";
 import { TaskWithSessions } from "@/hooks/use-tasks";
 import { cn } from "@/lib/utils";
 import { useTimerStore } from "@/store/timer";
+import { TagBadge } from "./tags/tag-badge";
 
 const priorityConfig = {
     LOW: { color: "bg-slate-400", ring: "ring-slate-200" },
@@ -89,19 +90,8 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
                 <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", config.color)} />
             </div>
 
-            {/* Tags */}
-            {task.tags && task.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {task.tags.map((tag: any) => (
-                        <div key={typeof tag === 'object' ? tag.id : tag} className="rounded-md bg-secondary/50 px-1.5 py-0.5 text-[10px] text-muted-foreground truncate max-w-full">
-                            #{typeof tag === 'object' ? tag.name : tag}
-                        </div>
-                    ))}
-                </div>
-            )}
-
             {/* Footer meta */}
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-3">
                 {task.dueDate && (
                     <div className={cn(
                         "flex items-center gap-1",
@@ -111,16 +101,29 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
                         <span>{format(new Date(task.dueDate), "MMM d")}</span>
                     </div>
                 )}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                     <Clock className="h-3 w-3" />
                     <span>{task.completedPomodoros}/{task.estimatedPomodoros}</span>
                 </div>
-                {task.isRecurring && (
-                    <div className="flex items-center gap-1 text-primary/80">
-                        <Repeat className="h-3.3 w-3.2" />
+
+                {/* Tags moved to footer */}
+                {task.tags && task.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 ml-auto overflow-hidden">
+                        {task.tags.map((tag: any) => (
+                            <TagBadge 
+                                key={typeof tag === 'object' ? tag.id : tag} 
+                                tag={typeof tag === 'object' ? tag : { name: tag, color: null } as any} 
+                                className="border-none shadow-sm text-[10px] py-0 h-4" 
+                            />
+                        ))}
                     </div>
                 )}
 
+                {task.isRecurring && (
+                    <div className="flex items-center gap-1 text-primary/80 shrink-0">
+                        <Repeat className="h-3.3 w-3.2" />
+                    </div>
+                )}
             </div>
         </div>
     );

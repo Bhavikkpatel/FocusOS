@@ -24,15 +24,12 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useUpdateTask, useCreateTask, useTask, useDeleteTask } from "@/hooks/use-tasks";
+import { useUpdateTask, useCreateTask } from "@/hooks/use-tasks";
 import { useCreateColumn, useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, MoreHorizontal, Pencil, Trash2, Circle, Loader2, Eye, CheckCircle2, PauseCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KanbanCard } from "@/components/tasks/kanban-card";
-import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
-import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
-import { AnimatePresence } from "framer-motion";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -62,32 +59,32 @@ const COLUMN_STYLES: Record<string, any> = {
     TODO: {
         icon: Circle,
         color: "border-t-slate-400",
-        bg: "bg-slate-50 dark:bg-slate-900/50",
+        bg: "bg-[hsl(var(--column-todo))]",
         badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
     },
     IN_PROGRESS: {
         icon: Loader2,
         color: "border-t-blue-500",
-        bg: "bg-blue-50/50 dark:bg-blue-950/20",
+        bg: "bg-[hsl(var(--column-inprogress))]",
         badge: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
     },
     READY_FOR_REVIEW: {
         icon: Eye,
         color: "border-t-amber-500",
-        bg: "bg-amber-50/50 dark:bg-amber-950/20",
+        bg: "bg-[hsl(var(--column-review))]",
         badge: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
     },
     COMPLETED: {
         icon: CheckCircle2,
         color: "border-t-green-500",
-        bg: "bg-green-50/50 dark:bg-green-950/20",
+        bg: "bg-[hsl(var(--column-completed))]",
         badge: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
     },
     ON_HOLD: {
         icon: PauseCircle,
         color: "border-t-purple-500",
-        bg: "bg-purple-50/50 dark:bg-purple-950/20",
-        badge: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+        bg: "bg-[hsl(var(--column-onhold))]",
+        badge: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-blue-400",
     },
 };
 
@@ -317,7 +314,7 @@ function KanbanColumn({
                             )}
                         </div>
                         {newTitle && !createTask.isPending && (
-                            <button 
+                            <button
                                 onClick={handleAddTask}
                                 className="text-[10px] font-bold text-primary hover:text-primary/80 shrink-0"
                             >
@@ -332,13 +329,19 @@ function KanbanColumn({
 }
 
 // ─── Main Kanban Board ─────────────────────────
-export function ProjectKanban({ project }: { project: ProjectData }) {
+export function ProjectKanban({
+    project,
+    selectedTaskId,
+    onSelectTask
+}: {
+    project: ProjectData;
+    selectedTaskId: string | null;
+    onSelectTask: (id: string | null) => void;
+}) {
     const { mutate: updateTask } = useUpdateTask();
-    const { mutate: deleteTask } = useDeleteTask();
     const createColumn = useCreateColumn();
     const queryClient = useQueryClient();
     const [activeTask, setActiveTask] = useState<any>(null);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [newColumnName, setNewColumnName] = useState("");
 
     const sensors = useSensors(
@@ -347,13 +350,11 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
         useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
     );
 
-    // Build a flat list of all tasks for deriving live task
+    // Build a flat list of all tasks
     const allTasks = useMemo(
         () => project.columns.flatMap((c) => c.tasks),
         [project.columns]
     );
-
-    const { data: fullSelectedTask } = useTask(selectedTaskId);
 
     const handleDragStart = (event: DragStartEvent) => {
         const task = allTasks.find((t) => t.id === event.active.id);
@@ -472,13 +473,13 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
                             key={column.id}
                             column={column}
                             projectId={project.id}
-                            onSelectTask={(t) => setSelectedTaskId(t.id)}
+                            onSelectTask={(t) => onSelectTask(t.id)}
                         />
                     ))}
 
                     {/* Persistent Add Column */}
                     <div className="w-72 min-w-[288px] flex-shrink-0 snap-start">
-                        <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 group/addcol hover:border-primary/30 transition-all">
+                        <div className="p-3 bg-card rounded-xl border border-dashed border-border group/addcol hover:border-primary/30 transition-all">
                             <div className="flex items-center gap-2 mb-2">
                                 <Plus className="h-4 w-4 text-muted-foreground group-focus-within/addcol:text-primary" />
                                 <h3 className="text-sm font-semibold text-muted-foreground group-focus-within/addcol:text-foreground">New Column</h3>
@@ -525,20 +526,6 @@ export function ProjectKanban({ project }: { project: ProjectData }) {
                     ) : null}
                 </DragOverlay>
             </DndContext>
-
-            <AnimatePresence>
-                {fullSelectedTask ? (
-                    <TaskExpandedView
-                        task={fullSelectedTask}
-                        onClose={() => setSelectedTaskId(null)}
-                        onDelete={(id) => {
-                            deleteTask(id);
-                        }}
-                    />
-                ) : selectedTaskId ? (
-                    <TaskExpandedSkeleton onClose={() => setSelectedTaskId(null)} />
-                ) : null}
-            </AnimatePresence>
         </>
     );
 }

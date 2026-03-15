@@ -131,16 +131,20 @@ export function useCreateTask() {
             }
             return response.json() as Promise<Task>;
         },
-        onSuccess: async () => {
-            toast.success("Task created");
+        onMutate: () => {
+            const toastId = toast.loading("Creating task...");
+            return { toastId };
+        },
+        onSuccess: async (_, __, context) => {
+            toast.success("Task created", { id: context?.toastId });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: taskKeys.all }),
                 queryClient.invalidateQueries({ queryKey: ["projects"] }),
                 queryClient.invalidateQueries({ queryKey: ["project"] })
             ]);
         },
-        onError: (error) => {
-            toast.error(`Error: ${error.message}`);
+        onError: (error, _, context) => {
+            toast.error(`Error: ${error.message}`, { id: context?.toastId });
         },
     });
 }
@@ -164,6 +168,7 @@ export function useUpdateTask() {
         },
         // Optimistic Update
         onMutate: async (updatedTask) => {
+            const toastId = toast.loading("Updating task...");
             await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
             await queryClient.cancelQueries({ queryKey: ["project"] });
 
@@ -241,14 +246,17 @@ export function useUpdateTask() {
                 return { ...(oldData as Record<string, unknown>), ...updatedTask };
             });
 
-            return { previousTasks };
+            return { previousTasks, toastId };
+        },
+        onSuccess: (_, __, context) => {
+            toast.success("Task updated", { id: context?.toastId });
         },
         onError: (err, _newTodo, context) => {
             // context.previousTasks is correct type if we typed checking above properly
             if (context?.previousTasks) {
                 queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
             }
-            toast.error(err.message || "Failed to update task");
+            toast.error(err.message || "Failed to update task", { id: context?.toastId });
         },
         onSettled: async () => {
             await Promise.all([
@@ -271,15 +279,19 @@ export function useDeleteTask() {
             if (!res.ok) throw new Error("Failed to delete task");
             return res.json();
         },
-        onSuccess: async () => {
-            toast.success("Task deleted");
+        onMutate: () => {
+            const toastId = toast.loading("Deleting task...");
+            return { toastId };
+        },
+        onSuccess: async (_, __, context) => {
+            toast.success("Task deleted", { id: context?.toastId });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: taskKeys.all }),
                 queryClient.invalidateQueries({ queryKey: ["project"] })
             ]);
         },
-        onError: (error) => {
-            toast.error(`Failed to delete task: ${error.message}`);
+        onError: (error, _, context) => {
+            toast.error(`Failed to delete task: ${error.message}`, { id: context?.toastId });
         },
     });
 }
@@ -311,15 +323,19 @@ export function useRateSession() {
             if (!res.ok) throw new Error("Failed to rate session");
             return res.json();
         },
-        onSuccess: async () => {
-            toast.success("Focus rated successfully");
+        onMutate: () => {
+            const toastId = toast.loading("Saving rating...");
+            return { toastId };
+        },
+        onSuccess: async (_, __, context) => {
+            toast.success("Focus rated successfully", { id: context?.toastId });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: taskKeys.lists() }),
                 queryClient.invalidateQueries({ queryKey: ["project"] })
             ]);
         },
-        onError: () => {
-            toast.error("Failed to save rating");
+        onError: (_, __, context) => {
+            toast.error("Failed to save rating", { id: context?.toastId });
         },
     });
 }
