@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { CheckCircle, Flame, PlusSquare, LayoutGrid, List, ArrowDownUp, ChevronDown, ChevronRight, Folder, Kanban, Archive } from "lucide-react";
 import { Task } from "@prisma/client";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import NProgress from "nprogress";
 import { useTasks, useTask, TaskWithSessions, useDeleteTask } from "@/hooks/use-tasks";
 import { useTags } from "@/hooks/use-tags";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskItem } from "./task-item";
 import { TaskDialog } from "./task-dialog";
 import { KanbanBoard } from "./kanban-board";
-import { TaskListSkeleton, TaskExpandedSkeleton } from "./task-skeleton";
 
 import { TaskExpandedView } from "./task-expanded-view";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,19 +24,21 @@ type GroupBy = "none" | "project" | "status";
 export function TaskList() {
     const [filter, setFilter] = useState<"ALL" | "COMPLETED" | "ARCHIVED">("ALL");
     const [viewMode, setViewMode] = useState<ViewMode>("list");
-    const router = useRouter();
     const searchParams = useSearchParams();
     const taskParam = searchParams.get("task");
+    // Initialize from URL param once, then manage locally
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskParam);
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
     const [groupBy, setGroupBy] = useState<GroupBy>("none");
     const [tagFilter, setTagFilter] = useState<string>("ALL");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
-    const [isMounted, setIsMounted] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    // Track whether preferences have been loaded from localStorage
+    const prefsLoaded = useRef(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        if (prefsLoaded.current) return;
+        prefsLoaded.current = true;
         const savedView = localStorage.getItem("focusos_tasks_view");
         if (savedView === "list" || savedView === "kanban") {
             setViewMode(savedView as ViewMode);
@@ -49,13 +51,7 @@ export function TaskList() {
         if (savedGroup === "none" || savedGroup === "project" || savedGroup === "status") {
             setGroupBy(savedGroup as GroupBy);
         }
-
-        // Sync local state if URL param changes (robust sync)
-        const taskInUrl = searchParams.get("task");
-        if (taskInUrl !== selectedTaskId) {
-            setSelectedTaskId(taskInUrl);
-        }
-    }, [searchParams, selectedTaskId]); // Added dependencies for robust sync
+    }, []); // Only run once on mount
 
     const handleViewModeChange = (mode: ViewMode) => {
         setViewMode(mode);
@@ -83,7 +79,6 @@ export function TaskList() {
 
     const {
         data,
-        isLoading,
         error,
         fetchNextPage,
         hasNextPage,
@@ -109,17 +104,11 @@ export function TaskList() {
     };
 
     const handleSelectTask = (id: string | null) => {
-        if (id) {
-            setSelectedTaskId(id);
-            router.push(`/tasks?task=${id}`, { scroll: false });
-        } else {
-            handleCloseTask();
-        }
+        setSelectedTaskId(id);
     };
 
     const handleCloseTask = () => {
         setSelectedTaskId(null);
-        router.push('/tasks', { scroll: false });
     };
 
     const allTasks = data?.pages.flatMap((page) => page.tasks) || [];
@@ -212,9 +201,17 @@ export function TaskList() {
         }));
     }, [sortedTasks, groupBy]);
 
-    if (!isMounted || isLoading) {
-        return <TaskListSkeleton />;
-    }
+    // Show/hide NProgress top bar when task is selected but not yet loaded
+    useEffect(() => {
+        if (selectedTaskId && !taskToDisplay) {
+            NProgress.start();
+        } else {
+            NProgress.done();
+        }
+        return () => {
+            NProgress.done();
+        };
+    }, [selectedTaskId, taskToDisplay]);
 
     if (error) {
         return <div className="p-8 text-center text-red-500">Error loading tasks</div>;
@@ -503,9 +500,10 @@ export function TaskList() {
                 </>
             )}
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {taskToDisplay ? (
                     <TaskExpandedView
+                        key={taskToDisplay.id}
                         task={taskToDisplay}
                         onClose={handleCloseTask}
                         onDelete={(id) => {
@@ -513,8 +511,6 @@ export function TaskList() {
                             handleCloseTask();
                         }}
                     />
-                ) : selectedTaskId ? (
-                    <TaskExpandedSkeleton onClose={handleCloseTask} />
                 ) : null}
             </AnimatePresence>
 

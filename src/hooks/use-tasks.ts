@@ -112,6 +112,7 @@ export function useTasks(filters: TaskFilters = {}) {
             return undefined;
         },
         initialPageParam: 1,
+        placeholderData: (previousData) => previousData,
     });
 }
 
@@ -306,6 +307,7 @@ export function useTask(id: string | null) {
             return res.json() as Promise<TaskWithSessions>;
         },
         enabled: !!id,
+        placeholderData: (previousData) => previousData,
     });
 }
 

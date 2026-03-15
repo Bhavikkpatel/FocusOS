@@ -291,7 +291,7 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                 className="flex h-full flex-col"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.15 }}
+                transition={{ duration: 0.2 }}
             >
                 {/* Header Top Bar */}
                 <div className={cn(
