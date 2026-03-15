@@ -49,7 +49,13 @@ export function TaskList() {
         if (savedGroup === "none" || savedGroup === "project" || savedGroup === "status") {
             setGroupBy(savedGroup as GroupBy);
         }
-    }, []);
+
+        // Sync local state if URL param changes (robust sync)
+        const taskInUrl = searchParams.get("task");
+        if (taskInUrl !== selectedTaskId) {
+            setSelectedTaskId(taskInUrl);
+        }
+    }, [searchParams, selectedTaskId]); // Added dependencies for robust sync
 
     const handleViewModeChange = (mode: ViewMode) => {
         setViewMode(mode);
@@ -102,9 +108,13 @@ export function TaskList() {
         setIsDialogOpen(true);
     };
 
-    const handleSelectTask = (id: string) => {
-        setSelectedTaskId(id);
-        router.push(`/tasks?task=${id}`, { scroll: false });
+    const handleSelectTask = (id: string | null) => {
+        if (id) {
+            setSelectedTaskId(id);
+            router.push(`/tasks?task=${id}`, { scroll: false });
+        } else {
+            handleCloseTask();
+        }
     };
 
     const handleCloseTask = () => {
@@ -213,161 +223,166 @@ export function TaskList() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="space-y-6">
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                    <div className="space-y-1">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Tasks</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-                            Stay focused and organized. You have {activeTasks.length} tasks pending.
-                        </p>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className={cn(
-                                "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-primary/30",
-                                filter === "COMPLETED" ? "ring-2 ring-primary bg-primary/5 border-primary/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
-                            )}
-                            onClick={() => setFilter(filter === "COMPLETED" ? "ALL" : "COMPLETED")}
-                        >
-                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
-                                <CheckCircle className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Done</p>
-                                <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                    {completedTasks.length}
-                                </p>
-                            </div>
+            {!selectedTaskId && (
+                <div className="space-y-6">
+                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                        <div className="space-y-1">
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Tasks</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
+                                Stay focused and organized. You have {activeTasks.length} tasks pending.
+                            </p>
                         </div>
 
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className={cn(
-                                "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-amber-500/30",
-                                filter === "ARCHIVED" ? "ring-2 ring-amber-500 bg-amber-500/5 border-amber-500/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
-                            )}
-                            onClick={() => setFilter(filter === "ARCHIVED" ? "ALL" : "ARCHIVED")}
-                        >
-                            <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                                <Archive className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Archived</p>
-                                <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                    {archivedTasks.length}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-                                <Flame className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Urgent</p>
-                                <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                    {highPriorityCount}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Filters Row */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/50">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select value={tagFilter} onValueChange={setTagFilter}>
-                            <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                <SelectValue placeholder="All Tags" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="ALL">All Tags</SelectItem>
-                                {tags.map((t) => (
-                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                <SelectValue placeholder="Difficulty" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="ALL">Difficulty</SelectItem>
-                                <SelectItem value="EASY">Easy</SelectItem>
-                                <SelectItem value="MEDIUM">Medium</SelectItem>
-                                <SelectItem value="HARD">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={groupBy} onValueChange={handleGroupChange}>
-                            <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                <div className="flex items-center gap-1.5">
-                                    <Kanban className="h-3.5 w-3.5 text-muted-foreground" />
-                                    <SelectValue placeholder="Group" />
+                        {/* Quick Stats */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div
+                                tabIndex={0}
+                                role="button"
+                                className={cn(
+                                    "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-primary/30",
+                                    filter === "COMPLETED" ? "ring-2 ring-primary bg-primary/5 border-primary/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                                )}
+                                onClick={() => setFilter(filter === "COMPLETED" ? "ALL" : "COMPLETED")}
+                            >
+                                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
+                                    <CheckCircle className="h-4 w-4" />
                                 </div>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="none">Group: None</SelectItem>
-                                <SelectItem value="project">Group: Project</SelectItem>
-                                <SelectItem value="status">Group: Status</SelectItem>
-                            </SelectContent>
-                        </Select>
+                                <div>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Done</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
+                                        {completedTasks.length}
+                                    </p>
+                                </div>
+                            </div>
 
-                        {viewMode === "list" && (
-                            <Select value={sortBy} onValueChange={handleSortChange}>
+                            <div
+                                tabIndex={0}
+                                role="button"
+                                className={cn(
+                                    "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-amber-500/30",
+                                    filter === "ARCHIVED" ? "ring-2 ring-amber-500 bg-amber-500/5 border-amber-500/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                                )}
+                                onClick={() => setFilter(filter === "ARCHIVED" ? "ALL" : "ARCHIVED")}
+                            >
+                                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                    <Archive className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Archived</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
+                                        {archivedTasks.length}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+                                    <Flame className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Urgent</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
+                                        {highPriorityCount}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filters Row */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Select value={tagFilter} onValueChange={setTagFilter}>
+                                <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                                    <SelectValue placeholder="All Tags" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="ALL">All Tags</SelectItem>
+                                    {tags.map((t) => (
+                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                                <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                                    <SelectValue placeholder="Difficulty" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="ALL">Difficulty</SelectItem>
+                                    <SelectItem value="EASY">Easy</SelectItem>
+                                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                                    <SelectItem value="HARD">Hard</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={groupBy} onValueChange={handleGroupChange}>
                                 <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-1.5">
-                                        <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <SelectValue placeholder="Sort" />
+                                        <Kanban className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <SelectValue placeholder="Group" />
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">
-                                    <SelectItem value="createdAt">Sort: Created</SelectItem>
-                                    <SelectItem value="priority">Sort: Priority</SelectItem>
-                                    <SelectItem value="dueDate">Sort: Due Date</SelectItem>
+                                    <SelectItem value="none">Group: None</SelectItem>
+                                    <SelectItem value="project">Group: Project</SelectItem>
+                                    <SelectItem value="status">Group: Status</SelectItem>
                                 </SelectContent>
                             </Select>
-                        )}
-                    </div>
 
-                    <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 p-1 shadow-sm backdrop-blur-sm">
-                        <button
-                            onClick={() => handleViewModeChange("list")}
-                            className={cn(
-                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-                                viewMode === "list"
-                                    ? "bg-primary text-primary-foreground shadow-md scale-105"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                            {viewMode === "list" && (
+                                <Select value={sortBy} onValueChange={handleSortChange}>
+                                    <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                                        <div className="flex items-center gap-1.5">
+                                            <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <SelectValue placeholder="Sort" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl">
+                                        <SelectItem value="createdAt">Sort: Created</SelectItem>
+                                        <SelectItem value="priority">Sort: Priority</SelectItem>
+                                        <SelectItem value="dueDate">Sort: Due Date</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             )}
-                        >
-                            <List className="h-3.5 w-3.5" />
-                            List
-                        </button>
-                        <button
-                            onClick={() => handleViewModeChange("kanban")}
-                            className={cn(
-                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-                                viewMode === "kanban"
-                                    ? "bg-primary text-primary-foreground shadow-md scale-105"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
-                            )}
-                        >
-                            <LayoutGrid className="h-3.5 w-3.5" />
-                            Board
-                        </button>
+                        </div>
+
+                        <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 p-1 shadow-sm backdrop-blur-sm">
+                            <button
+                                onClick={() => handleViewModeChange("list")}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                                    viewMode === "list"
+                                        ? "bg-primary text-primary-foreground shadow-md scale-105"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                )}
+                            >
+                                <List className="h-3.5 w-3.5" />
+                                List
+                            </button>
+                            <button
+                                onClick={() => handleViewModeChange("kanban")}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                                    viewMode === "kanban"
+                                        ? "bg-primary text-primary-foreground shadow-md scale-105"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                )}
+                            >
+                                <LayoutGrid className="h-3.5 w-3.5" />
+                                Board
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* View Content */}
             {viewMode === "kanban" ? (
-                <KanbanBoard tasks={kanbanTasks} />
+                <KanbanBoard
+                    tasks={kanbanTasks}
+                    onSelectTask={handleSelectTask}
+                />
             ) : (
                 <>
                     {/* Task List Container */}
@@ -485,26 +500,29 @@ export function TaskList() {
                             </div>
                         )}
                     </div>
-
-                    <AnimatePresence>
-                        {taskToDisplay ? (
-                            <TaskExpandedView
-                                task={taskToDisplay}
-                                onClose={handleCloseTask}
-                                onDelete={(id) => deleteTask(id)}
-                            />
-                        ) : selectedTaskId ? (
-                            <TaskExpandedSkeleton onClose={handleCloseTask} />
-                        ) : null}
-                    </AnimatePresence>
-
-                    <TaskDialog
-                        open={isDialogOpen}
-                        onOpenChange={setIsDialogOpen}
-                        taskToEdit={taskToEdit}
-                    />
                 </>
             )}
+
+            <AnimatePresence>
+                {taskToDisplay ? (
+                    <TaskExpandedView
+                        task={taskToDisplay}
+                        onClose={handleCloseTask}
+                        onDelete={(id) => {
+                            deleteTask(id);
+                            handleCloseTask();
+                        }}
+                    />
+                ) : selectedTaskId ? (
+                    <TaskExpandedSkeleton onClose={handleCloseTask} />
+                ) : null}
+            </AnimatePresence>
+
+            <TaskDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                taskToEdit={taskToEdit}
+            />
         </div>
     );
 }

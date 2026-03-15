@@ -19,6 +19,8 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -94,10 +96,24 @@ export function Sidebar() {
                             <ChevronUp className="h-4 w-4 text-slate-400 group-hover:text-slate-600" />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => signOut()}>
+                    <DropdownMenuContent align="end" className="w-64 p-2 shadow-xl border-slate-200 dark:border-slate-800" side="right" sideOffset={10}>
+                        <DropdownMenuLabel className="font-normal mb-1">
+                            <div className="flex flex-col space-y-2 py-1">
+                                <p className="text-sm font-bold leading-none text-slate-900 dark:text-white">
+                                    {session?.user?.name}
+                                </p>
+                                <p className="text-xs leading-none text-slate-500 font-medium">
+                                    {session?.user?.email}
+                                </p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
+                        <DropdownMenuItem 
+                            onClick={() => signOut()}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30 rounded-lg cursor-pointer transition-colors mt-1"
+                        >
                             <LogOut className="mr-2 h-4 w-4" />
-                            Log out
+                            <span className="font-semibold">Log out</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

@@ -285,7 +285,7 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ type: "spring", bounce: 0.1, duration: 0.3 }}
-            className="absolute inset-0 z-40 flex flex-col bg-background shadow-2xl border-l border-slate-200 dark:border-slate-800"
+            className="absolute inset-0 z-50 !m-0 flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800"
         >
             <motion.div
                 className="flex h-full flex-col"
@@ -296,10 +296,10 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                 {/* Header Top Bar */}
                 <div className={cn(
                     "flex flex-col gap-4 border-b p-4 sm:p-6 transition-colors duration-300",
-                    task.priority === "URGENT" && "bg-red-50 dark:bg-red-900/20",
-                    task.priority === "HIGH" && "bg-orange-50 dark:bg-orange-900/20",
-                    task.priority === "MEDIUM" && "bg-blue-50 dark:bg-blue-900/20",
-                    (!task.priority || task.priority === "LOW") && "bg-background"
+                    task.priority === "URGENT" && "bg-red-50/50 dark:bg-red-900/40",
+                    task.priority === "HIGH" && "bg-orange-50/50 dark:bg-orange-900/40",
+                    task.priority === "MEDIUM" && "bg-blue-50/50 dark:bg-blue-900/40",
+                    (!task.priority || task.priority === "LOW") && "bg-white dark:bg-slate-900"
                 )}>
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface ProjectWithStats {
     id: string;
@@ -67,8 +68,16 @@ export function useCreateProject() {
             if (!res.ok) throw new Error("Failed to create project");
             return res.json();
         },
-        onSuccess: async () => {
+        onMutate: () => {
+            const toastId = toast.loading("Creating project...");
+            return { toastId };
+        },
+        onSuccess: async (_, __, context) => {
+            toast.success("Project created", { id: context?.toastId });
             await queryClient.invalidateQueries({ queryKey: ["projects"] });
+        },
+        onError: (error, _, context) => {
+            toast.error(`Error: ${error.message}`, { id: context?.toastId });
         },
     });
 }
@@ -94,12 +103,20 @@ export function useUpdateProject() {
             if (!res.ok) throw new Error("Failed to update project");
             return res.json();
         },
-        onSuccess: async (_, variables) => {
+        onMutate: () => {
+            const toastId = toast.loading("Updating project...");
+            return { toastId };
+        },
+        onSuccess: async (_, variables, context) => {
+            toast.success("Project updated", { id: context?.toastId });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["projects"] }),
                 queryClient.invalidateQueries({ queryKey: ["project", variables.id] }),
                 queryClient.invalidateQueries({ queryKey: ["project"] })
             ]);
+        },
+        onError: (error, _, context) => {
+            toast.error(`Error: ${error.message}`, { id: context?.toastId });
         },
     });
 }
@@ -122,11 +139,19 @@ export function useDeleteProject() {
             if (!res.ok) throw new Error("Failed to delete project");
             return res.json();
         },
-        onSuccess: async () => {
+        onMutate: () => {
+            const toastId = toast.loading("Deleting project...");
+            return { toastId };
+        },
+        onSuccess: async (_, __, context) => {
+            toast.success("Project deleted", { id: context?.toastId });
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["projects"] }),
                 queryClient.invalidateQueries({ queryKey: ["tasks"] })
             ]);
+        },
+        onError: (error, _, context) => {
+            toast.error(`Error: ${error.message}`, { id: context?.toastId });
         },
     });
 }

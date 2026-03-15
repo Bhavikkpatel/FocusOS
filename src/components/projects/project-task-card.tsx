@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { TagBadge } from "../tasks/tags/tag-badge";
+import { TagSelector } from "../tasks/tags/tag-selector";
 import { DifficultyBadge } from "../tasks/difficulty-badge";
 import {
     ContextMenu,
@@ -160,23 +161,24 @@ export function ProjectTaskCard({
         <>
             <ContextMenu>
                 <ContextMenuTrigger asChild>
-                    <div
-                        onClick={() => {
-                            if (!isEditingTitle) onSelect(task);
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                            if ((e.key === 'Enter' || e.key === ' ') && !isEditingTitle) {
-                                onSelect(task);
-                            }
-                        }}
-                        className={cn(
-                            "p-3 bg-white dark:bg-slate-800 rounded-lg border transition-all cursor-pointer group border-l-[4px] relative",
-                            isActive ? "border-primary bg-primary/5 ring-1 ring-primary/20" : config.accent,
-                            isCompleted && "opacity-60"
-                        )}
-                    >
+                        <div
+                            onClick={() => {
+                                if (!isEditingTitle) onSelect(task);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if ((e.key === 'Enter' || e.key === ' ') && !isEditingTitle) {
+                                    onSelect(task);
+                                }
+                            }}
+                            className={cn(
+                                "p-3 bg-white dark:bg-slate-800 rounded-lg border transition-all cursor-pointer group border-l-[4px] relative",
+                                isActive ? "border-primary bg-primary/5 ring-1 ring-primary/20" : config.accent,
+                                isCompleted && "opacity-60"
+                            )}
+                            style={!isActive ? { borderLeftColor: task.project?.color || (task.projectColor) } : {}}
+                        >
                         <motion.div
                             className="absolute left-3 top-3 z-10"
                             onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -234,7 +236,7 @@ export function ProjectTaskCard({
                         {task.tags && task.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
                                 {task.tags.map((tag: any) => (
-                                    typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-sm bg-slate-50 dark:bg-slate-800" /> : null
+                                    typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-sm text-[10px] py-0 h-4" /> : null
                                 ))}
                             </div>
                         )}
@@ -299,9 +301,13 @@ export function ProjectTaskCard({
                                 )}
 
 
-                            </div>
-
-                            {/* Tags and Category Row (Above Action button or below Title) */}
+                                    <TagSelector
+                                        selectedTags={task.tags || []}
+                                        onTagsChange={(tagIds) => updateTask.mutate({ id: task.id, tags: tagIds })}
+                                        align="start"
+                                    />
+                                </div>
+                                {/* Tags and Category Row (Above Action button or below Title) */}
                             {/* Actually we can put category next to due date */}
                             {task.category && (
                                 <span className="text-[10px] text-muted-foreground ml-1.5 truncate max-w-[80px]">

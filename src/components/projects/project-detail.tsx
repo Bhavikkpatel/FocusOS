@@ -7,7 +7,10 @@ import { ProjectKanban } from "./project-kanban";
 import { ProjectListView } from "./project-list-view";
 import { AnimatePresence, motion } from "framer-motion";
 import { ProjectDialog } from "./project-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTask, useDeleteTask } from "@/hooks/use-tasks";
+import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
+import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -25,10 +28,17 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     const { data: project, isLoading, error } = useProject(projectId);
     const deleteProject = useDeleteProject();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<ViewMode>("board");
     const [isMounted, setIsMounted] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
+        searchParams.get("task")
+    );
+
+    const { data: fullSelectedTask } = useTask(selectedTaskId);
+    const { mutate: deleteTask } = useDeleteTask();
 
     useEffect(() => {
         setIsMounted(true);
@@ -36,7 +46,22 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         if (savedView === "list" || savedView === "board") {
             setViewMode(savedView as ViewMode);
         }
-    }, [projectId]);
+
+        // Sync local state if URL param changes
+        const taskInUrl = searchParams.get("task");
+        if (taskInUrl !== selectedTaskId) {
+            setSelectedTaskId(taskInUrl);
+        }
+    }, [projectId, searchParams, selectedTaskId]);
+
+    const handleSelectTask = (id: string | null) => {
+        setSelectedTaskId(id);
+        if (id) {
+            router.push(`/projects/${projectId}?task=${id}`, { scroll: false });
+        } else {
+            router.push(`/projects/${projectId}`, { scroll: false });
+        }
+    };
 
     const handleViewModeChange = (mode: ViewMode) => {
         setViewMode(mode);
@@ -71,14 +96,24 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <ProjectHeader
-                project={project}
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                onEdit={() => setEditOpen(true)}
-                onDelete={() => setDeleteOpen(true)}
-            />
+        <div className="flex flex-col h-full relative">
+            <AnimatePresence>
+                {!selectedTaskId && (
+                    <motion.div
+                        initial={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ProjectHeader
+                            project={project}
+                            viewMode={viewMode}
+                            onViewModeChange={handleViewModeChange}
+                            onEdit={() => setEditOpen(true)}
+                            onDelete={() => setDeleteOpen(true)}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="flex-1 overflow-hidden p-6 relative">
                 {isMounted ? (
@@ -92,7 +127,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                                 transition={{ duration: 0.2 }}
                                 className="h-full w-full"
                             >
-                                <ProjectKanban project={project} />
+                                <ProjectKanban 
+                                    project={project} 
+                                    selectedTaskId={selectedTaskId}
+                                    onSelectTask={handleSelectTask}
+                                />
                             </motion.div>
                         ) : (
                             <motion.div
@@ -103,13 +142,21 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                                 transition={{ duration: 0.2 }}
                                 className="h-full w-full"
                             >
-                                <ProjectListView project={project} />
+                                <ProjectListView 
+                                    project={project} 
+                                    selectedTaskId={selectedTaskId}
+                                    onSelectTask={handleSelectTask}
+                                 />
                             </motion.div>
                         )}
                     </AnimatePresence>
                 ) : (
                     <div className="h-full w-full">
-                        <ProjectKanban project={project} />
+                        <ProjectKanban 
+                            project={project} 
+                            selectedTaskId={selectedTaskId}
+                            onSelectTask={handleSelectTask}
+                        />
                     </div>
                 )}
             </div>
@@ -152,6 +199,21 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            {/* Task Expanded View */}
+            <AnimatePresence>
+                {fullSelectedTask ? (
+                    <TaskExpandedView
+                        task={fullSelectedTask}
+                        onClose={() => handleSelectTask(null)}
+                        onDelete={(id) => {
+                            deleteTask(id);
+                            handleSelectTask(null);
+                        }}
+                    />
+                ) : selectedTaskId ? (
+                    <TaskExpandedSkeleton onClose={() => handleSelectTask(null)} />
+                ) : null}
+            </AnimatePresence>
         </div>
     );
 }

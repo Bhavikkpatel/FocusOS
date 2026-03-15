@@ -15,16 +15,26 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import type { Tag } from "@prisma/client";
 import { useTags, useCreateTag } from "@/hooks/use-tags";
 
 interface TagSelectorProps {
-    selectedTags: Tag[];
+    selectedTags: any[];
     onTagsChange: (tags: string[]) => void;
     trigger?: React.ReactNode;
     className?: string;
     align?: "start" | "center" | "end";
 }
+
+const TAG_COLORS = [
+    "#94a3b8", // slate
+    "#ef4444", // red
+    "#f97316", // orange
+    "#eab308", // yellow
+    "#22c55e", // green
+    "#3b82f6", // blue
+    "#8b5cf6", // violet
+    "#ec4899", // pink
+];
 
 export function TagSelector({ selectedTags, onTagsChange, trigger, className, align = "center" }: TagSelectorProps) {
     const [open, setOpen] = React.useState(false);
@@ -39,11 +49,11 @@ export function TagSelector({ selectedTags, onTagsChange, trigger, className, al
         setOpen(!open);
     };
 
-    const handleSelectTag = (tag: Tag) => {
-        const isSelected = selectedTags.some(t => t.id === tag.id);
+    const handleSelectTag = (tag: any) => {
+        const isSelected = selectedTags.some((t: any) => t.id === tag.id);
         const newSelected = isSelected
-            ? selectedTags.filter((t) => t.id !== tag.id).map(t => t.id)
-            : [...selectedTags.map(t => t.id), tag.id];
+            ? selectedTags.filter((t: any) => t.id !== tag.id).map((t: any) => t.id)
+            : [...selectedTags.map((t: any) => t.id), tag.id];
 
         onTagsChange(newSelected);
     };
@@ -52,7 +62,11 @@ export function TagSelector({ selectedTags, onTagsChange, trigger, className, al
         if (!searchQuery.trim()) return;
 
         try {
-            const newTag = await createTag.mutateAsync({ name: searchQuery.trim() });
+            const color = TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+            const newTag = await createTag.mutateAsync({ 
+                name: searchQuery.trim(),
+                color 
+            });
             onTagsChange([...selectedTags.map(t => t.id), newTag.id]);
             setSearchQuery("");
         } catch (error) {
@@ -60,7 +74,7 @@ export function TagSelector({ selectedTags, onTagsChange, trigger, className, al
         }
     };
 
-    const isExactMatch = tags.some((t: Tag) => t.name.toLowerCase() === searchQuery.trim().toLowerCase());
+    const isExactMatch = tags.some((t: any) => t.name.toLowerCase() === searchQuery.trim().toLowerCase());
 
     const defaultTrigger = (
         <Button
@@ -117,8 +131,8 @@ export function TagSelector({ selectedTags, onTagsChange, trigger, className, al
                     </CommandEmpty>
                     <CommandList>
                         <CommandGroup>
-                            {tags.map((tag: Tag) => {
-                                const isSelected = selectedTags.some((t) => t.id === tag.id);
+                            {tags.map((tag: any) => {
+                                const isSelected = selectedTags.some((t: any) => t.id === tag.id);
                                 return (
                                     <CommandItem
                                         key={tag.id}
