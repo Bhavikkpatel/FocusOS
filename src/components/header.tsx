@@ -16,18 +16,24 @@ import { useParams } from "next/navigation";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { GlobalSearch } from "@/components/global-search";
 
+import { useSidebarStore } from "@/store/sidebar";
+
 export function Header() {
     const today = new Date();
     const params = useParams();
     const projectId = params?.id as string | undefined;
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const toggleSidebar = useSidebarStore((s) => s.toggle);
 
     return (
         <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10 sticky top-0">
             {/* Left: Mobile Toggle & Date */}
             <div className="flex items-center gap-4">
-                <button className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+                <button
+                    className="md:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                    onClick={toggleSidebar}
+                >
                     <Menu className="h-5 w-5" />
                 </button>
                 <div className="hidden sm:flex flex-col">

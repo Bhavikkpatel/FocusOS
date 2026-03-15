@@ -10,7 +10,8 @@ import {
     CalendarDays,
     Settings,
     ChevronUp,
-    LogOut
+    LogOut,
+    X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useSidebarStore } from "@/store/sidebar";
 
 const navigation = [
     { name: "Tasks", href: "/tasks", icon: ListTodo },
@@ -33,20 +35,28 @@ const navigation = [
     { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-export function Sidebar() {
+function SidebarContent({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const { data: session } = useSession();
 
     return (
-        <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full flex-shrink-0 z-20 hidden md:flex transition-all duration-300">
+        <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full flex-shrink-0">
             {/* Logo Area */}
-            <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
                     <div className="bg-primary/10 text-primary p-2 rounded-lg">
                         <CheckCircle className="h-6 w-6" />
                     </div>
                     <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">FocusOS</h1>
                 </div>
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                )}
             </div>
 
             {/* Navigation */}
@@ -57,6 +67,7 @@ export function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
+                            onClick={onClose}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors",
                                 isActive
@@ -71,7 +82,7 @@ export function Sidebar() {
                 })}
             </nav>
 
-            {/* Theme Toggle & User Profile (Bottom) */}
+            {/* Theme Toggle */}
             <div className="px-6 py-2">
                 <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest pl-1">Theme</span>
@@ -79,6 +90,7 @@ export function Sidebar() {
                 </div>
             </div>
 
+            {/* User Profile */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -108,7 +120,7 @@ export function Sidebar() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                             onClick={() => signOut()}
                             className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30 rounded-lg cursor-pointer transition-colors mt-1"
                         >
@@ -119,5 +131,33 @@ export function Sidebar() {
                 </DropdownMenu>
             </div>
         </aside>
+    );
+}
+
+export function Sidebar() {
+    const { isOpen, close } = useSidebarStore();
+
+    return (
+        <>
+            {/* Desktop: always visible */}
+            <div className="hidden md:flex h-full">
+                <SidebarContent />
+            </div>
+
+            {/* Mobile: backdrop + slide-in drawer */}
+            {isOpen && (
+                <div className="md:hidden fixed inset-0 z-50 flex">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={close}
+                    />
+                    {/* Drawer */}
+                    <div className="relative z-10 h-full">
+                        <SidebarContent onClose={close} />
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
