@@ -1,29 +1,38 @@
-import fs from "fs/promises";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import crypto from "crypto";
 import path from "path";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const s3Client = new S3Client({
+    region: process.env.R2_REGION || "auto",
+    endpoint: process.env.R2_ENDPOINT!,
+    credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+});
 
-export async function ensureUploadDir() {
-    try {
-        await fs.access(UPLOAD_DIR);
-    } catch {
-        await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    }
-}
+const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 
 export async function saveFile(file: File): Promise<{ url: string; size: number; name: string; mimeType: string }> {
-    await ensureUploadDir();
-
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = path.extname(file.name);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
-    const filePath = path.join(UPLOAD_DIR, fileName);
 
-    await fs.writeFile(filePath, buffer);
+    const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: fileName,
+        Body: buffer,
+        ContentType: file.type,
+    });
 
-    // In a real cloud storage, this would be the public URL
-    // Here we use the local path relative to public
-    const url = `/uploads/${fileName}`;
+    await s3Client.send(command);
+
+    // If R2_PUBLIC_URL is provided, use that to construct a direct public URL
+    // Otherwise, you can use presigned URLs or a custom worker route if R2 is not public
+    const url = process.env.R2_PUBLIC_URL 
+        ? `${process.env.R2_PUBLIC_URL}/${fileName}`
+        : `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/uploads/${fileName}`; // fallback to proxy if needed
 
     return {
         url,
@@ -34,14 +43,28 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
 }
 
 export async function deleteFile(url: string) {
-    if (!url.startsWith("/uploads/")) return;
+    let fileName = "";
+    
+    // Extract filename from URL depending on format
+    if (process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
+        fileName = url.replace(`${process.env.R2_PUBLIC_URL}/`, "");
+    } else if (url.startsWith("/api/uploads/") || (process.env.NEXT_PUBLIC_APP_URL && url.startsWith(`${process.env.NEXT_PUBLIC_APP_URL}/api/uploads/`))) {
+        const urlObj = new URL(url, process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+        fileName = urlObj.pathname.split('/').pop() || "";
+    } else {
+        // Fallback or old format
+        return;
+    }
 
-    const fileName = url.replace("/uploads/", "");
-    const filePath = path.join(UPLOAD_DIR, fileName);
+    if (!fileName) return;
 
     try {
-        await fs.unlink(filePath);
+        const command = new DeleteObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: fileName,
+        });
+        await s3Client.send(command);
     } catch (error) {
-        console.error(`Failed to delete file: ${filePath}`, error);
+        console.error(`Failed to delete file from R2: ${fileName}`, error);
     }
 }
