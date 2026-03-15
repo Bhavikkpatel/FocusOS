@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProject, useDeleteProject } from "@/hooks/use-projects";
 import { ProjectHeader } from "./project-header";
 import { ProjectKanban } from "./project-kanban";
 import { ProjectListView } from "./project-list-view";
 import { AnimatePresence, motion } from "framer-motion";
 import { ProjectDialog } from "./project-dialog";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTask, useDeleteTask } from "@/hooks/use-tasks";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
-import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
+import NProgress from "nprogress";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,6 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
 
 type ViewMode = "board" | "list";
 
@@ -30,37 +31,40 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<ViewMode>("board");
-    const [isMounted, setIsMounted] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    // Initialize from URL param once, then manage locally
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
         searchParams.get("task")
     );
 
     const { data: fullSelectedTask } = useTask(selectedTaskId);
     const { mutate: deleteTask } = useDeleteTask();
+    const prefsLoaded = useRef(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        if (prefsLoaded.current) return;
+        prefsLoaded.current = true;
         const savedView = localStorage.getItem(`focusos_project_view_${projectId}`);
         if (savedView === "list" || savedView === "board") {
             setViewMode(savedView as ViewMode);
         }
+    }, [projectId]);
 
-        // Sync local state if URL param changes
-        const taskInUrl = searchParams.get("task");
-        if (taskInUrl !== selectedTaskId) {
-            setSelectedTaskId(taskInUrl);
+    // Show/hide NProgress top bar when task is selected but not yet loaded
+    useEffect(() => {
+        if (selectedTaskId && !fullSelectedTask) {
+            NProgress.start();
+        } else {
+            NProgress.done();
         }
-    }, [projectId, searchParams, selectedTaskId]);
+        return () => {
+            NProgress.done();
+        };
+    }, [selectedTaskId, fullSelectedTask]);
 
     const handleSelectTask = (id: string | null) => {
         setSelectedTaskId(id);
-        if (id) {
-            router.push(`/projects/${projectId}?task=${id}`, { scroll: false });
-        } else {
-            router.push(`/projects/${projectId}`, { scroll: false });
-        }
     };
 
     const handleViewModeChange = (mode: ViewMode) => {
@@ -116,49 +120,39 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             </AnimatePresence>
 
             <div className="flex-1 overflow-hidden p-6 relative">
-                {isMounted ? (
-                    <AnimatePresence mode="wait">
-                        {viewMode === "board" ? (
-                            <motion.div
-                                key="board"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
-                                className="h-full w-full"
-                            >
-                                <ProjectKanban 
-                                    project={project} 
-                                    selectedTaskId={selectedTaskId}
-                                    onSelectTask={handleSelectTask}
-                                />
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="list"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
-                                className="h-full w-full"
-                            >
-                                <ProjectListView 
-                                    project={project} 
-                                    selectedTaskId={selectedTaskId}
-                                    onSelectTask={handleSelectTask}
-                                 />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                ) : (
-                    <div className="h-full w-full">
-                        <ProjectKanban 
-                            project={project} 
-                            selectedTaskId={selectedTaskId}
-                            onSelectTask={handleSelectTask}
-                        />
-                    </div>
-                )}
+                <AnimatePresence mode="wait">
+                    {viewMode === "board" ? (
+                        <motion.div
+                            key="board"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="h-full w-full"
+                        >
+                            <ProjectKanban 
+                                project={project} 
+                                selectedTaskId={selectedTaskId}
+                                onSelectTask={handleSelectTask}
+                            />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="list"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="h-full w-full"
+                        >
+                            <ProjectListView 
+                                project={project} 
+                                selectedTaskId={selectedTaskId}
+                                onSelectTask={handleSelectTask}
+                             />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Edit Dialog */}
@@ -200,9 +194,10 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                 </AlertDialogContent>
             </AlertDialog>
             {/* Task Expanded View */}
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {fullSelectedTask ? (
                     <TaskExpandedView
+                        key={fullSelectedTask.id}
                         task={fullSelectedTask}
                         onClose={() => handleSelectTask(null)}
                         onDelete={(id) => {
@@ -210,8 +205,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                             handleSelectTask(null);
                         }}
                     />
-                ) : selectedTaskId ? (
-                    <TaskExpandedSkeleton onClose={() => handleSelectTask(null)} />
                 ) : null}
             </AnimatePresence>
         </div>
