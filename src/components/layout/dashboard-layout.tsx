@@ -6,14 +6,16 @@ import { cn } from "@/lib/utils";
 
 function DashboardContent({ 
     children, 
-    noPadding 
+    noPadding,
+    hideHeader = false
 }: { 
     children: React.ReactNode; 
-    noPadding: boolean 
+    noPadding: boolean;
+    hideHeader?: boolean;
 }) {
     return (
         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <Header />
+            {!hideHeader && <Header />}
             <div className={cn(
                 "flex-1 overflow-y-auto scroll-smooth relative",
                 !noPadding && "p-4 md:p-8 space-y-8"
@@ -26,15 +28,17 @@ function DashboardContent({
 
 export function DashboardLayout({
     children,
-    noPadding = false
+    noPadding = false,
+    hideHeader = false
 }: {
     children: React.ReactNode;
     noPadding?: boolean;
+    hideHeader?: boolean;
 }) {
     return (
         <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
             <Sidebar />
-            <DashboardContent noPadding={noPadding}>
+            <DashboardContent noPadding={noPadding} hideHeader={hideHeader}>
                 {children}
             </DashboardContent>
         </div>

@@ -53,26 +53,23 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
                 isActive && "ring-2 ring-primary border-primary bg-primary/5 shadow-md"
             )}
             onClick={() => onSelect(task)}
-            role="button"
-            tabIndex={0}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     onSelect(task);
                 }
             }}
+            {...attributes}
+            {...listeners}
         >
 
 
             {/* Drag Handle + Priority */}
             <div className="flex items-start gap-2 mb-2">
-                <button
-                    {...attributes}
-                    {...listeners}
+                <div
                     className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing text-muted-foreground"
-                    onClick={(e) => e.stopPropagation()}
                 >
                     <GripVertical className="h-3.5 w-3.5" />
-                </button>
+                </div>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
                     <h4 className={cn(
                         "text-sm font-medium leading-snug line-clamp-2",

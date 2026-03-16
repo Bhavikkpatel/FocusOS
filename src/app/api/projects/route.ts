@@ -15,7 +15,8 @@ const DEFAULT_COLUMNS = [
     { name: "To Do", sortOrder: 0 },
     { name: "In Progress", sortOrder: 1 },
     { name: "Review", sortOrder: 2 },
-    { name: "Done", sortOrder: 3 },
+    { name: "On hold", sortOrder: 3 },
+    { name: "Done", sortOrder: 4 },
 ];
 
 // GET /api/projects — List all projects for the user

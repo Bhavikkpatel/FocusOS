@@ -27,7 +27,7 @@ export function Header() {
     const toggleSidebar = useSidebarStore((s) => s.toggle);
 
     return (
-        <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10 sticky top-0">
+        <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-50 sticky top-0">
             {/* Left: Mobile Toggle & Date */}
             <div className="flex items-center gap-4">
                 <button

@@ -285,7 +285,7 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ type: "spring", bounce: 0.1, duration: 0.3 }}
-            className="absolute inset-0 z-50 !m-0 flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800"
+            className="flex-1 flex flex-col bg-white dark:bg-slate-900 shadow-sm border-l border-slate-200 dark:border-slate-800 h-full"
         >
             <motion.div
                 className="flex h-full flex-col"

@@ -14,11 +14,9 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function ProjectListView({ 
     project, 
-    selectedTaskId, 
     onSelectTask 
 }: { 
     project: ProjectWithStats;
-    selectedTaskId: string | null;
     onSelectTask: (id: string | null) => void;
 }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
