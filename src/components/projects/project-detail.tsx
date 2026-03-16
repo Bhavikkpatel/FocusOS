@@ -7,10 +7,6 @@ import { ProjectKanban } from "./project-kanban";
 import { ProjectListView } from "./project-list-view";
 import { AnimatePresence, motion } from "framer-motion";
 import { ProjectDialog } from "./project-dialog";
-import { useSearchParams } from "next/navigation";
-import { useTask, useDeleteTask } from "@/hooks/use-tasks";
-import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
-import NProgress from "nprogress";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,17 +25,9 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     const { data: project, isLoading, error } = useProject(projectId);
     const deleteProject = useDeleteProject();
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<ViewMode>("board");
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    // Initialize from URL param once, then manage locally
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
-        searchParams.get("task")
-    );
-
-    const { data: fullSelectedTask } = useTask(selectedTaskId);
-    const { mutate: deleteTask } = useDeleteTask();
     const prefsLoaded = useRef(false);
 
     useEffect(() => {
@@ -51,20 +39,10 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         }
     }, [projectId]);
 
-    // Show/hide NProgress top bar when task is selected but not yet loaded
-    useEffect(() => {
-        if (selectedTaskId && !fullSelectedTask) {
-            NProgress.start();
-        } else {
-            NProgress.done();
-        }
-        return () => {
-            NProgress.done();
-        };
-    }, [selectedTaskId, fullSelectedTask]);
-
     const handleSelectTask = (id: string | null) => {
-        setSelectedTaskId(id);
+        if (id) {
+            router.push(`/tasks/${id}`);
+        }
     };
 
     const handleViewModeChange = (mode: ViewMode) => {
@@ -101,23 +79,13 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
     return (
         <div className="flex flex-col h-full relative">
-            <AnimatePresence>
-                {!selectedTaskId && (
-                    <motion.div
-                        initial={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <ProjectHeader
-                            project={project}
-                            viewMode={viewMode}
-                            onViewModeChange={handleViewModeChange}
-                            onEdit={() => setEditOpen(true)}
-                            onDelete={() => setDeleteOpen(true)}
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <ProjectHeader
+                project={project}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+                onEdit={() => setEditOpen(true)}
+                onDelete={() => setDeleteOpen(true)}
+            />
 
             <div className="flex-1 overflow-hidden p-6 relative">
                 <AnimatePresence mode="wait">
@@ -132,7 +100,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                         >
                             <ProjectKanban 
                                 project={project} 
-                                selectedTaskId={selectedTaskId}
                                 onSelectTask={handleSelectTask}
                             />
                         </motion.div>
@@ -147,7 +114,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                         >
                             <ProjectListView 
                                 project={project} 
-                                selectedTaskId={selectedTaskId}
                                 onSelectTask={handleSelectTask}
                              />
                         </motion.div>
@@ -193,20 +159,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            {/* Task Expanded View */}
-            <AnimatePresence mode="wait">
-                {fullSelectedTask ? (
-                    <TaskExpandedView
-                        key={fullSelectedTask.id}
-                        task={fullSelectedTask}
-                        onClose={() => handleSelectTask(null)}
-                        onDelete={(id) => {
-                            deleteTask(id);
-                            handleSelectTask(null);
-                        }}
-                    />
-                ) : null}
-            </AnimatePresence>
         </div>
     );
 }

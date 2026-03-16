@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     DndContext,
     DragOverlay,
@@ -17,6 +17,7 @@ import {
 import {
     SortableContext,
     verticalListSortingStrategy,
+    arrayMove,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
@@ -148,63 +149,114 @@ export function KanbanBoard({
     onSelectTask
 }: KanbanBoardProps) {
     const { mutate: updateTask } = useUpdateTask();
+    const [localTasks, setLocalTasks] = useState<TaskWithSessions[]>(tasks);
     const [activeTask, setActiveTask] = useState<TaskWithSessions | null>(null);
+
+    // Sync local state when tasks update
+    useEffect(() => {
+        setLocalTasks(tasks);
+    }, [tasks]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
         useSensor(KeyboardSensor)
     );
 
-    // Group tasks by status
+    // Group tasks by status using local state
     const tasksByStatus = useMemo(() => {
         const grouped: Record<string, TaskWithSessions[]> = {};
         for (const col of COLUMNS) {
             grouped[col.id] = [];
         }
-        for (const task of tasks) {
+        for (const task of localTasks) {
             if (grouped[task.status]) {
                 grouped[task.status].push(task);
             }
         }
         return grouped;
-    }, [tasks]);
+    }, [localTasks]);
 
     const handleDragStart = (event: DragStartEvent) => {
-        const task = tasks.find(t => t.id === event.active.id);
+        const task = localTasks.find(t => t.id === event.active.id);
         setActiveTask(task || null);
     };
 
-    const handleDragOver = (_event: DragOverEvent) => {
-        // No-op — we handle everything in onDragEnd
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        setActiveTask(null);
-
+    const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over) return;
 
-        const taskId = active.id as string;
-        const task = tasks.find(t => t.id === taskId);
-        if (!task) return;
+        const activeId = active.id as string;
+        const overId = over.id as string;
 
-        // Determine target column: could be a column ID or another task's ID
-        let targetStatus: string | null = null;
+        const activeTaskItem = localTasks.find(t => t.id === activeId);
+        if (!activeTaskItem) return;
 
-        // Check if dropped on a column directly
-        const isColumn = COLUMNS.some(c => c.id === over.id);
-        if (isColumn) {
-            targetStatus = over.id as string;
+        // Find which status column we're over
+        let overStatus: string | null = null;
+        const isOverColumn = COLUMNS.some(c => c.id === overId);
+        
+        if (isOverColumn) {
+            overStatus = overId;
         } else {
-            // Dropped on a task — find which column that task belongs to
-            const overTask = tasks.find(t => t.id === over.id);
-            if (overTask) {
-                targetStatus = overTask.status;
+            const overTaskItem = localTasks.find(t => t.id === overId);
+            if (overTaskItem) {
+                overStatus = overTaskItem.status;
             }
         }
 
-        if (targetStatus && targetStatus !== task.status) {
-            updateTask({ id: taskId, status: targetStatus as any });
+        if (!overStatus || overStatus === activeTaskItem.status) return;
+
+        setLocalTasks(prev => {
+            const activeIndex = prev.findIndex(t => t.id === activeId);
+            const updatedTask = { ...prev[activeIndex], status: overStatus as any };
+            
+            // Move item to new status in local state
+            const newTasks = [...prev];
+            newTasks[activeIndex] = updatedTask;
+            
+            // If dropping over a task, we could also handle reordering here, 
+            // but status change is the primary goal for now.
+            return newTasks;
+        });
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveTask(null);
+
+        if (!over) return;
+
+        const activeId = active.id as string;
+        const overId = over.id as string;
+
+        const taskInLocal = localTasks.find(t => t.id === activeId);
+        const originalTask = tasks.find(t => t.id === activeId);
+
+        if (!taskInLocal || !originalTask) return;
+
+        // Finalize reorder within same status if dropped over another task
+        if (taskInLocal.status === originalTask.status) {
+            const overTask = localTasks.find(t => t.id === overId);
+            if (overTask && overTask.status === taskInLocal.status) {
+                const oldIndex = localTasks.findIndex(t => t.id === activeId);
+                const newIndex = localTasks.findIndex(t => t.id === overId);
+                if (oldIndex !== newIndex) {
+                    setLocalTasks(prev => arrayMove(prev, oldIndex, newIndex));
+                }
+            }
+        }
+
+        // Finalize mutation
+        if (taskInLocal.status !== originalTask.status) {
+            updateTask(
+                { id: activeId, status: taskInLocal.status as any },
+                {
+                    onError: () => {
+                        // Revert on error
+                        setLocalTasks(tasks);
+                    }
+                }
+            );
         }
     };
 

@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-autofocus */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     DndContext,
     DragOverlay,
@@ -20,10 +20,9 @@ import {
 import { useRef } from "react";
 import {
     SortableContext,
-    useSortable,
     verticalListSortingStrategy,
+    arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { useUpdateTask, useCreateTask } from "@/hooks/use-tasks";
 import { useCreateColumn, useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -97,48 +96,15 @@ const DEFAULT_STYLE = {
 
 const getStatusFromColumnName = (name: string) => {
     const normalized = name.toLowerCase().trim();
-    if (normalized === "to do") return "TODO";
-    if (normalized === "in progress") return "IN_PROGRESS";
-    if (normalized === "review") return "READY_FOR_REVIEW";
-    if (normalized === "done") return "COMPLETED";
-    if (normalized === "on hold") return "ON_HOLD";
+    if (normalized.includes("todo") || normalized.includes("to do") || normalized.includes("backlog")) return "TODO";
+    if (normalized.includes("progress") || normalized.includes("doing")) return "IN_PROGRESS";
+    if (normalized.includes("review")) return "READY_FOR_REVIEW";
+    if (normalized.includes("done") || normalized.includes("completed") || normalized.includes("finished")) return "COMPLETED";
+    if (normalized.includes("hold")) return "ON_HOLD";
     return undefined;
 };
 
-// ─── Sortable Task Card ────────────────────────
-function SortableTaskCard({
-    task,
-    onSelect,
-}: {
-    task: any;
-    onSelect: (task: any) => void;
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: task.id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={cn(isDragging && "opacity-40")}
-            {...attributes}
-            {...listeners}
-        >
-            <KanbanCard task={task} onSelect={onSelect} />
-        </div>
-    );
-}
+// Sortable logic is now handled directly within KanbanCard
 
 // ─── Kanban Column ─────────────────────────────
 function KanbanColumn({
@@ -283,7 +249,7 @@ function KanbanColumn({
                     strategy={verticalListSortingStrategy}
                 >
                     {column.tasks.map((task: any) => (
-                        <SortableTaskCard
+                        <KanbanCard
                             key={task.id}
                             task={task}
                             onSelect={onSelectTask}
@@ -331,18 +297,22 @@ function KanbanColumn({
 // ─── Main Kanban Board ─────────────────────────
 export function ProjectKanban({
     project,
-    selectedTaskId,
     onSelectTask
 }: {
     project: ProjectData;
-    selectedTaskId: string | null;
     onSelectTask: (id: string | null) => void;
 }) {
     const { mutate: updateTask } = useUpdateTask();
     const createColumn = useCreateColumn();
     const queryClient = useQueryClient();
+    const [localColumns, setLocalColumns] = useState<ColumnWithTasks[]>(project.columns);
     const [activeTask, setActiveTask] = useState<any>(null);
     const [newColumnName, setNewColumnName] = useState("");
+
+    // Sync local state when project updates (e.g. after mutation)
+    useEffect(() => {
+        setLocalColumns(project.columns);
+    }, [project.columns]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -350,10 +320,10 @@ export function ProjectKanban({
         useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
     );
 
-    // Build a flat list of all tasks
+    // Build a flat list of all tasks from local state
     const allTasks = useMemo(
-        () => project.columns.flatMap((c) => c.tasks),
-        [project.columns]
+        () => localColumns.flatMap((c) => c.tasks),
+        [localColumns]
     );
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -369,10 +339,10 @@ export function ProjectKanban({
         const overId = over.id as string;
 
         // Find the columns
-        const activeColumn = project.columns.find((col) =>
+        const activeColumn = localColumns.find((col) =>
             col.tasks.some((t: any) => t.id === activeId)
         );
-        const overColumn = project.columns.find((col) =>
+        const overColumn = localColumns.find((col) =>
             col.id === overId || col.tasks.some((t: any) => t.id === overId)
         );
 
@@ -380,9 +350,32 @@ export function ProjectKanban({
             return;
         }
 
-        // We don't necessarily need to update the state here IF we want to wait for the drop
-        // But for a "stickier" feel, we could optimistically move it in the local state or signal dnd-kit
-        // For now, let's keep it simple and ensure DragEnd handles the final move.
+        setLocalColumns((prev) => {
+            const activeColIndex = prev.findIndex((col) => col.id === activeColumn.id);
+            const overColIndex = prev.findIndex((col) => col.id === overColumn.id);
+
+            const activeTasks = [...prev[activeColIndex].tasks];
+            const overTasks = [...prev[overColIndex].tasks];
+
+            const activeTaskIndex = activeTasks.findIndex((t) => t.id === activeId);
+            const task = activeTasks[activeTaskIndex];
+
+            if (!task) return prev;
+
+            // Remove from active column
+            activeTasks.splice(activeTaskIndex, 1);
+
+            // Add to over column
+            const overTaskIndex = overTasks.findIndex((t) => t.id === overId);
+            const newIndex = overTaskIndex >= 0 ? overTaskIndex : overTasks.length;
+            overTasks.splice(newIndex, 0, { ...task, columnId: overColumn.id });
+
+            const newCols = [...prev];
+            newCols[activeColIndex] = { ...prev[activeColIndex], tasks: activeTasks };
+            newCols[overColIndex] = { ...prev[overColIndex], tasks: overTasks };
+
+            return newCols;
+        });
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -391,44 +384,59 @@ export function ProjectKanban({
 
         if (!over) return;
 
-        const taskId = active.id as string;
-        const task = allTasks.find((t) => t.id === taskId);
-        if (!task) return;
+        const activeId = active.id as string;
+        const overId = over.id as string;
 
-        // Determine target column and status
-        let targetColumnId: string | null = null;
-        let newStatus: any = undefined;
+        const activeColumn = localColumns.find((col) =>
+            col.tasks.some((t: any) => t.id === activeId)
+        );
+        const overColumn = localColumns.find((col) =>
+            col.id === overId || col.tasks.some((t: any) => t.id === overId)
+        );
 
-        // Check if dropped on a column directly
-        const targetColumn = project.columns.find((c) => c.id === over.id);
-        if (targetColumn) {
-            targetColumnId = targetColumn.id;
-            newStatus = getStatusFromColumnName(targetColumn.name);
-        } else {
-            // Dropped on another task — find its column
-            const overTask = allTasks.find((t) => t.id === over.id);
-            if (overTask) {
-                targetColumnId = overTask.columnId;
-                const col = project.columns.find(c => c.id === overTask.columnId);
-                if (col) {
-                    newStatus = getStatusFromColumnName(col.name);
-                }
+        if (!activeColumn || !overColumn) return;
+
+        // If in same column and moved position
+        if (activeColumn.id === overColumn.id) {
+            const oldIndex = activeColumn.tasks.findIndex((t: any) => t.id === activeId);
+            const newIndex = activeColumn.tasks.findIndex((t: any) => t.id === overId);
+
+            if (oldIndex !== newIndex) {
+                const newTasks = arrayMove(activeColumn.tasks, oldIndex, newIndex);
+                setLocalColumns((prev) =>
+                    prev.map((col) =>
+                        col.id === activeColumn.id ? { ...col, tasks: newTasks } : col
+                    )
+                );
             }
         }
 
-        if (targetColumnId && (targetColumnId !== task.columnId || newStatus !== task.status)) {
+        // Finalize the update on the server
+        const task = allTasks.find(t => t.id === activeId);
+        if (!task) return;
+
+        const targetColumnId = overColumn.id;
+        const newStatus = getStatusFromColumnName(overColumn.name);
+
+        const originalTask = project.columns
+            .flatMap(c => c.tasks)
+            .find(t => t.id === activeId);
+
+        if (targetColumnId && originalTask && (targetColumnId !== originalTask.columnId || newStatus !== originalTask.status)) {
             // Prevent completion if there are unfinished subtasks
             if (newStatus === "COMPLETED" && task.subtasks && task.subtasks.length > 0) {
                 const hasUnfinishedSubtasks = task.subtasks.some((st: any) => !st.isCompleted);
                 if (hasUnfinishedSubtasks) {
                     toast.error("Finish all subtasks before moving to Done");
+                    // Revert local state if validation fails
+                    setLocalColumns(project.columns);
                     return;
                 }
             }
 
             updateTask(
                 {
-                    id: taskId,
+                    id: activeId,
                     columnId: targetColumnId,
                     status: newStatus
                 },
@@ -438,6 +446,10 @@ export function ProjectKanban({
                             queryKey: ["project", project.id],
                         });
                     },
+                    onError: () => {
+                        // Revert on error
+                        setLocalColumns(project.columns);
+                    }
                 }
             );
         }
@@ -468,7 +480,7 @@ export function ProjectKanban({
                 onDragEnd={handleDragEnd}
             >
                 <div className="flex h-full gap-6 overflow-x-auto pb-6 px-2 snap-x snap-mandatory hide-scrollbar">
-                    {project.columns.map((column) => (
+                    {localColumns.map((column) => (
                         <KanbanColumn
                             key={column.id}
                             column={column}

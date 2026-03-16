@@ -123,7 +123,35 @@ export async function PATCH(
                     updateData.project = project.name;
                     if (!validatedData.columnId && project.columns.length > 0) {
                         updateData.columnId = project.columns[0].id;
+                        // Also update status for first column
+                        const firstColName = project.columns[0].name.toLowerCase();
+                        if (firstColName.includes("done") || firstColName.includes("completed")) {
+                            updateData.status = "COMPLETED";
+                        } else if (firstColName.includes("progress") || firstColName.includes("doing")) {
+                            updateData.status = "IN_PROGRESS";
+                        } else {
+                            updateData.status = "TODO";
+                        }
                     }
+                }
+            }
+        }
+
+        // Derive status from columnId if provided and status isn't explicitly sent
+        if (validatedData.columnId && !validatedData.status) {
+            const column = await prisma.column.findUnique({
+                where: { id: validatedData.columnId }
+            });
+            if (column) {
+                const colName = column.name.toLowerCase();
+                if (colName.includes("done") || colName.includes("completed")) {
+                    updateData.status = "COMPLETED";
+                } else if (colName.includes("progress") || colName.includes("doing") || colName.includes("review")) {
+                    updateData.status = colName.includes("review") ? "READY_FOR_REVIEW" : "IN_PROGRESS";
+                } else if (colName.includes("hold")) {
+                    updateData.status = "ON_HOLD";
+                } else if (colName.includes("todo") || colName.includes("to do") || colName.includes("backlog")) {
+                    updateData.status = "TODO";
                 }
             }
         }

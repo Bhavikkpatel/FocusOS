@@ -146,7 +146,7 @@ export function Sidebar() {
 
             {/* Mobile: backdrop + slide-in drawer */}
             {isOpen && (
-                <div className="md:hidden fixed inset-0 z-50 flex">
+                <div className="md:hidden fixed inset-0 z-[100] flex">
                     {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
