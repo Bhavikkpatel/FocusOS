@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useUpdateTask } from "@/hooks/use-tasks";
 import { toast } from "sonner";
+import { VictoryAnimation } from "./victory-animation";
 
 export function FocusMode() {
     const {
@@ -23,7 +24,9 @@ export function FocusMode() {
         isRunning,
         pause,
         resume,
-        sessionType
+        sessionType,
+        isVictory,
+        updateTimerState,
     } = useTimerStore();
 
     const { data } = useTasks({});
@@ -82,6 +85,17 @@ export function FocusMode() {
         }, 1000);
         return () => clearTimeout(timer);
     }, [notes, currentTaskId, currentTask?.notes, updateTask]);
+
+    // Handle Victory Transition
+    useEffect(() => {
+        if (isVictory) {
+            const timer = setTimeout(() => {
+                setFocusMode(false);
+                updateTimerState({ isVictory: false, isCompletionDialogOpen: true });
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isVictory, setFocusMode, updateTimerState]);
 
     const formatTime = (seconds: number) => {
         const remaining = Math.max(0, total - seconds);
@@ -265,6 +279,7 @@ export function FocusMode() {
                     </div>
                 </div>
             </motion.div>
+            {isVictory && <VictoryAnimation />}
         </AnimatePresence>
     );
 }
