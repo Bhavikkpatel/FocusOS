@@ -43,3 +43,6 @@ prisma/*.db-journal
 .idea/
 *.swp
 *.swo
+
+# Uploads
+/public/uploads
