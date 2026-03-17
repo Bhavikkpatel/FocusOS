@@ -49,6 +49,7 @@ export async function GET(
                 pomodoroSessions: true,
                 category: true,
                 tags: true,
+                attachments: true,
                 subtasks: {
                     orderBy: { sortOrder: "asc" },
                 },

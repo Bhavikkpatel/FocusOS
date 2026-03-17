@@ -7,8 +7,9 @@ import {
     Play, Pause, RotateCcw, Target, Timer, Clock, Activity,
     Pencil, Trash2, X, Archive, Plus, Maximize2,
     Star, AlertCircle, StickyNote, History as HistoryIcon, ListChecks, CheckCircle, ChevronRight, CalendarIcon, Minus, BarChart2, Repeat,
-    Paperclip, Link as LinkIcon, Download, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Loader2
+    Paperclip, Link as LinkIcon, Download, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Loader2, Eye
 } from "lucide-react";
+import { AttachmentPreview } from "@/components/tasks/attachment-preview";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
 import { useSubtasks, useCreateSubtask, useUpdateSubtask, useDeleteSubtask } from "@/hooks/use-subtasks";
 import { useAttachments, useUploadFile, useAddAttachment, useDeleteAttachment } from "@/hooks/use-attachments";
@@ -92,7 +93,7 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
             else resume();
         } else {
             const duration = task.pomodoroDuration || (currentPreset?.focusDuration ? currentPreset.focusDuration / 60 : 25);
-            start(duration, "FOCUS", task.id);
+            start(duration, "FOCUS", task.id, task.estimatedPomodoros);
             if (task.status === "TODO") {
                 updateTask({ id: task.id, status: "IN_PROGRESS" });
             }
@@ -113,6 +114,10 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
     const uploadFile = useUploadFile(task.id);
     const addLink = useAddAttachment(task.id);
     const deleteAttachment = useDeleteAttachment(task.id);
+
+    // Preview state
+    const [previewAttachment, setPreviewAttachment] = useState<any>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [linkName, setLinkName] = useState("");
     const [linkUrl, setLinkUrl] = useState("");
@@ -794,7 +799,13 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                                                                 <span className="text-[10px] text-muted-foreground font-medium">
                                                                     {attachment.type === "FILE"
                                                                         ? `${(attachment.size! / 1024 / 1024).toFixed(2)} MB`
-                                                                        : new URL(attachment.url).hostname}
+                                                                        : (() => {
+                                                                            try {
+                                                                                return new URL(attachment.url).hostname;
+                                                                            } catch (e) {
+                                                                                return 'link';
+                                                                            }
+                                                                        })()}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -811,6 +822,19 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                                                                         <ExternalLink className="h-3.5 w-3.5" />
                                                                     </Button>
                                                                 </a>
+                                                            )}
+                                                            {attachment.type === "FILE" && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7 rounded-lg"
+                                                                    onClick={() => {
+                                                                        setPreviewAttachment(attachment);
+                                                                        setIsPreviewOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Eye className="h-3.5 w-3.5" />
+                                                                </Button>
                                                             )}
                                                             <Button
                                                                 variant="ghost"
@@ -1213,6 +1237,12 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <AttachmentPreview
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                attachment={previewAttachment}
+            />
         </motion.div>
     );
 }

@@ -28,6 +28,9 @@ export interface TimerState {
     lastInterruptionTime: number;
     isFocusModeOpen: boolean;
     isFocusPromptOpen: boolean;
+    isVictory: boolean;
+    isCompletionDialogOpen: boolean;
+    estimatedPomodoros: number | null;
     lastUpdated: number;         // timestamp
     sessionToRate: string | null;
 
@@ -43,7 +46,7 @@ export interface TimerState {
 
     // Actions
     initWorker: () => void;
-    start: (duration: number, type: SessionType, taskId?: string) => void;
+    start: (duration: number, type: SessionType, taskId?: string, estimatedPomodoros?: number) => void;
     pause: () => void;
     resume: () => void;
     reset: () => void;
@@ -76,6 +79,9 @@ export const useTimerStore = create<TimerState>()(
                 lastInterruptionTime: 0,
                 isFocusModeOpen: false,
                 isFocusPromptOpen: false,
+                isVictory: false,
+                isCompletionDialogOpen: false,
+                estimatedPomodoros: null,
                 isConfirmingNewSession: null,
                 sessionToRate: null,
                 currentPreset: null,
@@ -139,7 +145,7 @@ export const useTimerStore = create<TimerState>()(
                     }
                 },
 
-                start: (duration, type, taskId) => {
+                start: (duration, type, taskId, estimatedPomodoros) => {
                     const state = get();
                     const { worker, isRunning, currentTaskId } = state;
 
@@ -172,8 +178,11 @@ export const useTimerStore = create<TimerState>()(
                         total: totalSeconds,
                         sessionType: type,
                         currentTaskId: taskId || null,
+                        estimatedPomodoros: estimatedPomodoros !== undefined ? estimatedPomodoros : state.estimatedPomodoros,
                         interruptions: 0,
                         lastInterruptionTime: 0,
+                        isVictory: false,
+                        isCompletionDialogOpen: false,
                         // Feature: Centralized focus prompt logic
                         isFocusPromptOpen: type === "FOCUS" && !state.isFocusModeOpen
                     });
@@ -245,7 +254,7 @@ export const useTimerStore = create<TimerState>()(
 
                 completeSession: () => {
                     const state = get();
-                    const { sessionType, sessionsCompleted, currentPreset, elapsed, interruptions, currentTaskId } = state;
+                    const { sessionType, sessionsCompleted, currentPreset, elapsed, interruptions, currentTaskId, estimatedPomodoros } = state;
 
                     set({ isRunning: false, isPaused: false });
 
@@ -315,6 +324,13 @@ export const useTimerStore = create<TimerState>()(
                             }, 1000);
                         }
                     }
+
+                    // Victory detection: config sessions over AND break is over
+                    if ((sessionType === "SHORT_BREAK" || sessionType === "LONG_BREAK") &&
+                        estimatedPomodoros &&
+                        sessionsCompleted >= estimatedPomodoros) {
+                        set({ isVictory: true });
+                    }
                 },
 
                 addInterruption: () => {
@@ -362,6 +378,7 @@ export const useTimerStore = create<TimerState>()(
                     total: state.total,
                     sessionType: state.sessionType,
                     currentTaskId: state.currentTaskId,
+                    estimatedPomodoros: state.estimatedPomodoros,
                     lastUpdated: state.lastUpdated,
                 }),
             }

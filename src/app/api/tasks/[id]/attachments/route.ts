@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const addAttachmentSchema = z.object({
     name: z.string().min(1),
-    url: z.string().url(),
+    url: z.string().min(1),
     type: z.enum(["FILE", "LINK"]),
     size: z.number().optional(),
     mimeType: z.string().optional(),

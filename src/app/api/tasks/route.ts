@@ -96,6 +96,7 @@ export async function GET(req: Request) {
                     pomodoroSessions: true,
                     category: true,
                     tags: true,
+                    attachments: true,
                     subtasks: {
                         orderBy: { sortOrder: "asc" },
                     },

@@ -9,6 +9,7 @@ import { FloatingTimer } from "@/components/timer/floating-timer";
 import { FocusMode } from "@/components/timer/focus-mode";
 import { FocusPromptDialog } from "@/components/timer/focus-prompt-dialog";
 import { ThemeProvider } from "next-themes";
+import { CompletionDialog } from "@/components/timer/completion-dialog";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const [queryClient] = useState(
@@ -33,6 +34,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <FloatingTimer />
                     <FocusMode />
                     <FocusPromptDialog />
+                    <CompletionDialog />
                 </ThemeProvider>
             </QueryClientProvider>
         </SessionProvider>

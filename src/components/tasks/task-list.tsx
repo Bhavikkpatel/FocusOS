@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { CheckCircle, Flame, PlusSquare, LayoutGrid, List, ArrowDownUp, ChevronDown, ChevronRight, Folder, Kanban, Archive } from "lucide-react";
+import { Flame, PlusSquare, LayoutGrid, List, ArrowDownUp, ChevronDown, ChevronRight, Folder } from "lucide-react";
 import { Task } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useTasks, TaskWithSessions } from "@/hooks/use-tasks";
@@ -16,18 +16,21 @@ import { KanbanBoard } from "./kanban-board";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 type ViewMode = "list" | "kanban";
 type GroupBy = "none" | "project" | "status";
 
 export function TaskList() {
     const router = useRouter();
-    const [filter, setFilter] = useState<"ALL" | "COMPLETED" | "ARCHIVED">("ALL");
+    const [activeTab, setActiveTab] = useState<string>("active");
     const [viewMode, setViewMode] = useState<ViewMode>("list");
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
     const [groupBy, setGroupBy] = useState<GroupBy>("none");
     const [tagFilter, setTagFilter] = useState<string>("ALL");
     const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [isFiltersVisible, setIsFiltersVisible] = useState(false);
     // Track whether preferences have been loaded from localStorage
     const prefsLoaded = useRef(false);
 
@@ -46,7 +49,16 @@ export function TaskList() {
         if (savedGroup === "none" || savedGroup === "project" || savedGroup === "status") {
             setGroupBy(savedGroup as GroupBy);
         }
+        const savedTab = localStorage.getItem("focusos_tasks_tab");
+        if (savedTab) {
+            setActiveTab(savedTab);
+        }
     }, []); // Only run once on mount
+
+    const handleTabChange = (val: string) => {
+        setActiveTab(val);
+        localStorage.setItem("focusos_tasks_tab", val);
+    };
 
     const handleViewModeChange = (mode: ViewMode) => {
         setViewMode(mode);
@@ -79,7 +91,7 @@ export function TaskList() {
         hasNextPage,
         isFetchingNextPage
     } = useTasks({
-        status: filter === "ALL" ? "ALL" : filter
+        status: activeTab === "active" ? "ALL" : (activeTab === "completed" ? "COMPLETED" : "ARCHIVED")
     });
 
     const { data: tags = [] } = useTags();
@@ -107,7 +119,6 @@ export function TaskList() {
     const activeTasks = allTasks.filter(t => t.status !== "COMPLETED" && t.status !== "ARCHIVED");
     const completedTasks = allTasks.filter(t => t.status === "COMPLETED");
     const archivedTasks = allTasks.filter(t => t.status === "ARCHIVED");
-    const highPriorityCount = activeTasks.filter(t => t.priority === "HIGH" || t.priority === "URGENT").length;
 
 
     // For kanban: show all non-archived tasks (including completed)
@@ -133,7 +144,7 @@ export function TaskList() {
 
     // Sorting logic
     const sortedTasks = useMemo(() => {
-        const tasks = filter === "ALL" ? filteredActiveTasks : (filter === "COMPLETED" ? filteredCompletedTasks : filteredArchivedTasks);
+        const tasks = activeTab === "active" ? filteredActiveTasks : (activeTab === "completed" ? filteredCompletedTasks : filteredArchivedTasks);
         return [...tasks].sort((a, b) => {
             if (sortBy === "dueDate") {
                 if (a.dueDate && b.dueDate) {
@@ -151,7 +162,7 @@ export function TaskList() {
             // Fallback to createdAt or if sortBy === 'createdAt'
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
-    }, [filter, filteredActiveTasks, filteredCompletedTasks, filteredArchivedTasks, sortBy]);
+    }, [activeTab, filteredActiveTasks, filteredCompletedTasks, filteredArchivedTasks, sortBy]);
 
     // Grouping Logic
     const groupedTasks = useMemo(() => {
@@ -190,288 +201,376 @@ export function TaskList() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="space-y-6">
-                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                        <div className="space-y-1">
-                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Tasks</h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-                                Stay focused and organized. You have {activeTasks.length} tasks pending.
-                            </p>
-                        </div>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        <List className="h-8 w-8 text-primary" />
+                        Tasks
+                    </h2>
+                    <p className="text-muted-foreground font-medium">
+                        {activeTab === "active" ? `You have ${activeTasks.length} tasks to focus on.` : 
+                         activeTab === "completed" ? `Great job! You've finished ${completedTasks.length} tasks.` : 
+                         `Viewing ${archivedTasks.length} archived items.`}
+                    </p>
+                </div>
+                <Button 
+                    onClick={handleCreate}
+                    className="bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 rounded-xl px-6"
+                >
+                    <PlusSquare className="mr-2 h-5 w-5" />
+                    New Task
+                </Button>
+            </div>
 
-                        {/* Quick Stats */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div
-                                tabIndex={0}
-                                role="button"
-                                className={cn(
-                                    "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-primary/30",
-                                    filter === "COMPLETED" ? "ring-2 ring-primary bg-primary/5 border-primary/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
-                                )}
-                                onClick={() => setFilter(filter === "COMPLETED" ? "ALL" : "COMPLETED")}
-                            >
-                                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
-                                    <CheckCircle className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Done</p>
-                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                        {completedTasks.length}
-                                    </p>
-                                </div>
-                            </div>
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-1">
+                    <TabsList className="bg-transparent h-auto p-0 md:gap-8 gap-4 justify-start">
+                        <TabsTrigger 
+                            value="active" 
+                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
+                        >
+                            Active
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
+                                {activeTasks.length}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="completed"
+                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
+                        >
+                            Completed
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
+                                {completedTasks.length}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="archived"
+                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
+                        >
+                            Archived
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
+                                {archivedTasks.length}
+                            </span>
+                        </TabsTrigger>
+                    </TabsList>
 
-                            <div
-                                tabIndex={0}
-                                role="button"
-                                className={cn(
-                                    "flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 cursor-pointer transition-all hover:border-amber-500/30",
-                                    filter === "ARCHIVED" ? "ring-2 ring-amber-500 bg-amber-500/5 border-amber-500/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/80"
-                                )}
-                                onClick={() => setFilter(filter === "ARCHIVED" ? "ALL" : "ARCHIVED")}
-                            >
-                                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                                    <Archive className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Archived</p>
-                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                        {archivedTasks.length}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-                                    <Flame className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Urgent</p>
-                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-none">
-                                        {highPriorityCount}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filters Row */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/50">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Select value={tagFilter} onValueChange={setTagFilter}>
-                                <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                    <SelectValue placeholder="All Tags" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="ALL">All Tags</SelectItem>
-                                    {tags.map((t) => (
-                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                                <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                    <SelectValue placeholder="Difficulty" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="ALL">Difficulty</SelectItem>
-                                    <SelectItem value="EASY">Easy</SelectItem>
-                                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                                    <SelectItem value="HARD">Hard</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={groupBy} onValueChange={handleGroupChange}>
-                                <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                    <div className="flex items-center gap-1.5">
-                                        <Kanban className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <SelectValue placeholder="Group" />
-                                    </div>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="none">Group: None</SelectItem>
-                                    <SelectItem value="project">Group: Project</SelectItem>
-                                    <SelectItem value="status">Group: Status</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            {viewMode === "list" && (
-                                <Select value={sortBy} onValueChange={handleSortChange}>
-                                    <SelectTrigger className="h-9 w-[120px] bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                        <div className="flex items-center gap-1.5">
-                                            <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <SelectValue placeholder="Sort" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        <SelectItem value="createdAt">Sort: Created</SelectItem>
-                                        <SelectItem value="priority">Sort: Priority</SelectItem>
-                                        <SelectItem value="dueDate">Sort: Due Date</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-
-                        <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 p-1 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/50">
                             <button
                                 onClick={() => handleViewModeChange("list")}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-                                    viewMode === "list"
-                                        ? "bg-primary text-primary-foreground shadow-md scale-105"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                    "p-1.5 rounded-lg transition-all",
+                                    viewMode === "list" ? "bg-white dark:bg-slate-900 shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
                                 )}
+                                title="List View"
                             >
-                                <List className="h-3.5 w-3.5" />
-                                List
+                                <List className="h-4 w-4" />
                             </button>
                             <button
                                 onClick={() => handleViewModeChange("kanban")}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-                                    viewMode === "kanban"
-                                        ? "bg-primary text-primary-foreground shadow-md scale-105"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                    "p-1.5 rounded-lg transition-all",
+                                    viewMode === "kanban" ? "bg-white dark:bg-slate-900 shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
                                 )}
+                                title="Board View"
                             >
-                                <LayoutGrid className="h-3.5 w-3.5" />
-                                Board
+                                <LayoutGrid className="h-4 w-4" />
                             </button>
                         </div>
-                </div>
-            </div>
-
-            {/* View Content */}
-            {viewMode === "kanban" ? (
-                <KanbanBoard
-                    tasks={kanbanTasks}
-                    onSelectTask={handleSelectTask}
-                />
-            ) : (
-                <>
-                    {/* Task List Container */}
-                    <div className="space-y-4">
-                        {groupBy === "none" ? (
-                            sortedTasks.map((task) => (
-                                <TaskItem
-                                    key={task.id}
-                                    task={task}
-                                    onEdit={handleEdit}
-                                    onSelect={(t) => handleSelectTask(t.id)}
-                                />
-                            ))
-                        ) : (
-                            <div className="space-y-6">
-                                {groupedTasks?.map((group) => {
-                                    const isExpanded = expandedGroups[group.id] !== false;
-                                    return (
-                                        <div key={group.id} className="space-y-3">
-                                            <button
-                                                onClick={() => toggleGroup(group.id)}
-                                                className="flex items-center gap-2 group w-full text-left"
-                                            >
-                                                <div className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-                                                    {isExpanded ? (
-                                                        <ChevronDown className="h-3 w-3" />
-                                                    ) : (
-                                                        <ChevronRight className="h-3 w-3" />
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {groupBy === "project" && <Folder className="h-3.5 w-3.5 text-primary/70" />}
-                                                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                                        {group.label}
-                                                    </h3>
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                                        {group.tasks.length}
-                                                    </span>
-                                                </div>
-                                                <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800 ml-2" />
-                                            </button>
-
-                                            <AnimatePresence initial={false}>
-                                                {isExpanded && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: "auto", opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        <div className="space-y-3 pt-1">
-                                                            {group.tasks.map((task) => (
-                                                                <TaskItem
-                                                                    key={task.id}
-                                                                    task={task}
-                                                                    onEdit={handleEdit}
-                                                                    onSelect={(t) => handleSelectTask(t.id)}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {hasNextPage && (
-                            <div className="flex justify-center py-4">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => fetchNextPage()}
-                                    disabled={isFetchingNextPage}
-                                >
-                                    {isFetchingNextPage ? "Loading more..." : "Load More"}
-                                </Button>
-                            </div>
-                        )}
-
-                        <div
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    handleCreate();
-                                }
-                            }}
-                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center opacity-75 hover:opacity-100 transition-opacity cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
-                            onClick={handleCreate}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setIsFiltersVisible(!isFiltersVisible)}
+                            className={cn(
+                                "h-9 rounded-xl border-slate-200 dark:border-slate-700 font-bold text-xs uppercase tracking-widest",
+                                (tagFilter !== "ALL" || difficultyFilter !== "ALL" || groupBy !== "none") && "border-primary text-primary"
+                            )}
                         >
-                            <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                                <PlusSquare className="h-6 w-6 text-slate-400" />
-                            </div>
-                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Create new task</h3>
-                            <p className="text-xs text-slate-500 mt-1">Add another item to your list</p>
-                        </div>
+                            <ArrowDownUp className="mr-2 h-3.5 w-3.5" />
+                            Filters
+                        </Button>
+                    </div>
+                </div>
 
-                        {/* Completed Tasks Section */}
-                        {completedTasks.length > 0 && filter === "ALL" && (
-                            <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Completed</h3>
-                                <div className="space-y-4 opacity-60">
-                                    {completedTasks.map((task) => (
-                                        <TaskItem
-                                            key={task.id}
-                                            task={task}
-                                            onEdit={handleEdit}
-                                            onSelect={(t) => handleSelectTask(t.id)}
-                                        />
-                                    ))}
+                <AnimatePresence>
+                    {isFiltersVisible && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Tags</label>
+                                    <Select value={tagFilter} onValueChange={setTagFilter}>
+                                        <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                            <SelectValue placeholder="All Tags" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="ALL">All Tags</SelectItem>
+                                            {tags.map((t) => (
+                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Difficulty</label>
+                                    <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                                        <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                            <SelectValue placeholder="All Difficulties" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="ALL">All Difficulties</SelectItem>
+                                            <SelectItem value="EASY">Easy</SelectItem>
+                                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                                            <SelectItem value="HARD">Hard</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Group By</label>
+                                    <Select value={groupBy} onValueChange={handleGroupChange}>
+                                        <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                            <SelectValue placeholder="Group" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="project">Project</SelectItem>
+                                            <SelectItem value="status">Status</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Sort By</label>
+                                    <Select value={sortBy} onValueChange={handleSortChange}>
+                                        <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                            <SelectValue placeholder="Sort" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="createdAt">Created Date</SelectItem>
+                                            <SelectItem value="priority">Priority</SelectItem>
+                                            <SelectItem value="dueDate">Due Date</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </>
-            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <TabsContent value="active" className="mt-0 outline-none">
+                    {viewMode === "kanban" ? (
+                        <KanbanBoard tasks={kanbanTasks} onSelectTask={handleSelectTask} />
+                    ) : (
+                        <TaskListView 
+                            groupBy={groupBy} 
+                            sortedTasks={sortedTasks} 
+                            groupedTasks={groupedTasks}
+                            expandedGroups={expandedGroups}
+                            toggleGroup={toggleGroup}
+                            handleEdit={handleEdit}
+                            handleSelectTask={handleSelectTask}
+                            handleCreate={handleCreate}
+                            hasNextPage={hasNextPage}
+                            isFetchingNextPage={isFetchingNextPage}
+                            fetchNextPage={fetchNextPage}
+                        />
+                    )}
+                </TabsContent>
+
+                <TabsContent value="completed" className="mt-0 outline-none">
+                    <TaskListView 
+                        groupBy={groupBy} 
+                        sortedTasks={sortedTasks} 
+                        groupedTasks={groupedTasks}
+                        expandedGroups={expandedGroups}
+                        toggleGroup={toggleGroup}
+                        handleEdit={handleEdit}
+                        handleSelectTask={handleSelectTask}
+                        handleCreate={handleCreate}
+                        hasNextPage={hasNextPage}
+                        isFetchingNextPage={isFetchingNextPage}
+                        fetchNextPage={fetchNextPage}
+                        isCompletedView
+                    />
+                </TabsContent>
+
+                <TabsContent value="archived" className="mt-0 outline-none">
+                    <TaskListView 
+                        groupBy={groupBy} 
+                        sortedTasks={sortedTasks} 
+                        groupedTasks={groupedTasks}
+                        expandedGroups={expandedGroups}
+                        toggleGroup={toggleGroup}
+                        handleEdit={handleEdit}
+                        handleSelectTask={handleSelectTask}
+                        handleCreate={handleCreate}
+                        hasNextPage={hasNextPage}
+                        isFetchingNextPage={isFetchingNextPage}
+                        fetchNextPage={fetchNextPage}
+                    />
+                </TabsContent>
+            </Tabs>
+
             <TaskDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 taskToEdit={taskToEdit}
             />
+        </div>
+    );
+}
+
+interface TaskListViewProps {
+    groupBy: GroupBy;
+    sortedTasks: TaskWithSessions[];
+    groupedTasks: { id: string; label: string; tasks: TaskWithSessions[] }[] | null;
+    expandedGroups: Record<string, boolean>;
+    toggleGroup: (id: string) => void;
+    handleEdit: (task: Task) => void;
+    handleSelectTask: (id: string | null) => void;
+    handleCreate: () => void;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => void;
+    isCompletedView?: boolean;
+}
+
+function TaskListView({
+    groupBy,
+    sortedTasks,
+    groupedTasks,
+    expandedGroups,
+    toggleGroup,
+    handleEdit,
+    handleSelectTask,
+    handleCreate,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isCompletedView = false
+}: TaskListViewProps) {
+    return (
+        <div className="space-y-4">
+            {groupBy === "none" ? (
+                <div className={cn("space-y-3", isCompletedView && "opacity-75")}>
+                    {sortedTasks.map((task) => (
+                        <TaskItem
+                            key={task.id}
+                            task={task}
+                            onEdit={handleEdit}
+                            onSelect={(t) => handleSelectTask(t.id)}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {groupedTasks?.map((group) => {
+                        const isExpanded = expandedGroups[group.id] !== false;
+                        return (
+                            <div key={group.id} className="space-y-3">
+                                <button
+                                    onClick={() => toggleGroup(group.id)}
+                                    className="flex items-center gap-2 group w-full text-left"
+                                >
+                                    <div className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                        {isExpanded ? (
+                                            <ChevronDown className="h-3 w-3" />
+                                        ) : (
+                                            <ChevronRight className="h-3 w-3" />
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {groupBy === "project" && <Folder className="h-3.5 w-3.5 text-primary/70" />}
+                                        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                            {group.label}
+                                        </h3>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                            {group.tasks.length}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800 ml-2" />
+                                </button>
+
+                                <AnimatePresence initial={false}>
+                                    {isExpanded && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className={cn("space-y-3 pt-1", isCompletedView && "opacity-75")}>
+                                                {group.tasks.map((task) => (
+                                                    <TaskItem
+                                                        key={task.id}
+                                                        task={task}
+                                                        onEdit={handleEdit}
+                                                        onSelect={(t) => handleSelectTask(t.id)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {sortedTasks.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-slate-50/50 dark:bg-slate-900/20 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                    <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-full mb-4">
+                        <Flame className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <h3 className="font-bold text-lg">No tasks found</h3>
+                    <p className="text-muted-foreground text-sm max-w-[240px] mt-1 italic">
+                        {isCompletedView ? "You haven't completed any tasks with these filters yet." : "Time to add some goals and start your focus session!"}
+                    </p>
+                    {!isCompletedView && (
+                        <Button onClick={handleCreate} variant="outline" className="mt-6 rounded-xl font-bold border-2">
+                            <PlusSquare className="mr-2 h-4 w-4" />
+                            Create Task
+                        </Button>
+                    )}
+                </div>
+            )}
+
+            {hasNextPage && (
+                <div className="flex justify-center py-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        className="rounded-xl font-bold hover:bg-primary hover:text-white transition-all"
+                    >
+                        {isFetchingNextPage ? "Loading more..." : "Load More"}
+                    </Button>
+                </div>
+            )}
+
+            {!isCompletedView && sortedTasks.length > 0 && (
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            handleCreate();
+                        }
+                    }}
+                    className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-70 hover:opacity-100 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 group mt-4"
+                    onClick={handleCreate}
+                >
+                    <div className="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                        <PlusSquare className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add another task</h3>
+                </div>
+            )}
         </div>
     );
 }
