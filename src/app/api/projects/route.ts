@@ -99,7 +99,10 @@ export async function GET() {
         });
 
         return NextResponse.json(projectsWithStats);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("Failed to fetch projects:", error);
         return NextResponse.json(
             { error: "Failed to fetch projects" },

@@ -116,7 +116,10 @@ export async function GET(req: Request) {
                 totalPages: Math.ceil(total / limit)
             }
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("[TASKS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }

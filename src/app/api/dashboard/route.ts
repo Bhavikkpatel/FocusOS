@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
@@ -164,7 +166,10 @@ export async function GET() {
             upcomingTasks: categorizedTasks,
             activeProjects: projectStats,
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("[DASHBOARD_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }

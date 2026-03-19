@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
@@ -80,7 +81,10 @@ export async function GET(
             completedTasks,
             totalFocusTime,
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("Failed to fetch project:", error);
         return NextResponse.json(
             { error: "Failed to fetch project" },

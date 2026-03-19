@@ -70,7 +70,10 @@ export async function GET(req: Request) {
         ]);
 
         return NextResponse.json({ tasks, projects, tags });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("Search error:", error);
         return NextResponse.json(
             { error: "Failed to perform search" },

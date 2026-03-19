@@ -17,7 +17,10 @@ export async function GET() {
         });
 
         return NextResponse.json(tags);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("[TAGS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }

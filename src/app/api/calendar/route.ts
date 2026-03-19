@@ -56,7 +56,10 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json(events);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+            throw error;
+        }
         console.error("[CALENDAR_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
