@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 
 const isDev = process.env.NODE_ENV === "development";
-const storageType = process.env.STORAGE_TYPE || (isDev ? "LOCAL" : "S3");
+const storageType = (process.env.STORAGE_TYPE || (isDev ? "LOCAL" : "S3")).toUpperCase();
 
 const s3Configured = 
     process.env.R2_ENDPOINT && 
@@ -21,9 +21,10 @@ const s3Client = s3Configured ? new S3Client({
     },
 }) : null;
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+const BUCKET_NAME = process.env.R2_BUCKET_NAME || "focus-os";
 
 export async function saveFile(file: File): Promise<{ url: string; size: number; name: string; mimeType: string }> {
+    console.log(`[STORAGE] Uploading file: ${file.name}, type: ${storageType}, configured: ${!!s3Client}`);
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = path.extname(file.name);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
@@ -49,6 +50,7 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
                 ? `${baseUrl}/${fileName}`
                 : `${baseUrl}/${BUCKET_NAME}/${fileName}`;
 
+            console.log(`[STORAGE] S3 Upload success: ${url}`);
             return {
                 url,
                 size: file.size,
