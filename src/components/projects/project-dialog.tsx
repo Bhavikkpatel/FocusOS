@@ -7,6 +7,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,9 @@ export function ProjectDialog({
                     <DialogTitle>
                         {isEdit ? "Edit Project" : "New Project"}
                     </DialogTitle>
+                    <DialogDescription>
+                        {isEdit ? "Update your project settings and color." : "Create a new project to organize your tasks."}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">

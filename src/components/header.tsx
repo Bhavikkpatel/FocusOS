@@ -3,8 +3,6 @@
 import {
     Search,
     Bell,
-    Filter,
-    ArrowUpDown,
     Plus,
     Menu
 } from "lucide-react";
@@ -71,15 +69,6 @@ export function Header() {
                         <Bell className="h-5 w-5" />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
                     </button>
-                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                    <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 shadow-sm">
-                        <Filter className="h-4 w-4" />
-                        <span>Filter</span>
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 shadow-sm">
-                        <ArrowUpDown className="h-4 w-4" />
-                        <span>Sort</span>
-                    </Button>
                 </div>
                 <Button
                     className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all active:scale-95"

@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, X, ExternalLink, FileText, ImageIcon, FileIcon } from "lucide-react";
@@ -68,6 +69,9 @@ export function AttachmentPreview({ isOpen, onClose, attachment }: AttachmentPre
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-2xl [&>button]:hidden">
+                <DialogDescription className="sr-only">
+                    View and manage task attachments
+                </DialogDescription>
                 <DialogHeader className="p-4 border-b flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:bg-slate-900/50">
                     <div className="flex items-center gap-3 overflow-hidden">
                         <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border shadow-sm shrink-0">

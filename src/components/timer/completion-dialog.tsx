@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight, Plus } from "lucide-react";
 import { useTimerStore } from "@/store/timer";
@@ -42,6 +42,9 @@ export function CompletionDialog() {
                         <DialogTitle className="text-center text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
                             Session Complete!
                         </DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Your focus session for {task.title} has finished.
+                        </DialogDescription>
                     </DialogHeader>
                     <p className="text-slate-600 dark:text-slate-400 text-center text-sm font-medium">
                         You've finished your estimated focus for <span className="text-slate-900 dark:text-white font-bold">{task.title}</span>.
