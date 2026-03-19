@@ -52,11 +52,9 @@ export function TaskDetailsDialog({ task, open, onOpenChange }: TaskDetailsDialo
                         {task.project && <Badge variant="secondary">{task.project}</Badge>}
                     </div>
                     <DialogTitle className="text-2xl font-bold">{task.title}</DialogTitle>
-                    {task.description && (
-                        <DialogDescription className="text-base mt-2">
-                            {task.description}
-                        </DialogDescription>
-                    )}
+                    <DialogDescription className="text-base mt-2">
+                        {task.description || "No description provided."}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex items-center gap-4 py-4">

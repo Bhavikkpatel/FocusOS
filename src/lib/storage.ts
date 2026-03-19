@@ -41,7 +41,7 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
             await s3Client.send(command);
 
             const url = process.env.R2_PUBLIC_URL 
-                ? `${process.env.R2_PUBLIC_URL}/${fileName}`
+                ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${BUCKET_NAME}/${fileName}`
                 : `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/uploads/${fileName}`;
 
             return {
