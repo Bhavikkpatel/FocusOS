@@ -7,7 +7,7 @@ import {
     Play, Pause, RotateCcw, Target, Timer, Clock, Activity,
     Pencil, Trash2, X, Archive, Plus, Maximize2,
     Star, AlertCircle, StickyNote, History as HistoryIcon, ListChecks, CheckCircle, ChevronRight, CalendarIcon, Minus, BarChart2, Repeat,
-    Paperclip, Link as LinkIcon, Download, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Loader2, Eye
+    Paperclip, Link as LinkIcon, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Loader2, Eye
 } from "lucide-react";
 import { AttachmentPreview } from "@/components/tasks/attachment-preview";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
@@ -810,20 +810,13 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-1 group-hover:translate-x-0">
-                                                            {attachment.type === "FILE" ? (
-                                                                <a href={attachment.url} download={attachment.name}>
-                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
-                                                                        <Download className="h-3.5 w-3.5" />
-                                                                    </Button>
-                                                                </a>
-                                                            ) : (
+                                                            {attachment.type === "LINK" ? (
                                                                 <a href={attachment.url} target="_blank" rel="noopener noreferrer">
                                                                     <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
                                                                         <ExternalLink className="h-3.5 w-3.5" />
                                                                     </Button>
                                                                 </a>
-                                                            )}
-                                                            {attachment.type === "FILE" && (
+                                                            ) : (
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"

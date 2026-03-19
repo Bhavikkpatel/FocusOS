@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 import path from "path";
 import fs from "fs/promises";
@@ -6,12 +7,15 @@ import fs from "fs/promises";
 const isDev = process.env.NODE_ENV === "development";
 const storageType = (process.env.STORAGE_TYPE || (isDev ? "LOCAL" : "S3")).toUpperCase();
 
-const s3Configured = 
-    process.env.R2_ENDPOINT && 
-    process.env.R2_ACCESS_KEY_ID && 
-    process.env.R2_SECRET_ACCESS_KEY && 
+const s3Configured =
+    process.env.R2_ENDPOINT &&
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY &&
     process.env.R2_BUCKET_NAME;
 
+// R2_ENDPOINT should be the base account URL WITHOUT the bucket:
+// e.g. https://0312a93b5b948165b1c6d6c7b680b616.r2.cloudflarestorage.com
+// The bucket name is appended via BUCKET_NAME separately
 const s3Client = s3Configured ? new S3Client({
     region: process.env.R2_REGION || "auto",
     endpoint: process.env.R2_ENDPOINT!,
@@ -22,9 +26,16 @@ const s3Client = s3Configured ? new S3Client({
 }) : null;
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME || "focus-os";
+const LOCAL_PREFIX = "local:";
 
-export async function saveFile(file: File): Promise<{ url: string; size: number; name: string; mimeType: string }> {
-    console.log(`[STORAGE] Uploading file: ${file.name}, type: ${storageType}, configured: ${!!s3Client}`);
+/**
+ * Upload a file to S3/R2 (or local in dev).
+ * Returns a `key` — either:
+ *   - an S3 object key like `65e555a6-....png` (for R2 files)
+ *   - a local path like `local:/uploads/filename.png` (for dev)
+ */
+export async function saveFile(file: File): Promise<{ key: string; size: number; name: string; mimeType: string }> {
+    console.log(`[STORAGE] Uploading: ${file.name}, storageType=${storageType}, s3Configured=${!!s3Client}`);
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = path.extname(file.name);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
@@ -40,19 +51,10 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
             });
 
             await s3Client.send(command);
+            console.log(`[STORAGE] S3 Upload success key=${fileName}`);
 
-            const endpoint = (process.env.R2_ENDPOINT || '').replace(/\/$/, '');
-            const baseUrl = process.env.R2_PUBLIC_URL 
-                ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
-                : endpoint;
-
-            const url = baseUrl.endsWith(`/${BUCKET_NAME}`)
-                ? `${baseUrl}/${fileName}`
-                : `${baseUrl}/${BUCKET_NAME}/${fileName}`;
-
-            console.log(`[STORAGE] S3 Upload success: ${url}`);
             return {
-                url,
+                key: fileName,
                 size: file.size,
                 name: file.name,
                 mimeType: file.type,
@@ -63,65 +65,84 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
         }
     }
 
-    // Local Storage Fallback
+    // Local Storage Fallback (development only)
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await fs.mkdir(uploadDir, { recursive: true });
-    
     const filePath = path.join(uploadDir, fileName);
     await fs.writeFile(filePath, buffer);
 
-    // Standard Next.js public access is via /uploads/ filename
-    const url = `/uploads/${fileName}`;
-
     return {
-        url,
+        key: `${LOCAL_PREFIX}/uploads/${fileName}`,
         size: file.size,
         name: file.name,
         mimeType: file.type,
     };
 }
 
-export async function deleteFile(url: string) {
+/**
+ * Generate a presigned URL for a given key.
+ * For local keys (dev), returns the path directly.
+ * For S3 keys, returns a short-lived signed URL.
+ */
+export async function getPresignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    // Local dev: return the path directly (publicly accessible in dev)
+    if (key.startsWith(LOCAL_PREFIX)) {
+        return key.replace(LOCAL_PREFIX, "");
+    }
+
+    if (!s3Client) {
+        throw new Error("S3 client not configured");
+    }
+
+    const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+    });
+
+    return getSignedUrl(s3Client, command, { expiresIn });
+}
+
+/**
+ * Delete a file by its key.
+ */
+export async function deleteFile(key: string) {
     // Local storage delete
-    if (url.startsWith("/uploads/")) {
+    if (key.startsWith(LOCAL_PREFIX)) {
         try {
-            const fileName = url.replace("/uploads/", "");
+            const localPath = key.replace(LOCAL_PREFIX, "");
+            const fileName = localPath.replace("/uploads/", "");
             const filePath = path.join(process.cwd(), "public", "uploads", fileName);
             await fs.unlink(filePath);
             return;
         } catch (error) {
             console.error("Failed to delete local file:", error);
         }
+        return;
     }
 
-    if (!s3Client) return;
-
-    let fileName = "";
-    
-    const r2Base = (process.env.R2_PUBLIC_URL || process.env.R2_ENDPOINT || '').replace(/\/$/, '');
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
-
-    if (r2Base && url.startsWith(r2Base)) {
-        // Handle format: [BASE]/[BUCKET]/[FILENAME]
-        const pathParts = url.replace(`${r2Base}/`, "").split('/');
-        fileName = pathParts[pathParts.length - 1];
-    } else if (url.startsWith("/api/uploads/") || (appUrl && url.startsWith(`${appUrl}/api/uploads/`))) {
-        const urlObj = new URL(url, appUrl || "http://localhost:3000");
-        fileName = urlObj.pathname.split('/').pop() || "";
-    } else if (url.startsWith("/uploads/")) {
-        // Should have been handled above, but for safety:
-        fileName = url.replace("/uploads/", "");
+    // Legacy: handle old-style full URLs stored before this migration
+    if (key.startsWith("http")) {
+        try {
+            const urlObj = new URL(key);
+            const parts = urlObj.pathname.split("/").filter(Boolean);
+            // Last segment is usually the filename
+            key = parts[parts.length - 1];
+        } catch {
+            console.error("Failed to parse legacy URL for deletion:", key);
+            return;
+        }
     }
 
-    if (!fileName) return;
+    if (!s3Client || !key) return;
 
     try {
         const command = new DeleteObjectCommand({
             Bucket: BUCKET_NAME,
-            Key: fileName,
+            Key: key,
         });
         await s3Client.send(command);
+        console.log(`[STORAGE] Deleted key=${key}`);
     } catch (error) {
-        console.error(`Failed to delete file from R2: ${fileName}`, error);
+        console.error(`Failed to delete file from R2: ${key}`, error);
     }
 }
