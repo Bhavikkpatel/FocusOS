@@ -21,6 +21,23 @@ export function useAttachments(taskId: string) {
     });
 }
 
+export function useSignedUrl(attachmentId: string | null) {
+    return useQuery({
+        queryKey: ["attachments", "signed-url", attachmentId],
+        queryFn: async () => {
+            if (!attachmentId) return null;
+            const response = await fetch(`/api/attachments/${attachmentId}/sign`);
+            if (!response.ok) {
+                throw new Error("Failed to sign attachment");
+            }
+            const data = await response.json();
+            return data.signedUrl as string;
+        },
+        enabled: !!attachmentId,
+        staleTime: 1000 * 60 * 50, // 50 minutes (signed URLs expire in 60)
+    });
+}
+
 export function useAddAttachment(taskId: string) {
     const queryClient = useQueryClient();
 
@@ -70,7 +87,7 @@ export function useUploadFile(taskId: string) {
 
             return addAttachment.mutateAsync({
                 name: uploadResult.name,
-                url: uploadResult.url,
+                url: uploadResult.key, // Now storing the R2 key as the 'url'
                 type: "FILE",
                 size: uploadResult.size,
                 mimeType: uploadResult.mimeType,
