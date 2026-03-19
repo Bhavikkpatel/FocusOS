@@ -40,9 +40,14 @@ export async function saveFile(file: File): Promise<{ url: string; size: number;
 
             await s3Client.send(command);
 
-            const url = process.env.R2_PUBLIC_URL 
-                ? `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${BUCKET_NAME}/${fileName}`
-                : `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/uploads/${fileName}`;
+            const endpoint = (process.env.R2_ENDPOINT || '').replace(/\/$/, '');
+            const baseUrl = process.env.R2_PUBLIC_URL 
+                ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
+                : endpoint;
+
+            const url = baseUrl.endsWith(`/${BUCKET_NAME}`)
+                ? `${baseUrl}/${fileName}`
+                : `${baseUrl}/${BUCKET_NAME}/${fileName}`;
 
             return {
                 url,
@@ -91,14 +96,19 @@ export async function deleteFile(url: string) {
 
     let fileName = "";
     
-    // Extract filename from URL depending on format
-    if (process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
-        fileName = url.replace(`${process.env.R2_PUBLIC_URL}/`, "");
-    } else if (url.startsWith("/api/uploads/") || (process.env.NEXT_PUBLIC_APP_URL && url.startsWith(`${process.env.NEXT_PUBLIC_APP_URL}/api/uploads/`))) {
-        const urlObj = new URL(url, process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+    const r2Base = (process.env.R2_PUBLIC_URL || process.env.R2_ENDPOINT || '').replace(/\/$/, '');
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+
+    if (r2Base && url.startsWith(r2Base)) {
+        // Handle format: [BASE]/[BUCKET]/[FILENAME]
+        const pathParts = url.replace(`${r2Base}/`, "").split('/');
+        fileName = pathParts[pathParts.length - 1];
+    } else if (url.startsWith("/api/uploads/") || (appUrl && url.startsWith(`${appUrl}/api/uploads/`))) {
+        const urlObj = new URL(url, appUrl || "http://localhost:3000");
         fileName = urlObj.pathname.split('/').pop() || "";
-    } else {
-        return;
+    } else if (url.startsWith("/uploads/")) {
+        // Should have been handled above, but for safety:
+        fileName = url.replace("/uploads/", "");
     }
 
     if (!fileName) return;
