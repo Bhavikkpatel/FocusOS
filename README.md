@@ -1,125 +1,232 @@
-# FocusOS - Production Pomodoro Application
+# 🚀 FocusOS — Feature Overview
 
-A modern, offline-first Pomodoro productivity application with task management, calendar-based planning, analytics, and cross-device sync.
-
-## Features
-
-### Phase 1 (Core) - ✅ COMPLETE
-- ✅ **Authentication**: Google and GitHub OAuth via NextAuth
-- ✅ **Pomodoro Timer**: Web Worker-based timer with <50ms drift tolerance
-- ✅ **Timer Presets**: Classic (25/5), Deep Work (50/10), Flow State (90/15)
-- ✅ **Task Management**: Create, organize, and track tasks with priorities and projects
-- ✅ **Advanced Calendar**: FullCalendar integration with drag-to-create scheduling and live time indicator
-- ✅ **Intelligent Scheduling**: Automatic Pomodoro duration calculation factoring in short and long breaks
-
-### Phase 2 (Recent Features & Refinements) - ✅ COMPLETE
-- ✅ **Cloudflare R2 Object Storage**: Integrated robust cloud file storage for attachments, replacing ephemeral local uploads.
-- ✅ **Advanced Tagging System**: Global tag management (Settings -> Tags) with full CRUD operations, usage tracking, and integrated creation directly from Kanban and List views.
-- ✅ **High-Contrast "Focus" Theming**: Refined Light and Dark modes with specialized tokens for Kanban columns, persistent project colors, and distraction-free "Immersive" task views.
-- ✅ **Zero-Lag Architecture**: Added `nextjs-toploader` for seamless page transitions and instantaneous "toast" loading states across all database mutations.
-- ✅ **Fluid UI/UX**: Custom scrollbars, fixed header overlaps, unified Kanban board sync, and optimized layouts for edge-to-edge focus.
-
-### Phase 3 (Integrations & AI) - IN PROGRESS / PLANNED
-- 🚧 **Analytics**: Daily, weekly, monthly productivity insights
-- 🚧 **Cloud Sync**: Supabase production database with connection pooling
-- 🚧 **Offline Cache**: IndexedDB-based offline support (Partial)
-- 📅 **Collaboration**: Study rooms and shared timers
-- 📅 **AI Insights**: Adaptive session recommendations & burnout detection
-
-## Tech Stack
-
-- **Frontend**: Next.js 14, TypeScript, TailwindCSS, Shadcn/UI
-- **Calendar**: FullCalendar (Day, Week, Month views)
-- **State**: Zustand, React Query
-- **Backend:** Node.js, PostgreSQL (Supabase in Prod), Prisma ORM
-- **Auth**: NextAuth.js with OAuth
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- PostgreSQL 14+ (Local) or Supabase (Production)
-- OAuth credentials (Google, GitHub)
-
-### Installation
-
-1. **Clone and install dependencies**:
-```bash
-npm install
-```
-
-2. **Setup database**:
-
-For local development, update `.env` with your PostgreSQL credentials. 
-
-3. **Configure environment variables**:
-
-Copy `.env.example` to `.env` and fill in:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/focusdb"
-DIRECT_URL="postgresql://postgres:postgres@localhost:5432/focusdb"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-random-secret-min-32-chars"
-
-# OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-```
-
-4. **Run migrations and apply schema**:
-```bash
-npx prisma migrate dev
-npx prisma generate
-```
-
-5. **Start development server**:
-```bash
-npm run dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000)
-
-## Production Setup
-
-For deploying to production using Supabase, please refer to [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) for detailed instructions on setting up Connection Pooling and Direct Connection strings.
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes (Tasks, Calendar, Auth)
-│   ├── calendar/          # Calendar page
-│   ├── timer/             # Timer page
-│   └── tasks/             # Task management
-├── components/
-│   ├── calendar/          # Advanced Calendar components
-│   ├── timer/             # Timer & Focus Mode
-│   └── tasks/             # Task lists & Expanded views
-├── hooks/                 # Reusable React Query & Logic hooks
-├── store/                 # Zustand state (Timer, UI)
-└── lib/                   # Shared utilities (Auth, DB)
-```
-
-## Architecture
-
-### Intelligent Timer
-- Web Worker for precision independent of UI thread
-- Dynamic duration calculation: Sessions automagically adjust to fit calendar slots while preserving recovery time.
-
-### Database
-PostgreSQL with Prisma. Optimized for production with **Supabase Connection Pooling** to handle high-frequency session logging.
-
-## Contributing
-
-This is an active project. Contributions and feedback are welcome!
-
-## License
-
-MIT
+FocusOS is a modern productivity system designed for **deep work, task management, and focus-driven execution**. It combines task organization, Pomodoro-based focus, and behavioral insights into a single workflow.
 
 ---
 
-Built with ❤️ for focused developers.
+## 🧠 Core Philosophy
+
+* **Execution over clutter**
+* **Context-aware UI**
+* **Deep work first**
+* **Minimal cognitive load**
+
+---
+
+# 🏗️ Core Features
+
+---
+
+## 📌 Project & Task Management
+
+* Create and manage **Projects**
+* Organize tasks within projects (Kanban/List)
+* Task features:
+
+  * Title, description, notes
+  * Subtasks
+  * Tags & priorities
+  * Due dates
+  * Difficulty level
+  * Categories
+* Task completion with:
+
+  * Auto-complete (based on Pomodoro estimate)
+  * Archive support
+  * Completion animations
+
+---
+
+## ⚡ Pomodoro Focus System
+
+* Built-in **Pomodoro timer**
+* Start focus session directly from a task
+* Session tracking:
+
+  * Completed sessions
+  * Total focus time
+* Active task highlighting
+* Auto-update task progress on session completion
+
+---
+
+## 🍅 Pomodoro Estimation
+
+* Set **estimated Pomodoros per task**
+* Track **completed Pomodoros**
+* Visual progress bar on task
+* Detect and highlight **overestimation / underestimation**
+
+---
+
+## 🧭 Contextual Task Workspace
+
+Replaces traditional dashboard with a **3-mode task view**:
+
+### 1. Focus (Execution Mode)
+
+* Hero task + timer
+* Centered subtasks ("Focus Rows")
+* Minimal UI for zero distraction
+* Ghost UI (fades after inactivity)
+
+### 2. Details (Composition Mode)
+
+* Split-pane layout:
+
+  * Notes (Markdown)
+  * Attachments & metadata
+* Contextual visibility (low-opacity metadata)
+
+### 3. History (Reflection Mode)
+
+* Session analytics
+* Timeline of focus sessions
+* Unified session scorecard
+
+---
+
+## 🔥 Zenith Focus Mode
+
+A full-screen deep work environment:
+
+* Single **Hero Task**
+* Minimal UI
+* Ghosting logic (UI fades after 5s inactivity)
+* Integrated timer
+* Distraction Scratchpad:
+
+  * Capture thoughts using `!` or `?`
+  * Stored for later review
+
+---
+
+## 🧠 Deep Work Sessions
+
+* Group multiple focus sessions into one workflow
+* Continue / End flow between sessions
+* Optional break handling
+* Track:
+
+  * Total time
+  * Session count
+  * Interruptions
+
+---
+
+## ⚡ Momentum Summary (Post-Focus)
+
+After each deep work session:
+
+* Session summary (time, sessions, interruptions)
+* **Energy check-in** (Low / Medium / High)
+* Distraction review:
+
+  * Convert to tasks
+  * Dismiss entries
+
+---
+
+## 📊 Analytics & Insights
+
+* Focus time tracking
+* Session history timeline
+* Task-level statistics:
+
+  * Total time spent
+  * Average session duration
+  * Estimation accuracy
+* Project-level insights (planned)
+
+---
+
+## 📅 Calendar Planning
+
+* Google Calendar–style interface
+* Schedule tasks as events
+* Drag & resize events
+* Create tasks directly from calendar
+* Start focus sessions from calendar
+* Current time indicator (live)
+* Zoom levels (hour → day → week)
+
+---
+
+## 🏷️ Organization Features
+
+* Tags (multi-select)
+* Categories (single classification)
+* Difficulty levels (energy-based work planning)
+* Filters:
+
+  * By tag
+  * By difficulty
+  * By priority
+
+---
+
+## 🎧 Focus Music Integration
+
+* Background work/study music via YouTube
+* Hidden player with custom controls
+* Features:
+
+  * Play / Pause
+  * Volume control
+  * Playlist selection
+* Auto-play on focus start
+* Floating music widget
+* User preference persistence
+
+---
+
+## 🧩 UI/UX System (FlowState DLS)
+
+* **2-Second Capture** (command-style input)
+* **Contextual Visibility** (low-opacity metadata)
+* **Ghost UI** (fade inactive elements)
+* Minimalist, execution-focused design
+* Fonts:
+
+  * Inter (content)
+  * JetBrains Mono (data/timer)
+
+---
+
+## 🏗️ Architecture
+
+* Frontend: Next.js (Vercel)
+* Database: PostgreSQL (Supabase)
+* Storage: Cloudflare R2 (attachments)
+* API: Serverless functions
+
+---
+
+## 🔐 Storage & Attachments
+
+* File uploads (images, PDFs, docs)
+* Secure storage using Cloudflare R2
+* Structured file organization:
+
+  ```
+  userId / taskId / files
+  ```
+* Signed URL support (secure access)
+
+---
+
+## 🧠 Future Scope
+
+* AI-based task prioritization
+* Energy-based scheduling
+* Smart focus recommendations
+* Advanced analytics dashboard
+* Recurring tasks & dependencies
+
+---
+
+# 🚀 Vision
+
+FocusOS is not just a task manager.
+
+It is a **complete system for thinking, focusing, and executing work at a high level**.
