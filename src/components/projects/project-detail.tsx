@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useLayoutStore } from "@/store/layout";
 import { useProject, useDeleteProject } from "@/hooks/use-projects";
-import { ProjectHeader } from "./project-header";
 import { ProjectKanban } from "./project-kanban";
 import { ProjectListView } from "./project-list-view";
 import { AnimatePresence, motion } from "framer-motion";
@@ -19,25 +19,37 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 
-type ViewMode = "board" | "list";
-
-export function ProjectDetail({ projectId }: { projectId: string }) {
+export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element | null {
     const { data: project, isLoading, error } = useProject(projectId);
     const deleteProject = useDeleteProject();
     const router = useRouter();
-    const [viewMode, setViewMode] = useState<ViewMode>("board");
-    const [editOpen, setEditOpen] = useState(false);
-    const [deleteOpen, setDeleteOpen] = useState(false);
-    const prefsLoaded = useRef(false);
+    const { 
+        projectViewMode, 
+        setProjectViewMode,
+        projectCommand,
+        clearProjectCommand,
+        setNoPadding
+    } = useLayoutStore();
 
     useEffect(() => {
-        if (prefsLoaded.current) return;
-        prefsLoaded.current = true;
+        if (!projectCommand) return;
+        if (projectCommand === "edit") setEditOpen(true);
+        if (projectCommand === "delete") setDeleteOpen(true);
+        clearProjectCommand();
+    }, [projectCommand, clearProjectCommand]);
+    const [editOpen, setEditOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    useEffect(() => {
         const savedView = localStorage.getItem(`focusos_project_view_${projectId}`);
         if (savedView === "list" || savedView === "board") {
-            setViewMode(savedView as ViewMode);
+            setProjectViewMode(savedView as "list" | "board");
         }
-    }, [projectId]);
+        
+        // Disable padding for project detail page
+        setNoPadding(true);
+        return () => setNoPadding(false);
+    }, [projectId, setProjectViewMode, setNoPadding]);
 
     const handleSelectTask = (id: string | null) => {
         if (id) {
@@ -45,10 +57,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         }
     };
 
-    const handleViewModeChange = (mode: ViewMode) => {
-        setViewMode(mode);
-        localStorage.setItem(`focusos_project_view_${projectId}`, mode);
-    };
 
     if (isLoading) {
         return (
@@ -79,17 +87,10 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
     return (
         <div className="flex flex-col h-full relative">
-            <ProjectHeader
-                project={project}
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                onEdit={() => setEditOpen(true)}
-                onDelete={() => setDeleteOpen(true)}
-            />
 
             <div className="flex-1 overflow-hidden p-6 relative">
                 <AnimatePresence mode="wait">
-                    {viewMode === "board" ? (
+                    {projectViewMode === "board" ? (
                         <motion.div
                             key="board"
                             initial={{ opacity: 0, y: 10 }}

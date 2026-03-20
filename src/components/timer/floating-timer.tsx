@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTimerStore } from "@/store/timer";
+import { usePathname } from "next/navigation";
 import { useTasks } from "@/hooks/use-tasks";
 import { Play, Pause, X, Timer, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ export function FloatingTimer() {
         reset,
         setFocusMode,
     } = useTimerStore();
+    const pathname = usePathname();
+    const isTaskPage = pathname?.includes("/tasks/");
 
     const [showTask, setShowTask] = useState(false);
 
@@ -40,7 +43,7 @@ export function FloatingTimer() {
     const isFocus = sessionType === "FOCUS";
     const label = isFocus ? "Focus" : sessionType === "SHORT_BREAK" ? "Short Break" : "Long Break";
 
-    if (!isActive) return null;
+    if (!isActive || isTaskPage) return null;
 
     return (
         <>

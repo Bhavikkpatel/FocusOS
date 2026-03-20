@@ -2,10 +2,28 @@
 
 import { useMemo } from "react";
 import { useTasks } from "@/hooks/use-tasks";
-import { BarChart, Folder, Clock, Activity } from "lucide-react";
+import { BarChart, Folder, Clock, Activity, RefreshCw } from "lucide-react";
+import { useHeader } from "@/hooks/use-header";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function AnalyticsDashboard() {
-    const { data, isLoading } = useTasks({ status: "ALL" });
+    const { data, isLoading, refetch } = useTasks({ status: "ALL" });
+
+    useHeader({
+        title: "Analytics",
+        actions: (
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 h-9 border-slate-200 dark:border-slate-700"
+                onClick={() => refetch()}
+            >
+                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                Refresh
+            </Button>
+        )
+    });
 
     // Calculate Category groupings
     const categoryStats = useMemo(() => {
@@ -37,19 +55,14 @@ export function AnalyticsDashboard() {
         return Array.from(map.values()).sort((a, b) => b.focusTimeMinutes - a.focusTimeMinutes);
     }, [data]);
 
-    if (isLoading) {
+    if (isLoading && !data) {
         return <div className="p-8 text-center text-muted-foreground">Loading analytics...</div>;
     }
 
     const maxFocusTime = Math.max(1, ...categoryStats.map(c => c.focusTimeMinutes));
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-20">
-            <div className="space-y-1">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Analytics</h1>
-                <p className="text-slate-500">Track your focus time and productivity trends by category.</p>
-            </div>
-
+        <div className="max-w-5xl mx-auto space-y-8 pb-20 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center gap-3 text-blue-500 mb-4">

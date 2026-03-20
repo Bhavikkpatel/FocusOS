@@ -16,6 +16,10 @@ const config: Config = {
             },
         },
         extend: {
+            fontFamily: {
+                sans: ["var(--font-inter)", "Inter", "sans-serif"],
+                jetbrains: ["var(--font-jetbrains)", "JetBrains Mono", "monospace"],
+            },
             colors: {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",

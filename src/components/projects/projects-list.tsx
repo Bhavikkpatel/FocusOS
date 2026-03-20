@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useProjects, ProjectWithStats } from "@/hooks/use-projects";
 import { ProjectDialog } from "./project-dialog";
-import { Plus, FolderOpen, Clock, CheckCircle2, ListTodo, Edit, Trash2 } from "lucide-react";
+import { FolderOpen, Clock, CheckCircle2, ListTodo, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDeleteProject } from "@/hooks/use-projects";
 import {
@@ -175,10 +175,6 @@ export function ProjectsList() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<any | null>(null);
 
-    const handleOpenCreate = () => {
-        setEditingProject(null);
-        setDialogOpen(true);
-    };
 
     const handleOpenEdit = (project: ProjectWithStats) => {
         setEditingProject(project);
@@ -195,26 +191,7 @@ export function ProjectsList() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-end justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        Projects
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1 text-base">
-                        Organize your work into focused projects
-                    </p>
-                </div>
-                <button
-                    onClick={handleOpenCreate}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm shadow-md hover:shadow-lg hover:bg-primary/90 transition-all active:scale-95"
-                >
-                    <Plus className="h-4 w-4" />
-                    New Project
-                </button>
-            </div>
-
-            {/* Projects Grid */}
+            {/* Project Grid */}
             {projects && projects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {projects.map((project) => (
@@ -228,14 +205,8 @@ export function ProjectsList() {
                         No projects yet
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                        Create your first project to start organizing tasks
+                        Create your first project to start organizing tasks using the button in the header.
                     </p>
-                    <button
-                        onClick={handleOpenCreate}
-                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
-                    >
-                        Create Project
-                    </button>
                 </div>
             )}
 

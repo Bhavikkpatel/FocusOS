@@ -6,6 +6,7 @@ export interface SearchTaskResult {
     title: string;
     status: TaskStatus;
     priority: TaskPriority;
+    pomodoroDuration: number;
     projectRef: {
         id: string;
         name: string;
@@ -32,15 +33,20 @@ export interface SearchResponse {
     tags: SearchTagResult[];
 }
 
-export function useGlobalSearch(query: string) {
+export function useGlobalSearch(query: string, projectId?: string) {
     return useQuery({
-        queryKey: ["search", query],
+        queryKey: ["search", query, projectId],
         queryFn: async () => {
             if (!query.trim()) {
                 return { tasks: [], projects: [], tags: [] } as SearchResponse;
             }
             
-            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            let url = `/api/search?q=${encodeURIComponent(query)}`;
+            if (projectId) {
+                url += `&projectId=${projectId}`;
+            }
+            
+            const res = await fetch(url);
             if (!res.ok) {
                 throw new Error("Failed to fetch search results");
             }

@@ -4,13 +4,13 @@ import { useState, useMemo } from "react";
 import { ProjectWithStats } from "@/hooks/use-projects";
 import { TaskItem } from "@/components/tasks/task-item";
 import { motion } from "framer-motion";
-import { useTags } from "@/hooks/use-tags";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Task } from "@prisma/client";
 import { PlusSquare, ArrowDownUp, Plus, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLayoutStore } from "@/store/layout";
 
 export function ProjectListView({ 
     project, 
@@ -22,10 +22,8 @@ export function ProjectListView({
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | undefined>(undefined);
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
-    const [tagFilter, setTagFilter] = useState<string>("ALL");
-    const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
     const [quickTitle, setQuickTitle] = useState("");
-    const { data: tags = [] } = useTags();
+    const { projectFilters } = useLayoutStore();
     const createTask = useCreateTask();
     const queryClient = useQueryClient();
 
@@ -62,11 +60,17 @@ export function ProjectListView({
     // Unified filtering function
     const applyFilters = (tasks: typeof allTasks) => {
         return tasks.filter((t: any) => {
-            if (tagFilter !== "ALL") {
-                if (!t.tags || !t.tags.find((tag: any) => tag.id === tagFilter)) return false;
+            if (projectFilters.tag !== "ALL") {
+                if (!t.tags || !t.tags.find((tag: any) => tag.id === projectFilters.tag)) return false;
             }
-            if (difficultyFilter !== "ALL") {
-                if (t.difficulty !== difficultyFilter) return false;
+            if (projectFilters.difficulty !== "ALL") {
+                if (t.difficulty !== projectFilters.difficulty) return false;
+            }
+            if (projectFilters.status !== "ALL") {
+                if (t.status !== projectFilters.status) return false;
+            }
+            if (projectFilters.hasTimer) {
+                if (!t.pomodoroSessions || t.pomodoroSessions.length === 0) return false;
             }
             return true;
         });
@@ -105,30 +109,6 @@ export function ProjectListView({
             className="h-full overflow-y-auto w-full max-w-5xl mx-auto space-y-6 pb-20"
         >
             <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
-                <Select value={tagFilter} onValueChange={setTagFilter}>
-                    <SelectTrigger className="h-9 w-[130px] bg-white dark:bg-slate-800 text-xs font-medium border-slate-200 dark:border-slate-700">
-                        <SelectValue placeholder="All Tags" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="ALL">All Tags</SelectItem>
-                        {tags.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                    <SelectTrigger className="h-9 w-[130px] bg-white dark:bg-slate-800 text-xs font-medium border-slate-200 dark:border-slate-700">
-                        <SelectValue placeholder="All Difficulties" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="ALL">All Difficulties</SelectItem>
-                        <SelectItem value="EASY">Easy</SelectItem>
-                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                        <SelectItem value="HARD">Hard</SelectItem>
-                    </SelectContent>
-                </Select>
-
                 <Select value={sortBy} onValueChange={(val: "createdAt" | "priority" | "dueDate") => setSortBy(val)}>
                     <SelectTrigger className="h-9 w-[130px] bg-white dark:bg-slate-800 text-xs font-medium border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-1.5">
@@ -146,7 +126,7 @@ export function ProjectListView({
 
             <div className="space-y-4">
                 {/* Rapid Quick Add Row */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center gap-3 shadow-sm group focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center gap-3 shadow-sm group transition-all">
                     <div className="h-6 w-6 rounded-full border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0">
                         <Plus className="h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Calendar, AlertCircle, ChevronRight, Clock } from "lucide-react";
 import { TaskWithSessions } from "@/hooks/use-tasks";
 import { format } from "date-fns";
@@ -18,14 +17,14 @@ export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
     const hasUpcoming = tasks.overdue.length > 0 || tasks.today.length > 0 || tasks.tomorrow.length > 0;
 
     return (
-        <Card className="p-6 rounded-3xl border-2 border-slate-100 dark:border-slate-800/50 shadow-sm overflow-hidden flex flex-col h-full">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl p-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500">
                         <Calendar className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg tracking-tight">Upcoming Deadlines</h3>
+                        <h3 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Upcoming Deadlines</h3>
                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Priority focus</p>
                     </div>
                 </div>
@@ -70,7 +69,7 @@ export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
                     </>
                 )}
             </div>
-        </Card>
+        </div>
     );
 }
 
@@ -81,7 +80,7 @@ function TaskItem({ task }: { task: TaskWithSessions }) {
             className="group flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-900/50 dark:hover:bg-slate-900 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all cursor-pointer shadow-sm hover:shadow"
         >
             <div className="flex-1 min-w-0 mr-4">
-                <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">
+                <p className="text-sm font-bold truncate text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">
                     {task.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1">

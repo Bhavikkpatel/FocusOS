@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { TagManagement } from "@/components/settings/tag-management";
 import { Settings as SettingsIcon, Tag as TagIcon, Palette, Bell } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +10,7 @@ export default async function SettingsPage() {
     if (!session) redirect("/auth/signin");
 
     return (
-        <DashboardLayout>
-            <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col gap-1 mb-8">
                     <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-slate-900 dark:text-white">
                         <SettingsIcon className="h-8 w-8 text-primary" />
@@ -49,7 +47,6 @@ export default async function SettingsPage() {
                         </div>
                     </TabsContent>
                 </Tabs>
-            </div>
-        </DashboardLayout>
+        </div>
     );
 }

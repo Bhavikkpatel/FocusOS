@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Play, Timer, Pencil, Trash2, CalendarIcon, AlertCircle, Repeat } from "lucide-react";
+import { Play, Timer, Pencil, Archive, CalendarIcon, AlertCircle, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { useTimerStore } from "@/store/timer";
-import { useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
+import { useUpdateTask } from "@/hooks/use-tasks";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -54,9 +54,7 @@ export function ProjectTaskCard({
 }) {
     const { start, currentPreset, currentTaskId, isRunning, pause, reset } = useTimerStore();
     const updateTask = useUpdateTask();
-    const deleteTask = useDeleteTask();
-
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
 
     const isActive = currentTaskId === task.id && isRunning;
     const isCompleted = task.status === "COMPLETED";
@@ -140,6 +138,12 @@ export function ProjectTaskCard({
                 }
             }
         });
+    };
+
+    const handleArchive = () => {
+        updateTask.mutate({ id: task.id, status: "ARCHIVED" });
+        setArchiveDialogOpen(false);
+        toast.success("Task archived");
     };
 
     const handleStartFocus = (e: React.MouseEvent) => {
@@ -388,33 +392,34 @@ export function ProjectTaskCard({
                         }}
                         onSelect={(e) => {
                             e.preventDefault();
-                            setDeleteDialogOpen(true);
+                            setArchiveDialogOpen(true);
                         }}
-                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                        className="text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950"
                     >
-                        Delete Task
+                        Archive Task
                         <ContextMenuShortcut>
-                            <Trash2 className="h-4 w-4" />
+                            <Archive className="h-4 w-4" />
                         </ContextMenuShortcut>
                     </ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu >
 
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+                        <AlertDialogTitle>Archive Task?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This cannot be undone. Its data will be permanently removed.
+                            This will move "<strong>{task.title}</strong>" to your archives. 
+                            You can restore it anytime from the Archived tab.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => deleteTask.mutate(task.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={handleArchive}
+                            className="bg-amber-600 hover:bg-amber-700 text-white"
                         >
-                            Delete Task
+                            Archive Task
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

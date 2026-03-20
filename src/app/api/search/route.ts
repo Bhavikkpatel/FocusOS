@@ -13,6 +13,7 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const query = searchParams.get("q") || "";
+        const projectId = searchParams.get("projectId");
 
         if (!query.trim()) {
             return NextResponse.json({ tasks: [], projects: [], tags: [] });
@@ -22,22 +23,24 @@ export async function GET(req: Request) {
             prisma.task.findMany({
                 where: {
                     userId: session.user.id,
+                    ...(projectId ? { projectId } : {}),
                     OR: [
                         { title: { contains: query, mode: "insensitive" } },
                         { description: { contains: query, mode: "insensitive" } },
                     ],
                 },
-                take: 5,
+                take: 10,
                 orderBy: { createdAt: "desc" },
                 select: {
                     id: true,
                     title: true,
                     status: true,
                     priority: true,
+                    pomodoroDuration: true,
                     projectRef: { select: { id: true, name: true, color: true } }
                 }
             }),
-            prisma.project.findMany({
+            projectId ? Promise.resolve([]) : prisma.project.findMany({
                 where: {
                     userId: session.user.id,
                     OR: [

@@ -23,6 +23,7 @@ interface TagSelectorProps {
     trigger?: React.ReactNode;
     className?: string;
     align?: "start" | "center" | "end";
+    variant?: "default" | "square-icon";
 }
 
 const TAG_COLORS = [
@@ -36,7 +37,14 @@ const TAG_COLORS = [
     "#ec4899", // pink
 ];
 
-export function TagSelector({ selectedTags, onTagsChange, trigger, className, align = "center" }: TagSelectorProps) {
+export function TagSelector({ 
+    selectedTags, 
+    onTagsChange, 
+    trigger, 
+    className, 
+    align = "center",
+    variant = "default" 
+}: TagSelectorProps) {
     const [open, setOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
     const { data: tags = [], isLoading } = useTags();
@@ -76,7 +84,22 @@ export function TagSelector({ selectedTags, onTagsChange, trigger, className, al
 
     const isExactMatch = tags.some((t: any) => t.name.toLowerCase() === searchQuery.trim().toLowerCase());
 
-    const defaultTrigger = (
+    const defaultTrigger = variant === "square-icon" ? (
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggle}
+            className={cn("h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground transition-all group/tagbtn", className)}
+            title="Add tags"
+        >
+            <Tags className="h-3.5 w-3.5 group-hover/tagbtn:text-primary transition-colors" />
+            {selectedTags.length > 0 && (
+                <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white ring-2 ring-background">
+                    {selectedTags.length}
+                </div>
+            )}
+        </Button>
+    ) : (
         <Button
             variant="outline"
             size="sm"
