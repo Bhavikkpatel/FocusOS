@@ -3,6 +3,7 @@
 import { Sidebar } from "./sidebar";
 import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
+import { useLayoutStore } from "@/store/layout";
 
 function DashboardContent({ 
     children, 
@@ -28,17 +29,17 @@ function DashboardContent({
 
 export function DashboardLayout({
     children,
-    noPadding = false,
     hideHeader = false
 }: {
     children: React.ReactNode;
-    noPadding?: boolean;
     hideHeader?: boolean;
 }) {
+    const { isNoPadding } = useLayoutStore();
+
     return (
         <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
             <Sidebar />
-            <DashboardContent noPadding={noPadding} hideHeader={hideHeader}>
+            <DashboardContent noPadding={isNoPadding} hideHeader={hideHeader}>
                 {children}
             </DashboardContent>
         </div>

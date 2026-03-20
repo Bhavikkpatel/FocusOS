@@ -15,7 +15,13 @@ export async function POST(
         }
 
         const body = await req.json().catch(() => ({}));
-        const { type = "FOCUS", duration = 0, interruptions = 0, wasInterrupted = false } = body;
+        const { 
+            type = "FOCUS", 
+            duration = 0, 
+            interruptions = 0, 
+            wasInterrupted = false,
+            deepWorkSessionId = null
+        } = body;
 
         const task = await prisma.task.findUnique({
             where: { id: params.id, userId: session.user.id },
@@ -69,7 +75,7 @@ export async function POST(
         });
 
         // 2. Create the Pomodoro Session Record
-        await prisma.pomodoroSession.create({
+        const sessionRecord = await prisma.pomodoroSession.create({
             data: {
                 type: type,
                 duration: duration,
@@ -78,10 +84,26 @@ export async function POST(
                 taskId: params.id,
                 userId: session.user.id,
                 completedAt: new Date(),
+                deepWorkSessionId, // Link to Deep Work Session
             }
         });
 
-        return NextResponse.json(updatedTask);
+        // 3. If part of a Deep Work Session, update the session aggregate
+        if (deepWorkSessionId && type === "FOCUS") {
+            await prisma.deepWorkSession.update({
+                where: { id: deepWorkSessionId },
+                data: {
+                    totalDuration: { increment: duration },
+                    sessionCount: { increment: 1 },
+                    interruptions: { increment: interruptions },
+                }
+            });
+        }
+
+        return NextResponse.json({
+            ...updatedTask,
+            sessionId: sessionRecord.id
+        });
     } catch (error) {
         console.error("[TASK_POMODORO_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });

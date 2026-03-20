@@ -33,6 +33,12 @@ export interface TimerState {
     estimatedPomodoros: number | null;
     lastUpdated: number;         // timestamp
     sessionToRate: string | null;
+    isZenithMode: boolean;
+    sessionDistractions: string[];
+    deepWorkSessionId: string | null;
+
+    activeSubtaskId: string | null;
+    autoStartFocusTab: boolean;
 
     // Preset
     currentPreset: PomodoroPreset | null;
@@ -55,12 +61,17 @@ export interface TimerState {
     setPresets: (presets: PomodoroPreset[]) => void;
     updateTimerState: (payload: Partial<TimerState>) => void;
     completeSession: () => void;
-    addInterruption: () => void;
+    addInterruption: (note?: string) => void;
+    setActiveSubtask: (id: string | null) => void;
     setFocusMode: (open: boolean) => void;
     setFocusPrompt: (open: boolean) => void;
     setConfirmingNewSession: (state: { duration: number; type: SessionType; taskId: string } | null) => void;
     confirmNewSession: () => void;
     setSessionToRate: (sessionId: string | null) => void;
+    setZenithMode: (val: boolean) => void;
+    toggleZenithMode: () => void;
+    energyLevel: "HIGH" | "LOW";
+    setEnergyLevel: (level: "HIGH" | "LOW") => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -88,6 +99,13 @@ export const useTimerStore = create<TimerState>()(
                 lastUpdated: Date.now(),
                 presets: [],
                 worker: null,
+                isZenithMode: true,
+                energyLevel: "HIGH",
+                setEnergyLevel: (level) => set({ energyLevel: level }),
+                sessionDistractions: [],
+                deepWorkSessionId: null,
+                activeSubtaskId: null,
+                autoStartFocusTab: true,
 
                 initWorker: () => {
                     if (typeof window === "undefined") return;
@@ -183,9 +201,24 @@ export const useTimerStore = create<TimerState>()(
                         lastInterruptionTime: 0,
                         isVictory: false,
                         isCompletionDialogOpen: false,
+                        sessionDistractions: [],
                         // Feature: Centralized focus prompt logic
                         isFocusPromptOpen: type === "FOCUS" && !state.isFocusModeOpen
                     });
+
+                    // Start Deep Work Session if focusing and not already in one
+                    if (type === "FOCUS" && !state.deepWorkSessionId) {
+                        fetch("/api/deep-work/start", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ taskId, projectId: state.currentPreset?.id }) // Using preset or task project
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data?.id) set({ deepWorkSessionId: data.id });
+                        })
+                        .catch(err => console.error("Error starting deep work session:", err));
+                    }
                 },
 
                 pause: () => {
@@ -285,6 +318,7 @@ export const useTimerStore = create<TimerState>()(
                                 duration: elapsed,
                                 interruptions: interruptions,
                                 wasInterrupted: false, // Session completed normally
+                                deepWorkSessionId: state.deepWorkSessionId, // Link to Deep Work Session
                             })
                         })
                             .then(async (res) => {
@@ -333,18 +367,26 @@ export const useTimerStore = create<TimerState>()(
                     }
                 },
 
-                addInterruption: () => {
+                addInterruption: (note?: string) => {
                     const now = Date.now();
                     const state = get();
-                    // Debounce: only allow 1 interruption every 5 seconds to prevent spam
-                    // e.g. rapidly switching tabs or accidentally clicking pause twice
-                    if (now - state.lastInterruptionTime > 5000) {
-                        set({
-                            interruptions: state.interruptions + 1,
-                            lastInterruptionTime: now
-                        });
+                    
+                    set({
+                        interruptions: state.interruptions + 1,
+                        sessionDistractions: note ? [...state.sessionDistractions, note] : state.sessionDistractions,
+                        lastInterruptionTime: now
+                    });
+
+                    // Sync with Deep Work Session if active and note provided
+                    if (state.deepWorkSessionId && note) {
+                        fetch(`/api/deep-work/${state.deepWorkSessionId}/distractions`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ text: note })
+                        }).catch(err => console.error("Error syncing distraction:", err));
                     }
                 },
+                setActiveSubtask: (id: string | null) => set({ activeSubtaskId: id }),
                 setFocusMode: (open: boolean) => set({ isFocusModeOpen: open }),
                 setFocusPrompt: (open: boolean) => set({ isFocusPromptOpen: open }),
                 setConfirmingNewSession: (val) => set({ isConfirmingNewSession: val }),
@@ -365,6 +407,8 @@ export const useTimerStore = create<TimerState>()(
                     set({ isConfirmingNewSession: null });
                 },
                 setSessionToRate: (sessionId: string | null) => set({ sessionToRate: sessionId }),
+                setZenithMode: (val) => set({ isZenithMode: val }),
+                toggleZenithMode: () => set((state) => ({ isZenithMode: !state.isZenithMode })),
             }),
             {
                 name: "timer-storage",
@@ -380,6 +424,8 @@ export const useTimerStore = create<TimerState>()(
                     currentTaskId: state.currentTaskId,
                     estimatedPomodoros: state.estimatedPomodoros,
                     lastUpdated: state.lastUpdated,
+                    isZenithMode: state.isZenithMode,
+                    deepWorkSessionId: state.deepWorkSessionId,
                 }),
             }
         )

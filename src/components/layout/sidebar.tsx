@@ -56,7 +56,7 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                 isCollapsed && !isMobile && "px-0 justify-center"
             )}>
                 <AnimatePresence mode="wait">
-                    {!isCollapsed || isMobile ? (
+                    {(!isCollapsed || isMobile) && (
                         <motion.div 
                             key="full-logo"
                             initial={{ opacity: 0, x: -10 }}
@@ -69,16 +69,6 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                             </div>
                             <h1 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">FocusOS</h1>
                         </motion.div>
-                    ) : (
-                        <motion.div 
-                            key="collapsed-logo"
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.5 }}
-                            className="bg-primary/10 text-primary p-2 rounded-lg mx-auto"
-                        >
-                            <CheckCircle className="h-6 w-6" />
-                        </motion.div>
                     )}
                 </AnimatePresence>
                 
@@ -89,12 +79,12 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                     >
                         <X className="h-5 w-5" />
                     </button>
-                ) : !isCollapsed && (
+                ) : (
                     <button
                         onClick={toggleCollapse}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                        <ChevronLeft className="h-5 w-5" />
+                        {isCollapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
                     </button>
                 )}
             </div>
@@ -140,17 +130,6 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                 })}
             </nav>
 
-            {/* Collapse Toggle (Desktop only, when collapsed) */}
-            {!isMobile && isCollapsed && (
-                <div className="px-3 py-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
-                    <button
-                        onClick={toggleCollapse}
-                        className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                    >
-                        <Menu className="h-5 w-5" />
-                    </button>
-                </div>
-            )}
 
             {/* Theme Toggle */}
             <div className={cn("px-6 py-2 border-t border-slate-100 dark:border-slate-800", isCollapsed && !isMobile && "px-2 overflow-hidden")}>

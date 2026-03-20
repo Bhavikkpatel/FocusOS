@@ -24,14 +24,14 @@ export function ProjectDistributionChart({ data }: ProjectDistributionChartProps
     const hasData = totalMinutes > 0;
 
     return (
-        <Card className="p-6 rounded-3xl border-2 border-slate-100 dark:border-slate-800/50 shadow-sm flex flex-col h-full">
+        <Card className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6">
-                <div className="bg-purple-500/10 p-2 rounded-xl text-purple-500">
+                <div className="bg-purple-500/10 p-2 rounded-xl text-purple-500 shrink-0">
                     <PieChartIcon className="h-5 w-5" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg tracking-tight">Time Distribution</h3>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">By Project (%)</p>
+                    <h3 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Time Distribution</h3>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">By Project (%)</p>
                 </div>
             </div>
 
@@ -45,7 +45,7 @@ export function ProjectDistributionChart({ data }: ProjectDistributionChartProps
                                 cy="45%"
                                 innerRadius={70}
                                 outerRadius={100}
-                                paddingAngle={8}
+                                paddingAngle={data.length > 1 ? 8 : 0}
                                 dataKey="value"
                                 stroke="none"
                             >

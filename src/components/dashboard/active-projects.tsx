@@ -1,10 +1,10 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { FolderOpen, Target, Clock, ArrowRight } from "lucide-react";
+import { FolderOpen, Play } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTimerStore } from "@/store/timer";
+import { Button } from "@/components/ui/button";
 
 interface ProjectStats {
     id: string;
@@ -13,6 +13,8 @@ interface ProjectStats {
     progress: number;
     tasksRemaining: number;
     focusMinutes: number;
+    oldestTaskId: string | null;
+    oldestTaskDuration: number;
 }
 
 interface ActiveProjectsProps {
@@ -20,68 +22,73 @@ interface ActiveProjectsProps {
 }
 
 export function ActiveProjects({ projects }: ActiveProjectsProps) {
+    const { start, setFocusMode, setZenithMode } = useTimerStore();
+
+    const handlePlay = (e: React.MouseEvent, project: ProjectStats) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!project.oldestTaskId) return;
+        setZenithMode(true);
+        setFocusMode(true);
+        start(project.oldestTaskDuration, "FOCUS", project.oldestTaskId);
+    };
+
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500">
-                        <FolderOpen className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Active Projects</h3>
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Deep work targets</p>
-                    </div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl p-6 h-full flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="bg-primary/10 p-2 rounded-xl text-primary shrink-0">
+                    <FolderOpen className="h-5 w-5" />
                 </div>
-                <Link 
-                    href="/projects" 
-                    className="text-xs font-bold uppercase tracking-widest text-primary hover:underline hover:opacity-80 transition-all flex items-center gap-1"
-                >
-                    View All <ArrowRight className="h-3 w-3" />
-                </Link>
+                <div>
+                    <h3 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Active Projects</h3>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">Launchpad</p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {projects.map((project, index) => (
                     <motion.div
                         key={project.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group"
                     >
                         <Link href={`/projects/${project.id}`}>
-                            <Card className="p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800/50 hover:border-primary/20 transition-all duration-300 shadow-sm hover:shadow-md group relative overflow-hidden">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div 
-                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg"
-                                        style={{ backgroundColor: project.color, boxShadow: `0 8px 16px -4px ${project.color}40` }}
-                                    >
-                                        {project.name[0]}
+                            <div className="h-full flex flex-col justify-between p-4 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md">
+                                <div className="flex items-start justify-between gap-3 mb-4">
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-primary transition-colors">{project.name}</h4>
+                                        <p className="font-jetbrains text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                                            {project.tasksRemaining} TASKS LEFT
+                                        </p>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{project.name}</h4>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-1">
-                                                <Target className="h-3 w-3 text-muted-foreground" />
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase">{project.tasksRemaining} tasks left</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3 text-muted-foreground" />
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase">{project.focusMinutes}m spent</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {project.oldestTaskId && (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={(e) => handlePlay(e, project)}
+                                            className="h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-black transition-all shrink-0"
+                                        >
+                                            <Play className="h-3.5 w-3.5 fill-current" />
+                                        </Button>
+                                    )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                                        <span>Progress</span>
-                                        <span className="text-slate-900 dark:text-white">{project.progress}%</span>
+                                <div className="space-y-1.5 mt-auto">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">PROGRESS</span>
+                                        <span className="text-[10px] font-jetbrains font-bold text-slate-700 dark:text-slate-300">{project.progress}%</span>
                                     </div>
-                                    <Progress value={project.progress} className="h-1.5" indicatorClassName="bg-slate-900 dark:bg-white" />
+                                    <div className="h-1 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${project.progress}%` }}
+                                            className="h-full bg-primary"
+                                        />
+                                    </div>
                                 </div>
-                                
-                                <ArrowRight className="absolute bottom-5 right-5 h-4 w-4 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                            </Card>
+                            </div>
                         </Link>
                     </motion.div>
                 ))}

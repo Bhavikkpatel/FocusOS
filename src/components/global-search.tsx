@@ -24,14 +24,26 @@ import { TaskStatus } from "@prisma/client";
 interface GlobalSearchProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    projectId?: string;
+    projectName?: string;
 }
 
-export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
+export function GlobalSearch({ open, onOpenChange, projectId, projectName }: GlobalSearchProps) {
     const router = useRouter();
     const [query, setQuery] = React.useState("");
     const debouncedQuery = useDebounce(query, 300);
     
-    const { data: searchResults, isLoading } = useGlobalSearch(debouncedQuery);
+    const { data: searchResults, isLoading } = useGlobalSearch(debouncedQuery, projectId);
+
+    React.useEffect(() => {
+        if (!open) {
+            setQuery("");
+        }
+    }, [open]);
+
+    React.useEffect(() => {
+        setQuery("");
+    }, [projectId]);
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -61,7 +73,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
     return (
         <CommandDialog open={open} onOpenChange={onOpenChange}>
             <CommandInput 
-                placeholder="Search tasks, projects, or tags..." 
+                placeholder={projectName ? `Search in ${projectName}...` : "Search tasks, projects, or tags..."} 
                 value={query}
                 onValueChange={setQuery}
             />

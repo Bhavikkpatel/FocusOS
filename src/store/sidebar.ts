@@ -11,7 +11,7 @@ interface SidebarStore {
 
 export const useSidebarStore = create<SidebarStore>((set) => ({
     isOpen: false,
-    isCollapsed: false,
+    isCollapsed: true,
     open: () => set({ isOpen: true }),
     close: () => set({ isOpen: false }),
     toggle: () => set((state) => ({ isOpen: !state.isOpen })),

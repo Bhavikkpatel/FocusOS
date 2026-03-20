@@ -1,22 +1,22 @@
 "use client";
-
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import {
-    Play, Pause, RotateCcw, Target, Timer, Clock, Activity,
-    Pencil, Trash2, X, Archive, Plus, Maximize2,
-    Star, AlertCircle, StickyNote, History as HistoryIcon, ListChecks, CheckCircle, ChevronRight, CalendarIcon, Minus, BarChart2, Repeat,
-    Paperclip, Link as LinkIcon, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Loader2, Eye
+    Play, Pause, RotateCcw, Target, Activity,
+    Trash2, X, Plus, Maximize2, Archive,
+    StickyNote, History as HistoryIcon, ListChecks, CalendarIcon, Repeat,
+    Paperclip, Link as LinkIcon, FileIcon, Loader2,
+    Clock, AlertCircle
 } from "lucide-react";
 import { AttachmentPreview } from "@/components/tasks/attachment-preview";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
 import { useSubtasks, useCreateSubtask, useUpdateSubtask, useDeleteSubtask } from "@/hooks/use-subtasks";
-import { useAttachments, useUploadFile, useAddAttachment, useDeleteAttachment } from "@/hooks/use-attachments";
+import { useAttachments, useAddAttachment, useDeleteAttachment } from "@/hooks/use-attachments";
 import { useTimerStore } from "@/store/timer";
 import { SessionTimeline } from "@/components/tasks/session-timeline";
-import { DifficultyBadge } from "./difficulty-badge";
-import { TagBadge } from "./tags/tag-badge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,7 +34,6 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
     Dialog,
@@ -47,12 +46,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskPriority } from "@prisma/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 interface TaskExpandedViewProps {
     task: TaskWithSessions;
@@ -61,10 +57,14 @@ interface TaskExpandedViewProps {
     onDelete?: (taskId: string) => void;
 }
 
-export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpandedViewProps) {
+export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
     const { mutate: updateTask } = useUpdateTask();
     const [notes, setNotes] = useState(task.notes || "");
+    const [showArchiveDialog, setShowArchiveDialog] = useState(false);
     const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+    const [activeTab, setActiveTab] = useState<"FOCUS" | "DETAILS" | "HISTORY">("FOCUS");
+    const [isInactive, setIsInactive] = useState(false);
+    const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Sync notes when switching tasks without closing the view
     useEffect(() => {
@@ -83,9 +83,11 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
         resume,
         reset,
         setFocusMode,
+        activeSubtaskId,
+        setActiveSubtask,
+        autoStartFocusTab,
     } = useTimerStore();
 
-    const isActive = currentTaskId === task.id && isRunning;
 
     const handleTimerToggle = () => {
         if (currentTaskId === task.id && (isRunning || isPaused)) {
@@ -106,92 +108,58 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
     const updateSubtask = useUpdateSubtask();
     const deleteSubtask = useDeleteSubtask();
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
-    const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState("");
 
     // Attachments state
     const { data: attachments = [] } = useAttachments(task.id);
-    const uploadFile = useUploadFile(task.id);
     const addLink = useAddAttachment(task.id);
     const deleteAttachment = useDeleteAttachment(task.id);
 
     // Preview state
-    const [previewAttachment, setPreviewAttachment] = useState<any>(null);
+    const [previewAttachment] = useState<any>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [linkName, setLinkName] = useState("");
     const [linkUrl, setLinkUrl] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [expandedSubtaskId, setExpandedSubtaskId] = useState<string | null>(null);
-    const [subtaskNotes, setSubtaskNotes] = useState("");
     const subtaskInputRef = useRef<HTMLInputElement>(null);
-    const editInputRef = useRef<HTMLInputElement>(null);
 
-    // --- Analytics Calculations ---
-    const focusSessions = task.pomodoroSessions?.filter(s => s.type === "FOCUS") || [];
-    const totalFocusTime = focusSessions.reduce((acc, s) => acc + s.duration, 0);
-    const totalSessions = focusSessions.length;
-    const avgSessionLength = totalSessions > 0 ? Math.round(totalFocusTime / totalSessions) : 0;
-
-    // Average Rating Calculation (Story 7)
-    const ratedSessions = focusSessions.filter(s => s.rating !== null && s.rating !== undefined);
-    const avgRating = ratedSessions.length > 0
-        ? (ratedSessions.reduce((acc, curr) => acc + (curr.rating || 0), 0) / ratedSessions.length)
-        : null;
-
-    // Distraction Tracking (Story 9)
-    const totalInterruptions = focusSessions.reduce((acc, s) => acc + (s.interruptions || 0), 0);
-
-    const formatDuration = (seconds: number) => {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        if (h > 0) return `${h}h ${m}m`;
-        return `${m}m`;
-    };
-
-    const formatAvgDuration = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        if (m > 0) return `${m}m ${s}s`;
-        return `${s}s`;
-    };
-
-    // --- Estimation Accuracy ---
-    const accuracy = task.estimatedPomodoros > 0 && totalSessions > 0
-        ? Math.round((task.estimatedPomodoros / totalSessions) * 100)
-        : null;
-    const isOverEstimate = totalSessions > task.estimatedPomodoros && task.estimatedPomodoros > 0;
-
-    // Subtask progress
-    const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
     const totalSubtasks = subtasks.length;
-    const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+    const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
 
-    const toggleSubtaskNotes = (subtaskId: string, currentNotes: string) => {
-        if (expandedSubtaskId === subtaskId) {
-            setExpandedSubtaskId(null);
-        } else {
-            setExpandedSubtaskId(subtaskId);
-            setSubtaskNotes(currentNotes);
-        }
-    };
 
-    // Auto-save subtask notes debounce
+    // Ghost UI Logic (Story 5)
     useEffect(() => {
-        if (!expandedSubtaskId) return;
-        const current = subtasks.find(s => s.id === expandedSubtaskId);
-        if (!current || subtaskNotes === (current.notes || "")) return;
+        if (activeTab !== "FOCUS") {
+            setIsInactive(false);
+            return;
+        }
 
-        const timer = setTimeout(() => {
-            updateSubtask.mutate({
-                taskId: task.id,
-                subtaskId: expandedSubtaskId,
-                notes: subtaskNotes || null,
-            });
-        }, 800);
+        const resetInactivity = () => {
+            setIsInactive(false);
+            if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+            inactivityTimeoutRef.current = setTimeout(() => setIsInactive(true), 5000);
+        };
 
-        return () => clearTimeout(timer);
-    }, [subtaskNotes, expandedSubtaskId, subtasks, task.id, updateSubtask]);
+        const handleInteraction = () => resetInactivity();
+
+        window.addEventListener("mousemove", handleInteraction);
+        window.addEventListener("keydown", handleInteraction);
+        resetInactivity();
+
+        return () => {
+            window.removeEventListener("mousemove", handleInteraction);
+            window.removeEventListener("keydown", handleInteraction);
+            if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+        };
+    }, [activeTab]);
+
+    // Auto-start timer on Focus tab (Story 10)
+    useEffect(() => {
+        if (activeTab === "FOCUS" && autoStartFocusTab && !isRunning && !isPaused && currentTaskId !== task.id) {
+            handleTimerToggle();
+        }
+    }, [activeTab, autoStartFocusTab, isRunning, isPaused, currentTaskId, task.id]);
+
 
     // Auto-save notes debounce
     useEffect(() => {
@@ -204,12 +172,6 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
         return () => clearTimeout(timer);
     }, [notes, task.id, task.notes, updateTask]);
 
-    // Focus edit input when editing starts
-    useEffect(() => {
-        if (editingSubtaskId && editInputRef.current) {
-            editInputRef.current.focus();
-        }
-    }, [editingSubtaskId]);
 
     const isTaskRunning = currentTaskId === task.id && (isRunning || isPaused);
     const displayTotal = isTaskRunning ? total : ((task.pomodoroDuration || 25) * 60);
@@ -254,31 +216,8 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
         }
     };
 
-    const handleStartEditSubtask = (subtaskId: string, currentTitle: string) => {
-        setEditingSubtaskId(subtaskId);
-        setEditingTitle(currentTitle);
-    };
 
-    const handleSaveEditSubtask = () => {
-        if (editingSubtaskId && editingTitle.trim()) {
-            updateSubtask.mutate({
-                taskId: task.id,
-                subtaskId: editingSubtaskId,
-                title: editingTitle.trim(),
-            });
-        }
-        setEditingSubtaskId(null);
-        setEditingTitle("");
-    };
 
-    const handleEditKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleSaveEditSubtask();
-        } else if (e.key === "Escape") {
-            setEditingSubtaskId(null);
-            setEditingTitle("");
-        }
-    };
 
     const handleDeleteSubtask = (subtaskId: string) => {
         deleteSubtask.mutate({ taskId: task.id, subtaskId });
@@ -293,870 +232,607 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
             className="flex-1 flex flex-col bg-white dark:bg-slate-900 shadow-sm border-l border-slate-200 dark:border-slate-800 h-full"
         >
             <motion.div
-                className="flex h-full flex-col"
+                className="flex h-full flex-col overflow-hidden relative"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
             >
-                {/* Header Top Bar */}
-                <div className={cn(
-                    "flex flex-col gap-4 border-b p-4 sm:p-6 transition-colors duration-300",
-                    task.priority === "URGENT" && "bg-red-50/50 dark:bg-red-900/40",
-                    task.priority === "HIGH" && "bg-orange-50/50 dark:bg-orange-900/40",
-                    task.priority === "MEDIUM" && "bg-blue-50/50 dark:bg-blue-900/40",
-                    (!task.priority || task.priority === "LOW") && "bg-white dark:bg-slate-900"
+                {/* 2px Progress Indicator */}
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-100 dark:bg-slate-800 z-50">
+                    <motion.div 
+                        className="h-full bg-primary"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(completedSubtasks / Math.max(totalSubtasks, 1)) * 100}%` }}
+                        transition={{ type: "spring", bounce: 0, duration: 1 }}
+                    />
+                </div>
+
+                {/* Simplified Header */}
+                <header className={cn(
+                    "flex items-center justify-between px-4 sm:px-6 h-20 border-b sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-40 transition-all duration-500",
+                    isInactive && activeTab === "FOCUS" && "opacity-0 pointer-events-none -translate-y-4"
                 )}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-3">
-                            {/* Breadcrumbs / Metadata */}
-                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
-                                <div className="flex items-center gap-1.5 opacity-80">
-                                    <CheckCircle className="h-3 w-3 text-primary" />
-                                    <span>FocusOS</span>
-                                    {isActive && (
-                                        <Badge className="ml-2 bg-primary text-white text-[9px] font-bold px-1.5 py-0 animate-pulse border-none">
-                                            ACTIVE
-                                        </Badge>
+                    {/* Left Section: Title */}
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white truncate">
+                            {task.title}
+                        </h2>
+                    </div>
+
+                    {/* Center Section: Tabs (Story Update) */}
+                    <div className="hidden lg:flex flex-1 justify-center">
+                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#161618] p-1 rounded-2xl border border-slate-200 dark:border-white/5">
+                            {[
+                                { id: "FOCUS", label: "Focus", icon: Target },
+                                { id: "DETAILS", label: "Details", icon: ListChecks },
+                                { id: "HISTORY", label: "History", icon: HistoryIcon },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={cn(
+                                        "relative px-4 sm:px-6 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all duration-300 flex items-center gap-2",
+                                        activeTab === tab.id 
+                                            ? "text-white dark:text-black" 
+                                            : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                                     )}
-                                </div>
-                                <ChevronRight className="h-3 w-3 opacity-40" />
-                                <div className="flex items-center gap-1.5">
-                                    <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{ backgroundColor: task.projectRef?.color || "#3B82F6" }}
-                                    />
-                                    <span className="text-slate-700 dark:text-slate-300">
-                                        {task.projectRef?.name || "Daily"}
-                                    </span>
-                                </div>
-                                {(task as any).category && (
-                                    <>
-                                        <ChevronRight className="h-3 w-3 opacity-40" />
-                                        <span className="text-slate-700 dark:text-slate-300 truncate max-w-[100px]" title={task.category?.name}>
-                                            {task.category?.name}
-                                        </span>
-                                    </>
-                                )}
-                                <ChevronRight className="h-3 w-3 opacity-40" />
-                                <span className="font-medium opacity-70">
-                                    Created {format(new Date(task.createdAt), "MMM d, yyyy")}
-                                </span>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3">
-                                <DifficultyBadge difficulty={task.difficulty} />
-
-                                <Select
-                                    value={task.priority}
-                                    onValueChange={(val: TaskPriority) => updateTask({ id: task.id, priority: val })}
                                 >
-                                    <SelectTrigger className="h-7 w-28 text-xs font-semibold focus:ring-0 bg-white/50 dark:bg-slate-800/50">
-                                        <SelectValue placeholder="Priority" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="LOW">Low</SelectItem>
-                                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                                        <SelectItem value="HIGH">High</SelectItem>
-                                        <SelectItem value="URGENT">Urgent</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className={cn(
-                                                "h-7 text-xs font-semibold px-3 flex items-center gap-2 bg-white/50 dark:bg-slate-800/50",
-                                                !task.dueDate && "text-muted-foreground border-dashed"
-                                            )}
-                                        >
-                                            <CalendarIcon className="h-3.5 w-3.5" />
-                                            {task.dueDate ? format(new Date(task.dueDate), "MMM d, yyyy") : <span>Set Due Date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={task.dueDate ? new Date(task.dueDate) : undefined}
-                                            onSelect={(date) => updateTask({ id: task.id, dueDate: date || null })}
-                                            disabled={(date) => {
-                                                const today = new Date();
-                                                today.setHours(0, 0, 0, 0);
-                                                return date < today;
-                                            }}
-                                            initialFocus
+                                    {activeTab === tab.id && (
+                                        <motion.div
+                                            layoutId="activeTaskDetailTab"
+                                            className="absolute inset-0 bg-primary rounded-xl"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                         />
-                                        {task.dueDate && (
-                                            <div className="p-2 border-t bg-slate-50 dark:bg-slate-800 flex justify-end">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        updateTask({ id: task.id, dueDate: null });
-                                                    }}
-                                                    className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                >
-                                                    Clear Date
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </PopoverContent>
-                                </Popover>
+                                    )}
+                                    <span className="relative z-10 flex items-center gap-2">
+                                        <tab.icon className="h-3.5 w-3.5" />
+                                        {tab.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Right Section: Actions */}
+                    <div className="flex-1 flex items-center justify-end gap-3 shrink-0">
+                        <Select
+                            value={task.status}
+                            onValueChange={(val: any) => updateTask({ id: task.id, status: val })}
+                        >
+                            <SelectTrigger className={cn(
+                                "h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-widest border-2 transition-all",
+                                task.status === "COMPLETED" 
+                                    ? "bg-green-500 border-green-500 text-white hover:bg-green-600 focus:ring-green-500/20" 
+                                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-primary/50"
+                            )}>
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent align="end" className="rounded-xl border-2">
+                                <SelectItem value="TODO">To Do</SelectItem>
+                                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                <SelectItem value="READY_FOR_REVIEW">Review</SelectItem>
+                                <SelectItem value="COMPLETED">Completed</SelectItem>
+                                <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                                {/* Status Badge */}
-                                {(() => {
-                                    const statusMap: Record<string, { label: string; style: string }> = {
-                                        TODO: { label: "To Do", style: "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300" },
-                                        IN_PROGRESS: { label: "In Progress", style: "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
-                                        READY_FOR_REVIEW: { label: "Review", style: "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400" },
-                                        COMPLETED: { label: "Done", style: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" },
-                                        ON_HOLD: { label: "On Hold", style: "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400" },
-                                    };
-                                    const statusCycle = ["TODO", "IN_PROGRESS", "READY_FOR_REVIEW", "COMPLETED"] as const;
-                                    const current = statusMap[task.status] || statusMap.TODO;
-                                    const handleStatusClick = () => {
-                                        const idx = statusCycle.indexOf(task.status as typeof statusCycle[number]);
-                                        const next = idx >= 0 ? statusCycle[(idx + 1) % statusCycle.length] : "IN_PROGRESS";
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-amber-500/50 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-muted-foreground hover:text-amber-600 transition-all"
+                            onClick={() => setShowArchiveDialog(true)}
+                            title="Archive Task"
+                        >
+                            <Archive className="h-5 w-5" />
+                        </Button>
 
-                                        // Prevent completion if there are unfinished subtasks
-                                        if (next === "COMPLETED" && subtasks.length > 0) {
-                                            const hasUnfinishedSubtasks = subtasks.some((st) => !st.isCompleted);
-                                            if (hasUnfinishedSubtasks) {
-                                                toast.error("Finish all subtasks before completing the task");
-                                                return;
-                                            }
-                                        }
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+                            onClick={onClose}
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+                </header>
 
-                                        updateTask({ id: task.id, status: next });
-                                    };
-                                    return (
-                                        <button
-                                            onClick={handleStatusClick}
-                                            className={cn("rounded-full px-3 py-1 text-xs font-semibold transition-colors cursor-pointer border shadow-sm", current.style)}
-                                        >
-                                            {current.label}
-                                        </button>
-                                    );
-                                })()}
 
-                                {/* Tags */}
-                                {task.tags && task.tags.length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-1 ml-1 pl-3 border-l border-slate-200 dark:border-slate-800">
-                                        {task.tags.map((tag: any) => (
-                                            typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} /> : null
-                                        ))}
-                                    </div>
+                {/* Mobile Tab Switcher */}
+                <div className={cn(
+                    "lg:hidden flex items-center px-4 sm:px-6 py-3 bg-white dark:bg-slate-900 border-b shrink-0 transition-all duration-500",
+                    isInactive && activeTab === "FOCUS" && "opacity-0 pointer-events-none translate-y-4"
+                )}>
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#161618] p-1 rounded-2xl border border-slate-200 dark:border-white/5 mx-auto">
+                        {[
+                            { id: "FOCUS", label: "Focus", icon: Target },
+                            { id: "DETAILS", label: "Details", icon: ListChecks },
+                            { id: "HISTORY", label: "History", icon: HistoryIcon },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={cn(
+                                    "relative px-4 sm:px-6 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all duration-300 flex items-center gap-2",
+                                    activeTab === tab.id 
+                                        ? "text-white dark:text-black" 
+                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                                 )}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {onEdit && (
-                                <Button variant="ghost" size="icon" onClick={() => onEdit(task)} className="rounded-full text-muted-foreground hover:text-foreground">
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            )}
-                            {isTaskRunning && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setFocusMode(true)}
-                                    className="rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                    title="Enter Focus Mode"
-                                >
-                                    <Maximize2 className="h-4 w-4" />
-                                </Button>
-                            )}
-                            <div className="flex items-center gap-2">
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 text-xs font-semibold px-3 flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 border-amber-200 dark:border-amber-900/50"
-                                        >
-                                            <Archive className="h-3.5 w-3.5" />
-                                            <span>Archive</span>
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Archive this task?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This task will be moved to the archive. You can view archived tasks later or restore them if needed.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={() => {
-                                                    updateTask({ id: task.id, status: "ARCHIVED" });
-                                                    onClose();
-                                                    toast.success("Task archived");
-                                                }}
-                                                className="bg-amber-600 hover:bg-amber-700 text-white"
-                                            >
-                                                Archive Task
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 text-xs font-semibold px-3 flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 border-red-200 dark:border-red-900/50"
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                            <span>Delete</span>
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Permanently delete this task?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your task and remove its data from our servers.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={() => {
-                                                    onDelete?.(task.id);
-                                                    onClose();
-                                                }}
-                                                className="bg-red-600 hover:bg-red-700 text-white"
-                                            >
-                                                Delete Task
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-
-                                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-                                    <X className="h-6 w-6" />
-                                </Button>
-                            </div>
-                        </div>
+                            >
+                                {activeTab === tab.id && (
+                                    <motion.div
+                                        layoutId="activeTaskDetailTabMobile"
+                                        className="absolute inset-0 bg-primary rounded-xl"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <span className="relative z-10 flex items-center gap-2">
+                                    <tab.icon className="h-3.5 w-3.5" />
+                                    {tab.label}
+                                </span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
                 {/* Main Content Areas */}
-                <div className="flex flex-1 overflow-hidden">
-                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] w-full overflow-hidden">
-
-                        {/* Left Column: Details, Subtasks & Progress */}
-                        <div className="flex flex-col border-r h-full overflow-y-auto custom-scrollbar bg-background/50">
-                            <div className="p-8 pb-4">
-                                <h2 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white mb-4">
-                                    {task.title}
-                                </h2>
-                                {task.description && (
-                                    <div className="bg-muted/30 rounded-xl p-4 border border-dashed text-slate-700 dark:text-slate-300 leading-relaxed">
-                                        {task.description}
+                <div className="flex-1 overflow-hidden relative">
+                    <AnimatePresence mode="wait">
+                        {activeTab === "FOCUS" && (
+                            <motion.div
+                                key="focus"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                                className="h-full w-full flex flex-col items-center justify-center p-8 overflow-y-auto custom-scrollbar"
+                            >
+                                <div className="max-w-3xl w-full flex flex-col items-center gap-12 py-12">
+                                    {/* Task Title in Focus mode */}
+                                    <div className="text-center space-y-2">
+                                        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                            {task.title}
+                                        </h2>
+                                        <p className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground opacity-60">
+                                            Currently Executing
+                                        </p>
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Subtasks & Notes Grid */}
-                            <div className="px-8 py-4 grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
-                                {/* Subtasks Section */}
-                                <div className="rounded-2xl border bg-card shadow-sm overflow-hidden flex flex-col relative min-h-0">
-                                    <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/20">
-                                        <div className="flex items-center gap-2">
-                                            <ListChecks className="h-4 w-4 text-primary" />
-                                            <span className="font-bold text-sm tracking-tight">Subtasks</span>
-                                            {totalSubtasks > 0 && (
-                                                <Badge variant="secondary" className="ml-1 text-[10px] font-mono font-bold px-1.5 h-4">
-                                                    {completedSubtasks}/{totalSubtasks}
-                                                </Badge>
+                                    {/* Centered Timer (JetBrains Mono) */}
+                                    <div className="flex flex-col items-center gap-8">
+                                        <div className="text-[12rem] font-black tracking-tighter tabular-nums leading-none text-slate-900 dark:text-white font-jetbrains">
+                                            {formatTime(remaining)}
+                                        </div>
+
+                                        <div className={cn(
+                                            "flex items-center gap-8 transition-opacity duration-500",
+                                            isInactive && "opacity-20"
+                                        )}>
+                                            <Button
+                                                size="lg"
+                                                className={cn(
+                                                    "h-20 w-20 rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95",
+                                                    isTaskRunning && isRunning ? "bg-amber-500 hover:bg-amber-600 ring-8 ring-amber-100 dark:ring-amber-900/30" : "bg-primary ring-8 ring-primary/20"
+                                                )}
+                                                onClick={handleTimerToggle}
+                                            >
+                                                {isTaskRunning && isRunning ? (
+                                                    <Pause className="h-10 w-10 fill-current" />
+                                                ) : (
+                                                    <Play className="h-10 w-10 fill-current ml-1" />
+                                                )}
+                                            </Button>
+
+                                            {isTaskRunning && (
+                                                <div className="flex items-center gap-4">
+                                                    <Button 
+                                                        size="icon" 
+                                                        variant="outline" 
+                                                        className="h-20 w-20 rounded-full border-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+                                                        onClick={reset}
+                                                        title="Reset Timer"
+                                                    >
+                                                        <RotateCcw className="h-8 w-8" />
+                                                    </Button>
+                                                    
+                                                    <Button 
+                                                        size="icon" 
+                                                        variant="outline" 
+                                                        className="h-20 w-20 rounded-full border-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+                                                        onClick={() => setFocusMode(true)}
+                                                        title="Enter Fullscreen Focus"
+                                                    >
+                                                        <Maximize2 className="h-8 w-8" />
+                                                    </Button>
+                                                </div>
                                             )}
                                         </div>
-                                        {totalSubtasks > 0 && (
-                                            <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">{progressPercent}% DONE</span>
-                                        )}
                                     </div>
 
-                                    {totalSubtasks > 0 && (
-                                        <div className="px-5 pt-4 pb-2 shrink-0">
-                                            <Progress value={progressPercent} className="h-2" />
+                                    {/* Subtasks as Large Rows */}
+                                    <div className="w-full space-y-4 pt-12">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+                                                <ListChecks className="h-4 w-4" />
+                                                <span>Mission Checklist</span>
+                                            </div>
+                                            <Badge variant="secondary" className="font-mono">{completedSubtasks}/{totalSubtasks}</Badge>
                                         </div>
-                                    )}
 
-                                    <div className="px-5 py-2 space-y-2">
-                                        <AnimatePresence initial={false}>
-                                            {subtasks.map((subtask) => (
-                                                <motion.div
-                                                    key={subtask.id}
-                                                    initial={{ opacity: 0, scale: 0.98 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.98 }}
-                                                    transition={{ duration: 0.15 }}
-                                                    className="group flex flex-col gap-1 rounded-xl px-2 py-1.5 hover:bg-muted/50 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Checkbox
-                                                            checked={subtask.isCompleted}
-                                                            onCheckedChange={() => handleToggleSubtask(subtask.id, subtask.isCompleted)}
-                                                            className="h-5 w-5 rounded-md border-2 border-slate-300 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                                                        />
-                                                        {editingSubtaskId === subtask.id ? (
-                                                            <Input
-                                                                ref={editInputRef}
-                                                                value={editingTitle}
-                                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                                onBlur={handleSaveEditSubtask}
-                                                                onKeyDown={handleEditKeyDown}
-                                                                className="h-8 flex-1 text-sm px-2 font-medium"
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {subtasks.map((subtask) => {
+                                                const isFocused = activeSubtaskId === subtask.id;
+                                                return (
+                                                    <motion.div
+                                                        key={subtask.id}
+                                                        layout
+                                                        className={cn(
+                                                            "group relative flex items-center gap-6 p-6 rounded-[2rem] border-4 transition-all duration-500 cursor-pointer overflow-hidden",
+                                                            isFocused 
+                                                                ? "bg-primary/5 border-primary shadow-xl shadow-primary/10" 
+                                                                : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700",
+                                                            isInactive && !isFocused && "opacity-20",
+                                                            subtask.isCompleted && "bg-slate-50 dark:bg-slate-900/50 opacity-40"
+                                                        )}
+                                                        onClick={() => setActiveSubtask(subtask.id)}
+                                                    >
+                                                        <div className="relative z-10 flex-shrink-0">
+                                                            <Checkbox
+                                                                checked={subtask.isCompleted}
+                                                                onCheckedChange={() => handleToggleSubtask(subtask.id, subtask.isCompleted)}
+                                                                className="h-8 w-8 rounded-xl border-4 border-slate-200 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 transition-all hover:scale-110 active:scale-90"
                                                             />
-                                                        ) : (
-                                                            <span
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                onClick={() => handleStartEditSubtask(subtask.id, subtask.title)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === "Enter" || e.key === " ") {
-                                                                        handleStartEditSubtask(subtask.id, subtask.title);
-                                                                    }
-                                                                }}
-                                                                className={cn(
-                                                                    "flex-1 text-sm font-medium transition-colors cursor-text",
-                                                                    subtask.isCompleted && "line-through text-muted-foreground opacity-60"
-                                                                )}
-                                                            >
+                                                        </div>
+
+                                                        <div className="relative z-10 flex-1 min-w-0">
+                                                            <span className={cn(
+                                                                "text-2xl font-bold transition-all duration-300 block truncate",
+                                                                isFocused ? "text-primary" : "text-slate-700 dark:text-slate-300",
+                                                                subtask.isCompleted && "line-through opacity-50"
+                                                            )}>
                                                                 {subtask.title}
                                                             </span>
-                                                        )}
-                                                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        </div>
+
+                                                        <div className="relative z-10 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className={cn(
-                                                                    "h-7 w-7 rounded-full text-muted-foreground",
-                                                                    expandedSubtaskId === subtask.id && "text-primary bg-primary/10"
-                                                                )}
-                                                                onClick={() => toggleSubtaskNotes(subtask.id, subtask.notes || "")}
+                                                                className="h-12 w-12 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/20"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteSubtask(subtask.id);
+                                                                }}
                                                             >
-                                                                <StickyNote className="h-3.5 w-3.5" />
+                                                                <Trash2 className="h-6 w-6" />
                                                             </Button>
+                                                        </div>
+
+                                                        {isFocused && (
+                                                            <motion.div
+                                                                layoutId="activeSubtaskIndicator"
+                                                                className="absolute left-0 top-0 bottom-0 w-2 bg-primary"
+                                                            />
+                                                        )}
+                                                    </motion.div>
+                                                );
+                                            })}
+
+                                            {/* Add Subtask Row in Focus Mode */}
+                                            <div className="flex items-center gap-4 p-4 rounded-[2rem] border-4 border-dashed border-slate-200 dark:border-slate-800 focus-within:border-primary/50 transition-all mt-4 bg-muted/5">
+                                                <Plus className="h-6 w-6 text-muted-foreground ml-2" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Next mission objective..."
+                                                    value={newSubtaskTitle}
+                                                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                                    onKeyDown={handleSubtaskKeyDown}
+                                                    className="flex-1 bg-transparent text-xl outline-none placeholder:text-muted-foreground/30 font-bold"
+                                                />
+                                                {newSubtaskTitle.trim() && (
+                                                    <Button size="lg" className="rounded-2xl px-8 font-black text-sm uppercase tracking-widest" onClick={handleCreateSubtask}>ADD</Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === "DETAILS" && (
+                            <motion.div
+                                key="details"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="h-full w-full overflow-hidden flex flex-col"
+                            >
+                                <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] h-full w-full overflow-hidden">
+                                    {/* Left Pane: Notes (Composition) */}
+                                    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800">
+                                        <div className="p-10 space-y-8 max-w-4xl mx-auto w-full">
+                                            <div className="space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                        <StickyNote className="h-3.5 w-3.5" />
+                                                        <span>Composition & Notes</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="group relative min-h-[500px] flex flex-col gap-4">
+                                                    <div className="flex-1 rounded-3xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/50 p-6 transition-all focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-800 shadow-sm relative overflow-hidden">
+                                                        <Textarea
+                                                            placeholder="Start writing in Markdown... (headings, lists, code blocks supported)"
+                                                            className="min-h-[400px] w-full resize-none border-none bg-transparent p-0 text-lg leading-relaxed font-sans focus-visible:ring-0 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                                                            value={notes}
+                                                            onChange={(e) => setNotes(e.target.value)}
+                                                        />
+                                                        
+                                                        {notes.trim().length > 0 && (
+                                                            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 prose prose-slate dark:prose-invert max-w-none">
+                                                                <div className="text-[10px] uppercase tracking-widest font-black text-slate-300 dark:text-slate-700 mb-4 select-none">Preview</div>
+                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                    {notes}
+                                                                </ReactMarkdown>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Subtasks in Details Mode (Organizing) */}
+                                            <div className="space-y-6 pb-12">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                        <ListChecks className="h-3.5 w-3.5" />
+                                                        <span>Subtasks & Structure</span>
+                                                    </div>
+                                                    <Badge variant="secondary" className="font-mono text-[10px]">{completedSubtasks}/{totalSubtasks}</Badge>
+                                                </div>
+                                                
+                                                <div className="space-y-2">
+                                                    {subtasks.map((subtask) => (
+                                                        <div key={subtask.id} className="group flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                                                            <Checkbox
+                                                                checked={subtask.isCompleted}
+                                                                onCheckedChange={() => handleToggleSubtask(subtask.id, subtask.isCompleted)}
+                                                                className="h-5 w-5 rounded-lg border-2"
+                                                            />
+                                                            <span className={cn(
+                                                                "flex-1 text-sm font-medium",
+                                                                subtask.isCompleted && "line-through text-slate-400"
+                                                            )}>
+                                                                {subtask.title}
+                                                            </span>
                                                             <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive"
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                 onClick={() => handleDeleteSubtask(subtask.id)}
                                                             >
-                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                <Trash2 className="h-4 w-4 text-slate-300 hover:text-red-500" />
                                                             </Button>
                                                         </div>
-                                                    </div>
-                                                    <AnimatePresence>
-                                                        {expandedSubtaskId === subtask.id && (
-                                                            <motion.div
-                                                                initial={{ opacity: 0, height: 0 }}
-                                                                animate={{ opacity: 1, height: "auto" }}
-                                                                exit={{ opacity: 0, height: 0 }}
-                                                                className="ml-8 mt-1 pr-2"
-                                                            >
-                                                                <Textarea
-                                                                    placeholder="Subtask details..."
-                                                                    value={subtaskNotes}
-                                                                    onChange={(e) => setSubtaskNotes(e.target.value)}
-                                                                    className="min-h-[60px] resize-none text-xs bg-muted/20 border-slate-200 dark:border-slate-800 rounded-lg p-2 focus-visible:ring-1"
-                                                                />
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-
-                                        <div className="flex items-center gap-3 px-3 py-2 mt-2 shrink-0 bg-muted/10 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 focus-within:border-primary transition-colors">
-                                            <Plus className="h-4 w-4 text-muted-foreground" />
-                                            <input
-                                                ref={subtaskInputRef}
-                                                type="text"
-                                                placeholder="Add a next step..."
-                                                value={newSubtaskTitle}
-                                                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                                                onKeyDown={handleSubtaskKeyDown}
-                                                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50 font-medium"
-                                            />
-                                            {newSubtaskTitle.trim() && (
-                                                <Button size="sm" className="h-7 px-3 text-xs font-bold rounded-lg" onClick={handleCreateSubtask}>ADD</Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Internal Notes Container */}
-                                <div className="rounded-2xl border bg-card shadow-sm p-4 sm:p-5 flex flex-col relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-opacity opacity-50 group-hover:opacity-100" />
-                                    <div className="mb-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                                            <StickyNote className="h-4 w-4 text-amber-500" />
-                                            <span>Sticky Notes</span>
-                                        </div>
-                                        <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground text-right opacity-50 transition-opacity">
-                                            {notes !== (task.notes || "") ? "•• Saving" : "✓ Persistent"}
-                                        </div>
-                                    </div>
-                                    <Textarea
-                                        placeholder="Jot down context, keys, or links..."
-                                        className="flex-1 min-h-[200px] xl:min-h-[160px] resize-none border-2 border-slate-100/50 dark:border-slate-800/50 bg-amber-50/30 p-4 text-amber-900/90 font-medium text-sm leading-relaxed focus-visible:ring-amber-500/30 dark:bg-amber-900/10 dark:text-amber-100/90 rounded-xl shadow-inner placeholder:text-amber-900/30 dark:placeholder:text-amber-100/30 transition-all z-10 relative"
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Attachments Section */}
-                            <div className="px-8 py-4">
-                                <div className="rounded-2xl border bg-card shadow-sm overflow-hidden flex flex-col relative min-h-0">
-                                    <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/20">
-                                        <div className="flex items-center gap-2">
-                                            <Paperclip className="h-4 w-4 text-primary" />
-                                            <span className="font-bold text-sm tracking-tight">Attachments</span>
-                                            {attachments.length > 0 && (
-                                                <Badge variant="secondary" className="ml-1 text-[10px] font-mono font-bold px-1.5 h-4">
-                                                    {attachments.length}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-[10px] font-bold uppercase tracking-wider px-2"
-                                                onClick={() => setIsLinkDialogOpen(true)}
-                                            >
-                                                <LinkIcon className="h-3 w-3 mr-1.5" />
-                                                Add Link
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-[10px] font-bold uppercase tracking-wider px-2"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={uploadFile.isPending}
-                                            >
-                                                {uploadFile.isPending ? (
-                                                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                                                ) : (
-                                                    <Plus className="h-3 w-3 mr-1.5" />
-                                                )}
-                                                {uploadFile.isPending ? "Uploading..." : "Upload File"}
-                                            </Button>
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        uploadFile.mutate(file);
-                                                        e.target.value = '';
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 space-y-2">
-                                        {attachments.length === 0 ? (
-                                            <div className="py-8 flex flex-col items-center justify-center text-center opacity-40">
-                                                <Paperclip className="h-8 w-8 mb-2" />
-                                                <p className="text-xs font-semibold">No attachments yet</p>
-                                                <p className="text-[10px]">Add files or links related to this task</p>
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                {attachments.map((attachment) => (
-                                                    <div
-                                                        key={attachment.id}
-                                                        className="group flex items-center justify-between p-3 rounded-xl border bg-slate-50/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 transition-all hover:shadow-sm"
-                                                    >
-                                                        <div className="flex items-center gap-3 overflow-hidden">
-                                                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border shadow-sm shrink-0">
-                                                                {attachment.type === "LINK" ? (
-                                                                    <LinkIcon className="h-4 w-4 text-blue-500" />
-                                                                ) : attachment.mimeType?.startsWith("image/") ? (
-                                                                    <ImageIcon className="h-4 w-4 text-purple-500" />
-                                                                ) : attachment.mimeType === "application/pdf" ? (
-                                                                    <FileText className="h-4 w-4 text-red-500" />
-                                                                ) : (
-                                                                    <FileIcon className="h-4 w-4 text-slate-500" />
-                                                                )}
-                                                            </div>
-                                                            <div className="flex flex-col overflow-hidden">
-                                                                <span className="text-xs font-bold truncate pr-2">
-                                                                    {attachment.name}
-                                                                </span>
-                                                                <span className="text-[10px] text-muted-foreground font-medium">
-                                                                    {attachment.type === "FILE"
-                                                                        ? `${(attachment.size! / 1024 / 1024).toFixed(2)} MB`
-                                                                        : (() => {
-                                                                            try {
-                                                                                return new URL(attachment.url).hostname;
-                                                                            } catch (e) {
-                                                                                return 'link';
-                                                                            }
-                                                                        })()}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-1 group-hover:translate-x-0">
-                                                            {attachment.type === "LINK" ? (
-                                                                <a href={attachment.url} target="_blank" rel="noopener noreferrer">
-                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
-                                                                        <ExternalLink className="h-3.5 w-3.5" />
-                                                                    </Button>
-                                                                </a>
-                                                            ) : (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 rounded-lg"
-                                                                    onClick={() => {
-                                                                        setPreviewAttachment(attachment);
-                                                                        setIsPreviewOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Eye className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            )}
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-7 w-7 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                                onClick={() => deleteAttachment.mutate(attachment.id)}
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* Pomodoro Progress (Story 5 & 6) */}
-                            <div className="px-8 py-6 mt-auto">
-                                {task.estimatedPomodoros > 0 && (
-                                    <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-6">
-                                        <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
-                                            <div className="flex flex-col gap-0.5">
-                                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                                    <Timer className="h-3.5 w-3.5" />
-                                                    <span>Progression</span>
-                                                </div>
-                                                <div className="text-sm font-bold text-slate-900 dark:text-white">
-                                                    {task.completedPomodoros} of {task.estimatedPomodoros} sessions
-                                                </div>
-                                            </div>
-                                            {task.completedPomodoros > task.estimatedPomodoros && (
-                                                <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 dark:bg-orange-950/20 font-bold px-3 py-1">
-                                                    <AlertCircle className="h-3 w-3 mr-1.5" />
-                                                    EXCEEDED BY {task.completedPomodoros - task.estimatedPomodoros}
-                                                </Badge>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
-                                                <motion.div
-                                                    className={cn(
-                                                        "h-full rounded-full transition-all duration-1000",
-                                                        task.completedPomodoros >= task.estimatedPomodoros ? "bg-green-500" : "bg-primary"
-                                                    )}
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${Math.min(100, (task.completedPomodoros / task.estimatedPomodoros) * 100)}%` }}
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/20 border border-slate-200 dark:border-slate-800 transition-colors hover:bg-muted/30">
-                                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">Adjust Estimate</span>
-                                                    <div className="flex items-center gap-5">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-9 w-9 rounded-full border-2 border-slate-200 dark:border-slate-700 shadow-sm"
-                                                            onClick={() => updateTask({ id: task.id, estimatedPomodoros: Math.max(1, task.estimatedPomodoros - 1) })}
-                                                        >
-                                                            <Minus className="h-4 w-4" />
-                                                        </Button>
-                                                        <span className="text-2xl font-black text-slate-900 dark:text-white w-8 text-center">{task.estimatedPomodoros}</span>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-9 w-9 rounded-full border-2 border-slate-200 dark:border-slate-700 shadow-sm"
-                                                            onClick={() => updateTask({ id: task.id, estimatedPomodoros: Math.min(20, task.estimatedPomodoros + 1) })}
-                                                        >
-                                                            <Plus className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/20 border border-slate-200 dark:border-slate-800 hover:bg-muted/30 transition-colors">
-                                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">Auto-Complete</span>
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={!!task.autoComplete}
-                                                            onCheckedChange={(checked) => updateTask({ id: task.id, autoComplete: checked })}
-                                                            className="scale-110"
+                                                    ))}
+                                                    <div className="flex items-center gap-3 px-3 py-2 mt-2 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl hover:border-primary/30 transition-colors">
+                                                        <Plus className="h-4 w-4 text-slate-300" />
+                                                        <input
+                                                            ref={subtaskInputRef}
+                                                            type="text"
+                                                            placeholder="Add a structural step..."
+                                                            value={newSubtaskTitle}
+                                                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                                            onKeyDown={handleSubtaskKeyDown}
+                                                            className="flex-1 bg-transparent text-sm outline-none font-medium placeholder:text-slate-300"
                                                         />
-                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                            {!!task.autoComplete ? "ON" : "OFF"}
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Right Column: Timer, Performance, Notes & History */}
-                        <div className="flex flex-col bg-slate-50/50 dark:bg-slate-950/20 overflow-y-auto">
+                                    {/* Right Pane: Metadata & Attachments */}
+                                    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
+                                        <div className="p-8 space-y-10">
+                                            {/* Metadata Section (with Contextual Visibility) */}
+                                            <section className="space-y-6">
+                                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-1">
+                                                    <Activity className="h-3.5 w-3.5" />
+                                                    <span>Task Metadata</span>
+                                                </div>
+                                                
+                                                <div className="space-y-4">
+                                                    {/* Priority Selector (Opacity 20% -> 100%) */}
+                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Priority</label>
+                                                        <Select
+                                                            value={task.priority}
+                                                            onValueChange={(val: TaskPriority) => updateTask({ id: task.id, priority: val })}
+                                                        >
+                                                            <SelectTrigger className="h-10 w-full text-xs font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                                                                <SelectValue placeholder="Priority" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="LOW">Low Priority</SelectItem>
+                                                                <SelectItem value="MEDIUM">Medium Priority</SelectItem>
+                                                                <SelectItem value="HIGH">High Priority</SelectItem>
+                                                                <SelectItem value="URGENT">Urgent Mission</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
 
-                            {/* Sticky Sidebar Container */}
-                            <div className="p-8 space-y-8">
-                                {/* Timer Card */}
-                                <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-900 p-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] 1xl:scale-105 transition-transform origin-top">
-                                    <div className="mb-6 text-7xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">
-                                        {formatTime(remaining)}
-                                    </div>
-                                    <div className="flex gap-6">
-                                        <Button
-                                            size="lg"
-                                            className={cn(
-                                                "h-16 w-16 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition-all hover:scale-110 active:scale-95",
-                                                isTaskRunning && isRunning ? "bg-amber-500 hover:bg-amber-600 ring-4 ring-amber-100 dark:ring-amber-900/30" : "bg-primary ring-4 ring-primary/20"
-                                            )}
-                                            onClick={handleTimerToggle}
-                                        >
-                                            {isTaskRunning && isRunning ? (
-                                                <Pause className="h-7 w-7 fill-current" />
-                                            ) : (
-                                                <Play className="h-7 w-7 fill-current ml-1" />
-                                            )}
-                                        </Button>
-                                        {isTaskRunning && (
-                                            <Button size="icon" variant="outline" className="h-16 w-16 rounded-full border-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={reset}>
-                                                <RotateCcw className="h-6 w-6" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <div className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
-                                        {isTaskRunning
-                                            ? (isRunning ? "Focus session active" : "Timer paused")
-                                            : "Pledge your concentration"
-                                        }
-                                    </div>
-                                </div>
-
-                                {/* Recurrence Section */}
-                                <div className="rounded-[2.5rem] border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-900 overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.2)]">
-                                    <div className="flex items-center justify-between px-8 py-5 border-b bg-slate-50/30 dark:bg-slate-800/20">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                                                <Repeat className="h-4 w-4" />
-                                            </div>
-                                            <span className="text-sm font-black tracking-tight uppercase">Recurrence</span>
-                                        </div>
-                                        <Switch
-                                            checked={task.isRecurring}
-                                            onCheckedChange={(checked) => updateTask({ id: task.id, isRecurring: checked })}
-                                            className="data-[state=checked]:bg-primary"
-                                        />
-                                    </div>
-
-                                    {task.isRecurring && (
-                                        <div className="p-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 border-t-0">
-                                            <div className="space-y-2.5">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Frequency Pattern</label>
-                                                <Select
-                                                    value={task.recurrenceType || "DAILY"}
-                                                    onValueChange={(val) => updateTask({ id: task.id, recurrenceType: val as any })}
-                                                >
-                                                    <SelectTrigger className="h-12 rounded-2xl bg-slate-100/50 dark:bg-slate-800/50 border-none focus:ring-2 ring-primary/20 font-bold text-sm">
-                                                        <SelectValue placeholder="Select frequency" />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="rounded-2xl border-none shadow-xl">
-                                                        <SelectItem value="DAILY" className="rounded-xl">Daily</SelectItem>
-                                                        <SelectItem value="WEEKLY" className="rounded-xl">Weekly</SelectItem>
-                                                        <SelectItem value="MONTHLY" className="rounded-xl">Monthly</SelectItem>
-                                                        <SelectItem value="CUSTOM" className="rounded-xl">Every X Days</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            {task.recurrenceType === "WEEKLY" && (
-                                                <div className="space-y-3">
-                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Active Days</label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => {
-                                                            const isSelected = task.recurrenceDays?.split(",").includes(idx.toString());
-                                                            return (
+                                                    {/* Due Date (Opacity 20% -> 100%) */}
+                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Target Date</label>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
                                                                 <Button
-                                                                    key={`${day}-${idx}`}
-                                                                    type="button"
-                                                                    variant={isSelected ? "default" : "outline"}
-                                                                    className={cn(
-                                                                        "h-9 w-9 p-0 rounded-xl text-[10px] font-black transition-all",
-                                                                        isSelected
-                                                                            ? "bg-primary text-white shadow-lg shadow-primary/25 border-none"
-                                                                            : "text-slate-500 border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                                                    )}
-                                                                    onClick={() => {
-                                                                        const current = task.recurrenceDays ? task.recurrenceDays.split(",") : [];
-                                                                        const next = current.includes(idx.toString())
-                                                                            ? current.filter(d => d !== idx.toString())
-                                                                            : [...current, idx.toString()];
-                                                                        updateTask({ id: task.id, recurrenceDays: next.sort().join(",") });
-                                                                    }}
+                                                                    variant="outline"
+                                                                    className="h-10 w-full text-xs font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl shadow-sm justify-start gap-2"
                                                                 >
-                                                                    {day}
+                                                                    <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                                                                    {task.dueDate ? format(new Date(task.dueDate), "MMM d, yyyy") : "No deadline set"}
                                                                 </Button>
-                                                            );
-                                                        })}
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="end">
+                                                                <Calendar
+                                                                    mode="single"
+                                                                    selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                                                                    onSelect={(date) => updateTask({ id: task.id, dueDate: date || null })}
+                                                                    initialFocus
+                                                                />
+                                                            </PopoverContent>
+                                                        </Popover>
                                                     </div>
-                                                </div>
-                                            )}
 
-                                            {(task.recurrenceType === "DAILY" || task.recurrenceType === "CUSTOM") && (
-                                                <div className="space-y-3">
-                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
-                                                        Repeat Interval
-                                                    </label>
-                                                    <div className="flex items-center gap-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl h-12 px-2 border-2 border-transparent focus-within:border-primary/20 transition-all">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-slate-700 shadow-sm"
-                                                            onClick={() => updateTask({ id: task.id, recurrenceInterval: Math.max(1, (task.recurrenceInterval || 1) - 1) })}
-                                                        >
-                                                            <Minus className="h-4 w-4" />
-                                                        </Button>
-                                                        <div className="flex-1 flex flex-col items-center">
-                                                            <span className="text-sm font-black text-slate-900 dark:text-white">{task.recurrenceInterval || 1}</span>
-                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Days</span>
+                                                    {/* Recurrence (Opacity 20% -> 100%) */}
+                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                                                        <div className="flex items-center gap-2">
+                                                            <Repeat className="h-3.5 w-3.5 text-primary" />
+                                                            <span className="text-[10px] font-black uppercase tracking-tight">Recurring</span>
                                                         </div>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-slate-700 shadow-sm"
-                                                            onClick={() => updateTask({ id: task.id, recurrenceInterval: Math.min(365, (task.recurrenceInterval || 1) + 1) })}
-                                                        >
-                                                            <Plus className="h-4 w-4" />
+                                                        <Switch checked={task.isRecurring} onCheckedChange={(checked) => updateTask({ id: task.id, isRecurring: checked })} className="scale-75" />
+                                                    </div>
+                                                </div>
+                                            </section>
+
+                                            {/* Attachments Section */}
+                                            <section className="space-y-6 group/attachments">
+                                                <div className="flex items-center justify-between mb-2 px-1">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                        <Paperclip className="h-3.5 w-3.5" />
+                                                        <span>Attachments</span>
+                                                    </div>
+                                                    
+                                                    {/* Ghost Upload Buttons */}
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover/attachments:opacity-100 transition-opacity">
+                                                        <Button variant="ghost" size="icon" onClick={() => setIsLinkDialogOpen(true)} className="h-7 w-7 rounded-lg">
+                                                            <LinkIcon className="h-3 w-3" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-7 w-7 rounded-lg">
+                                                            <Plus className="h-3 w-3" />
                                                         </Button>
                                                     </div>
                                                 </div>
-                                            )}
+
+                                                <div className="space-y-2">
+                                                    {attachments.map((attachment) => (
+                                                        <div key={attachment.id} className="group flex flex-col gap-1 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-primary/20 transition-all shadow-sm relative overflow-hidden">
+                                                            <div className="flex items-center justify-between gap-3 min-w-0">
+                                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border">
+                                                                        {attachment.type === "LINK" ? <LinkIcon className="h-3.5 w-3.5 text-blue-500" /> : <FileIcon className="h-3.5 w-3.5 text-slate-500" />}
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0">
+                                                                        <span className="text-xs font-black truncate leading-none mb-1">{attachment.name}</span>
+                                                                        <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                                                            <span>{attachment.type}</span>
+                                                                            {attachment.size && (
+                                                                                <>
+                                                                                    <span>•</span>
+                                                                                    <span>{(attachment.size / 1024).toFixed(1)} KB</span>
+                                                                                </>
+                                                                            )}
+                                                                            <span>•</span>
+                                                                            <span>{format(new Date(attachment.createdAt), "MMM d")}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                                                    <Button
+                                                                        variant="ghost" 
+                                                                        size="icon" 
+                                                                        className="h-8 w-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                        onClick={() => deleteAttachment.mutate(attachment.id)}
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {attachments.length === 0 && (
+                                                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl opacity-40">
+                                                            <Paperclip className="h-6 w-6 mb-2" />
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">No assets yet</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </section>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
+                            </motion.div>
+                        )}
 
-                                {/* Task Performance Dashboard */}
-                                <section>
-                                    <div className="flex items-center gap-2 mb-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 px-1">
-                                        <BarChart2 className="h-4 w-4 text-primary" />
-                                        <span>Focus Analytics</span>
+                        {activeTab === "HISTORY" && (
+                            <motion.div
+                                key="history"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="h-full w-full overflow-y-auto p-8 custom-scrollbar"
+                            >
+                                <div className="max-w-4xl mx-auto space-y-8">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                                            <HistoryIcon className="h-8 w-8" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Execution History</h2>
+                                            <p className="text-muted-foreground text-sm font-medium">Timeline of all focus sessions and milestones</p>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <Timer className="h-3 w-3" />
-                                                Effort
-                                            </div>
-                                            <div className="text-xl font-black text-slate-900 dark:text-white">
-                                                {formatDuration(totalFocusTime)}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <Activity className="h-3 w-3" />
-                                                Sessions
-                                            </div>
-                                            <div className="text-xl font-black text-slate-900 dark:text-white">
-                                                {totalSessions}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <Clock className="h-3 w-3" />
-                                                Consistency
-                                            </div>
-                                            <div className="text-xl font-black text-slate-900 dark:text-white">
-                                                {formatAvgDuration(avgSessionLength)}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <Target className="h-3 w-3" />
-                                                Est. Accuracy
-                                            </div>
-                                            <div
-                                                className={cn(
-                                                    "text-xl font-black",
-                                                    isOverEstimate ? "text-orange-500" : "text-green-600 dark:text-green-400"
-                                                )}
-                                                title={`Accuracy = (Estimated: ${task.estimatedPomodoros} / Actual: ${totalSessions}) × 100`}
+
+                                    {/* Unified Session Scorecard */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+                                        {[
+                                            { 
+                                                label: "Focus Time", 
+                                                value: `${Math.round((task.pomodoroSessions?.reduce((acc, s) => acc + (s.duration || 0), 0) || 0) / 60)}m`, 
+                                                icon: Clock,
+                                                color: "text-blue-500",
+                                                bg: "bg-blue-50 dark:bg-blue-900/20"
+                                            },
+                                            { 
+                                                label: "Sessions", 
+                                                value: task.pomodoroSessions?.length || 0, 
+                                                icon: Target,
+                                                color: "text-primary",
+                                                bg: "bg-primary/5"
+                                            },
+                                            { 
+                                                label: "Interruptions", 
+                                                value: task.pomodoroSessions?.reduce((acc, s) => acc + (s.interruptions || 0), 0) || 0, 
+                                                icon: AlertCircle,
+                                                color: "text-amber-500",
+                                                bg: "bg-amber-50 dark:bg-amber-900/20"
+                                            },
+                                        ].map((stat, i) => (
+                                            <motion.div
+                                                key={stat.label}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.1 }}
+                                                className={cn("p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 flex flex-col gap-4", stat.bg)}
                                             >
-                                                {accuracy !== null ? (
-                                                    isOverEstimate ? "Exceeded" : `${accuracy}%`
-                                                ) : "N/A"}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <Star className="h-3 w-3 text-amber-500" />
-                                                Quality Avg
-                                            </div>
-                                            <div className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-1">
-                                                {avgRating !== null ? (
-                                                    <>
-                                                        {avgRating.toFixed(1)}
-                                                        <span className="text-xs text-muted-foreground">/5</span>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-base text-muted-foreground font-medium">Unrated</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                <AlertCircle className="h-3 w-3 text-red-500" />
-                                                Interruptions
-                                            </div>
-                                            <div className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-1">
-                                                {totalInterruptions}
-                                            </div>
-                                        </div>
+                                                <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center border", stat.color.replace('text-', 'bg-').replace('500', '500/10'))}>
+                                                    <stat.icon className={cn("h-5 w-5", stat.color)} />
+                                                </div>
+                                                <div>
+                                                    <div className="text-3xl font-black font-jetbrains tracking-tighter text-slate-900 dark:text-white">{stat.value}</div>
+                                                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{stat.label}</div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
                                     </div>
-                                </section>
 
-                                <Separator className="bg-slate-200 dark:bg-slate-800" />
-
-                                {/* Session Timeline (Story 10) */}
-                                <section className="pb-8">
-                                    <div className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 px-1">
-                                        <HistoryIcon className="h-4 w-4" />
-                                        <span>Session Timeline</span>
-                                    </div>
                                     <SessionTimeline sessions={task.pomodoroSessions || []} />
-                                </section>
-                            </div>
-                        </div>
-                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
 
@@ -1179,6 +855,32 @@ export function TaskExpandedView({ task, onClose, onEdit, onDelete }: TaskExpand
                             className="bg-green-600 hover:bg-green-700 text-white"
                         >
                             Mark as Done
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Archive Confirmation Dialog */}
+            <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Archive Task?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will move "<strong>{task.title}</strong>" to your archives. 
+                            You can restore it anytime from the Archived tab.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                updateTask({ id: task.id, status: "ARCHIVED" });
+                                setShowArchiveDialog(false);
+                                onClose();
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white"
+                        >
+                            Archive Task
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

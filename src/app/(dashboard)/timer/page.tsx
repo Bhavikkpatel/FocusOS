@@ -8,7 +8,6 @@ import { useTimerStore } from "@/store/timer";
 import { useThemeStore } from "@/store/theme";
 import { PomodoroPreset } from "@/store/timer";
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 export default function TimerPage() {
     const { data: session } = useSession();
@@ -34,13 +33,13 @@ export default function TimerPage() {
     }, [presets, setPresets]);
 
     return (
-        <DashboardLayout>
-            <div className="flex h-full items-center justify-center transition-colors duration-300" style={{
-                backgroundColor: colors.background,
-                color: colors.text
-            }}>
+        <div className="flex h-full items-center justify-center transition-colors duration-300" style={{
+            backgroundColor: colors.background,
+            color: colors.text
+        }}>
+            <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
                 <TimerDisplay />
             </div>
-        </DashboardLayout>
+        </div>
     );
 }

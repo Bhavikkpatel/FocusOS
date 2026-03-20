@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { ProjectsList } from "@/components/projects/projects-list";
 
 export default async function ProjectsPage() {
@@ -9,8 +8,6 @@ export default async function ProjectsPage() {
     if (!session) redirect("/auth/signin");
 
     return (
-        <DashboardLayout>
-            <ProjectsList />
-        </DashboardLayout>
+        <ProjectsList />
     );
 }

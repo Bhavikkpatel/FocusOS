@@ -15,8 +15,8 @@ import { KanbanBoard } from "./kanban-board";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ViewMode = "list" | "kanban";
 type GroupBy = "none" | "project" | "status";
@@ -198,6 +198,12 @@ export function TaskList() {
         return <div className="p-8 text-center text-red-500">Error loading tasks</div>;
     }
 
+    const tabs = [
+        { id: "active", label: "Active", count: activeTasks.length },
+        { id: "completed", label: "Completed", count: completedTasks.length },
+        { id: "archived", label: "Archived", count: archivedTasks.length },
+    ];
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -224,35 +230,39 @@ export function TaskList() {
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-1">
-                    <TabsList className="bg-transparent h-auto p-0 md:gap-8 gap-4 justify-start">
-                        <TabsTrigger 
-                            value="active" 
-                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
-                        >
-                            Active
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
-                                {activeTasks.length}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="completed"
-                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
-                        >
-                            Completed
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
-                                {completedTasks.length}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="archived"
-                            className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-3 text-sm font-bold uppercase tracking-widest text-muted-foreground data-[state=active]:text-primary transition-all"
-                        >
-                            Archived
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black">
-                                {archivedTasks.length}
-                            </span>
-                        </TabsTrigger>
-                    </TabsList>
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#161618] p-1 rounded-2xl border border-slate-200 dark:border-white/5">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleTabChange(tab.id)}
+                                className={cn(
+                                    "relative px-4 sm:px-6 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all duration-300",
+                                    activeTab === tab.id 
+                                        ? "text-white dark:text-black" 
+                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                                )}
+                            >
+                                {activeTab === tab.id && (
+                                    <motion.div
+                                        layoutId="activeTaskTab"
+                                        className="absolute inset-0 bg-primary rounded-xl"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <span className="relative z-10 flex items-center gap-2">
+                                    {tab.label}
+                                    <span className={cn(
+                                        "px-1.5 py-0.5 rounded-full text-[9px] font-black transition-colors",
+                                        activeTab === tab.id 
+                                            ? "bg-white/20 dark:bg-black/20" 
+                                            : "bg-slate-200 dark:bg-slate-800"
+                                    )}>
+                                        {tab.count}
+                                    </span>
+                                </span>
+                            </button>
+                        ))}
+                    </div>
 
                     <div className="flex items-center gap-3">
                         <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/50">

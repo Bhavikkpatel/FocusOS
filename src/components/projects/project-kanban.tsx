@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useLayoutStore } from "@/store/layout";
 
 // ─── Types ─────────────────────────────────────
 interface ColumnWithTasks {
@@ -111,10 +112,12 @@ function KanbanColumn({
     column,
     projectId,
     onSelectTask,
+    projectFilters,
 }: {
     column: ColumnWithTasks;
     projectId: string;
     onSelectTask: (task: any) => void;
+    projectFilters: any;
 }) {
     const [newTitle, setNewTitle] = useState("");
     const [isEditingName, setIsEditingName] = useState(false);
@@ -166,10 +169,27 @@ function KanbanColumn({
         deleteColumn.mutate({ projectId, colId: column.id });
     };
 
-    const taskIds = column.tasks.map((t: any) => t.id);
     const status = getStatusFromColumnName(column.name);
     const style = status ? COLUMN_STYLES[status] : DEFAULT_STYLE;
     const Icon = style.icon;
+
+    const filteredTasks = column.tasks.filter((t: any) => {
+        if (projectFilters.tag !== "ALL") {
+            if (!t.tags || !t.tags.find((tag: any) => tag.id === projectFilters.tag)) return false;
+        }
+        if (projectFilters.difficulty !== "ALL") {
+            if (t.difficulty !== projectFilters.difficulty) return false;
+        }
+        if (projectFilters.status !== "ALL") {
+            if (t.status !== projectFilters.status) return false;
+        }
+        if (projectFilters.hasTimer) {
+            if (!t.pomodoroSessions || t.pomodoroSessions.length === 0) return false;
+        }
+        return true;
+    });
+
+    const taskIds = filteredTasks.map((t: any) => t.id);
 
     return (
         <div className={cn(
@@ -248,7 +268,7 @@ function KanbanColumn({
                     items={taskIds}
                     strategy={verticalListSortingStrategy}
                 >
-                    {column.tasks.map((task: any) => (
+                    {filteredTasks.map((task: any) => (
                         <KanbanCard
                             key={task.id}
                             task={task}
@@ -305,6 +325,7 @@ export function ProjectKanban({
     const { mutate: updateTask } = useUpdateTask();
     const createColumn = useCreateColumn();
     const queryClient = useQueryClient();
+    const { projectFilters } = useLayoutStore();
     const [localColumns, setLocalColumns] = useState<ColumnWithTasks[]>(project.columns);
     const [activeTask, setActiveTask] = useState<any>(null);
     const [newColumnName, setNewColumnName] = useState("");
@@ -486,6 +507,7 @@ export function ProjectKanban({
                             column={column}
                             projectId={project.id}
                             onSelectTask={(t) => onSelectTask(t.id)}
+                            projectFilters={projectFilters}
                         />
                     ))}
 

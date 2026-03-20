@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Clock, Flame, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -49,13 +48,13 @@ export function ProductivitySummary({ summary }: ProductivitySummaryProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                 >
-                    <Card className="p-6 relative overflow-hidden group border-2 border-slate-100 dark:border-slate-800/50 hover:border-primary/20 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md">
+                    <div className="p-6 relative overflow-hidden group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-all duration-300 rounded-2xl shadow-sm hover:shadow-md">
                         <div className="flex items-start justify-between">
                             <div className="space-y-2">
                                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mr-1">
                                     {stat.label}
                                 </p>
-                                <h3 className="text-3xl font-black tracking-tight flex items-baseline gap-1">
+                                <h3 className="text-4xl font-black tracking-tighter flex items-baseline gap-1 font-jetbrains text-slate-900 dark:text-white">
                                     {stat.value}
                                 </h3>
                                 <p className="text-xs font-medium text-muted-foreground/60 italic lowercase">
@@ -67,8 +66,8 @@ export function ProductivitySummary({ summary }: ProductivitySummaryProps) {
                             </div>
                         </div>
                         {/* Decorative background element */}
-                        <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${stat.bg} rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    </Card>
+                        <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${stat.bg} rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
+                    </div>
                 </motion.div>
             ))}
         </div>

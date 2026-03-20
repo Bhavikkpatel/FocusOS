@@ -11,29 +11,27 @@ import {
     MoreVertical,
     Play,
     Check,
-    Trash2,
-
     Pencil,
     CalendarIcon,
-    AlertCircle,
     Repeat,
+    Archive,
+    Trash2,
 } from "lucide-react";
 import { Task } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import { TagBadge } from "./tags/tag-badge";
 import { TagSelector } from "./tags/tag-selector";
-import { DifficultyBadge } from "./difficulty-badge";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
     AlertDialog,
@@ -92,15 +90,11 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [title, setTitle] = useState(task.title);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
 
 
-    // Focus time calculations (Story 1-2)
-    const focusSessions = task.pomodoroSessions?.filter((s: any) => s.type === "FOCUS") || [];
-    const totalFocusSeconds = focusSessions.reduce((acc: number, s: any) => acc + s.duration, 0);
-    const totalFocusMins = Math.floor(totalFocusSeconds / 60);
 
     useEffect(() => {
         if (isEditingTitle && inputRef.current) {
@@ -117,9 +111,10 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
         updateTask.mutate({ id: task.id, status: nextStatus });
     };
 
-    const handleDelete = () => {
-        deleteTask.mutate(task.id);
-        setIsDeleteDialogOpen(false);
+    const handleArchive = () => {
+        updateTask.mutate({ id: task.id, status: "ARCHIVED" });
+        setIsArchiveDialogOpen(false);
+        toast.success("Task archived");
     };
 
     const handleTitleSubmit = () => {
@@ -209,7 +204,7 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                         {/* Main Card */}
                         <div
                             className={cn(
-                                "relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl border bg-card px-4 py-3 transition-all cursor-pointer border-l-[4px]",
+                                "relative flex items-center gap-3 sm:gap-4 rounded-xl border bg-card px-4 py-2.5 transition-all cursor-pointer border-l-[4px]",
                                 isActive ? "border-primary bg-primary/5 ring-1 ring-primary/20 m-[1px]" : cn(config.accent),
                                 isCompleted && "opacity-60 grayscale"
                             )}
@@ -218,22 +213,49 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
 
 
                             {/* Left Section: Checkbox + Content */}
-                            <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                                <motion.div
-                                    className="mt-1 sm:mt-0 shrink-0"
-                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                    whileTap={{ scale: 0.9 }}
-                                    animate={isCompleted ? { scale: [1, 1.2, 1] } : {}}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    <Checkbox
-                                        checked={isCompleted}
-                                        onCheckedChange={() => handleToggleComplete({ stopPropagation: () => { } } as any)}
-                                        className="h-5 w-5 rounded-md border-2 border-slate-300 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                                    />
-                                </motion.div>
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <motion.div
+                                            className="shrink-0"
+                                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                            whileTap={{ scale: 0.9 }}
+                                            animate={isCompleted ? { scale: [1, 1.2, 1] } : {}}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <div className="flex items-center justify-center h-5 w-5 rounded-md border-2 border-slate-300 dark:border-slate-700 hover:border-primary/50 transition-colors cursor-pointer data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500">
+                                                {isCompleted ? <Check className="h-3 w-3 text-white" /> : null}
+                                            </div>
+                                        </motion.div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuItem onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleComplete({ stopPropagation: () => { } } as any);
+                                        }}>
+                                            <Check className="mr-2 h-4 w-4 text-green-500" /> 
+                                            {isCompleted ? "Mark as Active" : "Mark as Done"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsArchiveDialogOpen(true);
+                                        }}>
+                                            <Archive className="mr-2 h-4 w-4 text-amber-500" /> Move to Archive
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem 
+                                            className="text-red-600 dark:text-red-400"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteTask.mutate(task.id);
+                                            }}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Task
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
-                                <div className="flex flex-col min-w-0 flex-1 gap-1">
+                                <div className="flex flex-col min-w-0 flex-1">
                                     {/* Title & Badges Row */}
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {isEditingTitle ? (
@@ -251,7 +273,7 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <h3
                                                     className={cn(
-                                                        "text-sm font-bold leading-tight tracking-tight hover:text-primary/80 truncate",
+                                                        "text-[13px] font-bold leading-tight tracking-tight hover:text-primary/80 truncate",
                                                         isCompleted && "line-through"
                                                     )}
                                                     onClick={(e) => {
@@ -266,110 +288,83 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                                     <Repeat className="h-3.5 w-3.5 text-primary/70 shrink-0" />
                                                 )}
                                                 {isActive && (
-                                                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold px-2 py-0 animate-pulse flex items-center gap-1.5 shadow-none shrink-0 h-5">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold px-1.5 py-0 animate-pulse flex items-center gap-1 shadow-none shrink-0 h-4.5">
+                                                        <span className="h-1 w-1 rounded-full bg-primary" />
                                                         ACTIVE
+                                                    </Badge>
+                                                )}
+                                                {(task.priority !== "LOW") && (
+                                                    <Badge className={cn("rounded-md font-bold text-[9px] uppercase shadow-none tracking-wider px-1.5 py-0 h-4.5", config.color)}>
+                                                        {task.priority}
                                                     </Badge>
                                                 )}
                                             </div>
                                         )}
-
-                                        {/* Badges inline */}
-                                        {task.project && (
-                                            <Badge variant="outline" className="rounded-md font-normal text-[10px] px-1.5 py-0 h-4">
-                                                {task.project}
-                                            </Badge>
-                                        )}
-                                        {(task as any).category && (
-                                            <Badge variant="secondary" className="rounded-md font-normal bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-none shadow-sm text-[10px] px-1.5 py-0 h-4">
-                                                {(task as any).category.name}
-                                            </Badge>
-                                        )}
-                                        <DifficultyBadge difficulty={(task as any).difficulty} className="rounded-md border shadow-none text-[10px] px-1.5 py-0 h-4 [&>div]:scale-75" />
-                                        {(task.priority !== "LOW") && (
-                                            <Badge className={cn("rounded-md font-medium text-[9px] uppercase shadow-none tracking-wider px-1.5 py-0 h-4", config.color, "hover:bg-opacity-90")}>
-                                                {task.priority}
-                                            </Badge>
-                                        )}
                                     </div>
 
-                                    {/* Description */}
-                                    {task.description && (
-                                        <p className="line-clamp-1 text-xs text-muted-foreground mt-0.5">
-                                            {task.description}
-                                        </p>
-                                    )}
-
-                                    {/* Meta Row */}
-                                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap mt-0.5">
-                                        {task.dueDate && (
-                                            <div className={cn(
-                                                "flex items-center gap-1 shrink-0",
-                                                new Date(task.dueDate) < new Date() && !isCompleted && "text-red-500 font-medium"
-                                            )}>
-                                                <CalendarIcon className="h-3 w-3" />
-                                                <span>{format(new Date(task.dueDate), "MMM d")}</span>
-                                            </div>
-                                        )}
-                                        {task.projectRef && task.projectRef.name && (
-                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.projectRef.color || "#3B82F6" }} />
-                                                <span className="truncate max-w-[80px] font-medium">{task.projectRef.name}</span>
-                                            </div>
-                                        )}
-
-                                        {totalFocusMins > 0 && (
-                                            <div className="flex items-center gap-1 shrink-0 text-primary/80" title="Total focus time">
-                                                <Play className="h-2.5 w-2.5 fill-current" />
-                                                <span>{totalFocusMins}m</span>
-                                            </div>
-                                        )}
-
-                                        {/* Pomodoro Progress mini */}
-                                        {task.estimatedPomodoros > 0 && (
-                                            <div className="flex items-center gap-1.5 shrink-0 lg:ml-2">
-                                                <span className="text-[10px] font-medium text-slate-500">{task.completedPomodoros}/{task.estimatedPomodoros}</span>
-                                                <div className="h-1.5 w-12 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shrink-0 hidden sm:block">
-                                                    <div
-                                                        className={cn(
-                                                            "h-full transition-all duration-500",
-                                                            task.completedPomodoros >= task.estimatedPomodoros ? "bg-green-500" : "bg-primary"
-                                                        )}
-                                                        style={{ width: `${Math.min(100, (task.completedPomodoros / task.estimatedPomodoros) * 100)}%` }}
-                                                    />
+                                    {/* Meta Row: Due date, Project, Pomos, Tags */}
+                                    <div className="flex items-center gap-3 mt-0.5 min-w-0">
+                                        <div className="flex items-center gap-2.5 text-[10px] text-muted-foreground/70 flex-wrap flex-1">
+                                            {task.dueDate && (
+                                                <div className={cn(
+                                                    "flex items-center gap-1 shrink-0",
+                                                    new Date(task.dueDate) < new Date() && !isCompleted && "text-red-500 font-medium"
+                                                )}>
+                                                    <CalendarIcon className="h-2.5 w-2.5" />
+                                                    <span>{format(new Date(task.dueDate), "MMM d")}</span>
                                                 </div>
-                                                {task.completedPomodoros > task.estimatedPomodoros && (
-                                                    <span title={`+${task.completedPomodoros - task.estimatedPomodoros} over`}>
-                                                        <AlertCircle className="h-3 w-3 text-orange-500" />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                                            )}
+                                            {task.projectRef && task.projectRef.name && (
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.projectRef.color || "#3B82F6" }} />
+                                                    <span className="truncate max-w-[80px]">{task.projectRef.name}</span>
+                                                </div>
+                                            )}
 
-                                    {/* Tags */}
-                                    <TagSelector
-                                        selectedTags={task.tags || []}
-                                        onTagsChange={(tagIds) => updateTask.mutate({ id: task.id, tags: tagIds })}
-                                        align="start"
-                                    />
+                                            {/* Pomodoro Progress mini */}
+                                            {task.estimatedPomodoros > 0 && (
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <span className="text-[9px] font-medium">{task.completedPomodoros}/{task.estimatedPomodoros}</span>
+                                                    <div className="h-1 w-10 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shrink-0">
+                                                        <div
+                                                            className={cn(
+                                                                "h-full transition-all duration-500",
+                                                                task.completedPomodoros >= task.estimatedPomodoros ? "bg-green-500" : "bg-primary"
+                                                            )}
+                                                            style={{ width: `${Math.min(100, (task.completedPomodoros / task.estimatedPomodoros) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {task.tags && task.tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {task.tags.map((tag: any) => (
-                                                typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-sm text-[9px] py-0 h-4" /> : null
-                                            ))}
+                                            {/* Tags Badge List */}
+                                            {task.tags && task.tags.length > 0 && (
+                                                <div className="flex items-center gap-1 flex-wrap">
+                                                    {task.tags.map((tag: any) => (
+                                                        typeof tag === 'object' ? <TagBadge key={tag.id} tag={tag} className="border-none shadow-none text-[8px] py-0 h-3.5 bg-slate-100 dark:bg-slate-800" /> : null
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Right Section: Actions */}
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-center mt-2 sm:mt-0">
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-center">
+                                {/* Square Tag Selector */}
+                                <TagSelector
+                                    selectedTags={task.tags || []}
+                                    onTagsChange={(tagIds) => updateTask.mutate({ id: task.id, tags: tagIds })}
+                                    align="end"
+                                    variant="square-icon"
+                                    className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                                />
+
                                 {/* Status Badge */}
                                 <div
                                     className={cn(
-                                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors hover:opacity-80 border border-transparent",
+                                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-colors hover:opacity-80 border border-transparent shrink-0",
                                         statusConfig[task.status]?.style || statusConfig.TODO.style
                                     )}
                                     onClick={(e) => {
@@ -378,7 +373,7 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                     }}
                                 >
                                     <span>{statusConfig[task.status]?.label || task.status}</span>
-                                    {isCompleted && <Check className="h-3 w-3" />}
+                                    {isCompleted && <Check className="h-2.5 w-2.5" />}
                                 </div>
 
                                 {/* Focus Button */}
@@ -386,8 +381,8 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                     variant={isActive ? "default" : "secondary"}
                                     size="sm"
                                     className={cn(
-                                        "h-7 w-7 sm:w-auto sm:px-3 rounded-full sm:rounded-md text-[10px] font-bold uppercase tracking-wider gap-1.5 transition-all shadow-none shrink-0",
-                                        isActive ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-primary/10 hover:text-primary dark:bg-slate-800 dark:text-slate-400 sm:opacity-0 sm:group-hover:opacity-100"
+                                        "h-7 px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider gap-1.5 transition-all shadow-none shrink-0",
+                                        isActive ? "bg-primary text-white" : "bg-slate-100/80 text-slate-600 hover:bg-primary/10 hover:text-primary dark:bg-slate-800 dark:text-slate-400 sm:opacity-0 sm:group-hover:opacity-100"
                                     )}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -397,12 +392,12 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                     {isActive ? (
                                         <>
                                             <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                                            <span className="hidden sm:inline">STOP</span>
+                                            <span>STOP</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Play className="h-3 w-3 fill-current sm:m-0 m-auto" />
-                                            <span className="hidden sm:inline">FOCUS</span>
+                                            <Play className="h-3 w-3 fill-current" />
+                                            <span>FOCUS</span>
                                         </>
                                     )}
                                 </Button>
@@ -410,7 +405,7 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                 {/* Dropdown Menu */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/60 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -424,11 +419,11 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                         <DropdownMenuItem
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setIsDeleteDialogOpen(true);
+                                                setIsArchiveDialogOpen(true);
                                             }}
-                                            className="text-red-600"
+                                            className="text-amber-600 dark:text-amber-500"
                                         >
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            <Archive className="mr-2 h-4 w-4" /> Archive
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -476,33 +471,33 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
 
                     <ContextMenuSeparator />
                     <ContextMenuItem
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                        onClick={() => setIsArchiveDialogOpen(true)}
+                        className="text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950"
                     >
-                        Delete Task
+                        Archive Task
                         <ContextMenuShortcut>
-                            <Trash2 className="h-4 w-4" />
+                            <Archive className="h-4 w-4" />
                         </ContextMenuShortcut>
                     </ContextMenuItem>
                 </ContextMenuContent>
             </ContextMenu >
 
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Archive Task?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the task
-                            "{task.title}" and remove it from our servers.
+                            This will move "<strong>{task.title}</strong>" to your archives. 
+                            You can restore it anytime from the Archived tab.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete();
-                        }} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            handleArchive();
+                        }} className="bg-amber-600 hover:bg-amber-700 text-white">
+                            Archive
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

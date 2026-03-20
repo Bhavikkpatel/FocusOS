@@ -55,22 +55,6 @@ export function VictoryAnimation() {
                 ))}
             </AnimatePresence>
             
-            <motion.div
-                initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: "backOut" }}
-                className="bg-white dark:bg-slate-900 px-8 py-4 rounded-3xl border-4 border-green-500 shadow-2xl flex flex-col items-center gap-2"
-            >
-                <motion.span 
-                    animate={{ rotate: [0, 10, -10, 10, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="text-6xl"
-                >
-                    🏆
-                </motion.span>
-                <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Goal Achieved!</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Deep work completion</p>
-            </motion.div>
         </div>
     );
 }
