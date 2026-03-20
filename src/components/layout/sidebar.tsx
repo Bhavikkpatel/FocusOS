@@ -31,7 +31,7 @@ import { useSidebarStore } from "@/store/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/app", icon: LayoutDashboard },
     { name: "Projects", href: "/projects", icon: FolderOpen },
     { name: "Calendar", href: "/calendar", icon: CalendarDays },
     { name: "Analytics", href: "/analytics", icon: BarChart2 },

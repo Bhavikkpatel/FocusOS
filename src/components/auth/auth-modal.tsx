@@ -35,7 +35,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                     <div className="mt-8 space-y-4">
                         <Button
-                            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                            onClick={() => signIn("google", { callbackUrl: "/app" })}
                             variant="outline"
                             className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-12 text-base font-semibold group rounded-xl transition-all"
                         >
@@ -60,7 +60,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             Continue with Google
                         </Button>
                         <Button
-                            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+                            onClick={() => signIn("github", { callbackUrl: "/app" })}
                             variant="outline"
                             className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-12 text-base font-semibold group rounded-xl transition-all"
                         >

@@ -73,7 +73,7 @@ export function Header() {
 
     // Dynamic Title Logic
     const getTitle = () => {
-        if (pathname === "/dashboard") return "Dashboard";
+        if (pathname === "/app") return "Dashboard";
         if (pathname === "/projects") return "Projects";
         if (pathname.startsWith("/projects/") && projectId) {
             return project?.name || "Loading Project...";
@@ -418,7 +418,7 @@ export function Header() {
                 </div>
 
                 {/* Global New Task (Show on Dashboard or if not in project detail) */}
-                {(pathname === "/dashboard" || pathname === "/tasks") && (
+                {(pathname === "/app" || pathname === "/tasks") && (
                     <Button
                         className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-sm h-9 ml-2"
                         onClick={() => setIsTaskDialogOpen(true)}
