@@ -14,9 +14,10 @@ import {
 import { AttachmentPreview } from "@/components/tasks/attachment-preview";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
 import { useSubtasks, useCreateSubtask, useUpdateSubtask, useDeleteSubtask } from "@/hooks/use-subtasks";
-import { useAttachments, useAddAttachment, useDeleteAttachment } from "@/hooks/use-attachments";
+import { useAttachments, useAddAttachment, useDeleteAttachment, useUploadFile } from "@/hooks/use-attachments";
 import { useTimerStore } from "@/store/timer";
 import { SessionTimeline } from "@/components/tasks/session-timeline";
+import { DayRibbon } from "@/components/tasks/day-ribbon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -53,11 +54,12 @@ import { cn } from "@/lib/utils";
 interface TaskExpandedViewProps {
     task: TaskWithSessions;
     onClose: () => void;
+    calendarEventId?: string | null;
     onEdit?: (task: TaskWithSessions) => void;
     onDelete?: (taskId: string) => void;
 }
 
-export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
+export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpandedViewProps) {
     const { mutate: updateTask } = useUpdateTask();
     const [notes, setNotes] = useState(task.notes || "");
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
@@ -95,7 +97,7 @@ export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
             else resume();
         } else {
             const duration = task.pomodoroDuration || (currentPreset?.focusDuration ? currentPreset.focusDuration / 60 : 25);
-            start(duration, "FOCUS", task.id, task.estimatedPomodoros);
+            start(duration, "FOCUS", task.id, task.estimatedPomodoros, calendarEventId);
             if (task.status === "TODO") {
                 updateTask({ id: task.id, status: "IN_PROGRESS" });
             }
@@ -112,6 +114,7 @@ export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
     // Attachments state
     const { data: attachments = [] } = useAttachments(task.id);
     const addLink = useAddAttachment(task.id);
+    const uploadFile = useUploadFile(task.id);
     const deleteAttachment = useDeleteAttachment(task.id);
 
     // Preview state
@@ -634,6 +637,8 @@ export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
                                     {/* Right Pane: Metadata & Attachments */}
                                     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
                                         <div className="p-8 space-y-10">
+                                            <DayRibbon taskId={task.id} taskTitle={task.title} />
+
                                             {/* Metadata Section (with Contextual Visibility) */}
                                             <section className="space-y-6">
                                                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-1">
@@ -932,6 +937,24 @@ export function TaskExpandedView({ task, onClose }: TaskExpandedViewProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Hidden File Input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                        try {
+                            await uploadFile.mutateAsync(file);
+                        } finally {
+                            // Reset input so the same file can be uploaded again if needed
+                            if (e.target) e.target.value = "";
+                        }
+                    }
+                }}
+            />
 
             <AttachmentPreview
                 isOpen={isPreviewOpen}

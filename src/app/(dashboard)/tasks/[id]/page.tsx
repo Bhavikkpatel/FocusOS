@@ -3,7 +3,7 @@
 import { useTask } from "@/hooks/use-tasks";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
 import { TaskListSkeleton } from "@/components/tasks/task-skeleton";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLayoutStore } from "@/store/layout";
 import { useEffect } from "react";
 
@@ -11,6 +11,8 @@ export default function TaskDetailPage() {
     const params = useParams();
     const router = useRouter();
     const taskId = params?.id as string;
+    const searchParams = useSearchParams();
+    const calendarEventId = searchParams.get("event");
     const { setNoPadding } = useLayoutStore();
 
     useEffect(() => {
@@ -51,6 +53,7 @@ export default function TaskDetailPage() {
         <TaskExpandedView 
             task={task} 
             onClose={handleClose}
+            calendarEventId={calendarEventId}
         />
     );
 }

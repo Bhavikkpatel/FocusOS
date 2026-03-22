@@ -61,8 +61,6 @@ export function Header() {
         setCalendarViewMode,
         setCalendarCommand,
         setProjectCommand,
-        calendarZoom,
-        setCalendarZoom,
         headerConfig,
         lowEnergyMode,
         setLowEnergyMode,
@@ -73,7 +71,7 @@ export function Header() {
 
     // Dynamic Title Logic
     const getTitle = () => {
-        if (pathname === "/dashboard") return "Dashboard";
+        if (pathname === "/app") return "Dashboard";
         if (pathname === "/projects") return "Projects";
         if (pathname.startsWith("/projects/") && projectId) {
             return project?.name || "Loading Project...";
@@ -319,29 +317,6 @@ export function Header() {
                             {/* Calendar Actions */}
                             {pathname === "/calendar" && (
                                 <>
-                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-7 w-7"
-                                            onClick={() => setCalendarZoom(Math.max(calendarZoom - 1, 1))}
-                                            disabled={calendarZoom === 1}
-                                        >
-                                            -
-                                        </Button>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter w-8 text-center bg-white dark:bg-slate-900 py-0.5 rounded shadow-sm border border-slate-100 dark:border-slate-800">
-                                            z{calendarZoom}
-                                        </span>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-7 w-7"
-                                            onClick={() => setCalendarZoom(Math.min(calendarZoom + 1, 4))}
-                                            disabled={calendarZoom === 4}
-                                        >
-                                            +
-                                        </Button>
-                                    </div>
                                     <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1" />
                                     <Button 
                                         variant="outline" 
@@ -418,7 +393,7 @@ export function Header() {
                 </div>
 
                 {/* Global New Task (Show on Dashboard or if not in project detail) */}
-                {(pathname === "/dashboard" || pathname === "/tasks") && (
+                {(pathname === "/app" || pathname === "/tasks") && (
                     <Button
                         className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-sm h-9 ml-2"
                         onClick={() => setIsTaskDialogOpen(true)}

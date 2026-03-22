@@ -20,7 +20,7 @@ export default function SignInPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Button
-                        onClick={() => signIn("google", { callbackUrl: "/timer" })}
+                        onClick={() => signIn("google", { callbackUrl: "/app" })}
                         variant="outline"
                         className="w-full"
                         size="lg"
@@ -46,7 +46,7 @@ export default function SignInPage() {
                         Continue with Google
                     </Button>
                     <Button
-                        onClick={() => signIn("github", { callbackUrl: "/timer" })}
+                        onClick={() => signIn("github", { callbackUrl: "/app" })}
                         variant="outline"
                         className="w-full"
                         size="lg"

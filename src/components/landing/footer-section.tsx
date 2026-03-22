@@ -1,0 +1,105 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { Button } from "@/components/ui/button";
+
+export function ConversionSection() {
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    return (
+        <section id="pricing" className="py-32 px-6 relative overflow-hidden bg-gradient-to-b from-transparent to-[#0A0A0B]">
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/20 blur-[140px] rounded-full pointer-events-none opacity-50" />
+            
+            <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="space-y-6"
+                >
+                    <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter leading-tight">
+                        Your focus is a<br/><span className="text-primary italic">finite resource.</span><br/><span className="text-slate-400">Protect it.</span>
+                    </h2>
+                    <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-2xl mx-auto">
+                        Most people end their day reacting. Start ending it having <span className="text-white italic">executed</span>.
+                    </p>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="space-y-6"
+                >
+                    <Button 
+                        onClick={() => setIsAuthModalOpen(true)}
+                        className="rounded-full bg-white text-black hover:bg-slate-200 px-12 h-20 text-2xl font-bold shadow-2xl shadow-white/20 transition-all hover:scale-110 active:scale-95"
+                    >
+                        Deploy FocusOS
+                    </Button>
+                    <div className="flex items-center justify-center gap-6 text-xs text-slate-600 font-bold uppercase tracking-widest">
+                        <span>No credit card</span>
+                        <div className="h-1 w-1 rounded-full bg-slate-800" />
+                        <span>No bloat</span>
+                        <div className="h-1 w-1 rounded-full bg-slate-800" />
+                        <span>Pure execution</span>
+                    </div>
+                </motion.div>
+            </div>
+
+            <AuthModal 
+                isOpen={isAuthModalOpen} 
+                onClose={() => setIsAuthModalOpen(false)} 
+            />
+        </section>
+    );
+}
+
+export function Footer() {
+    return (
+        <footer className="py-10 px-6 border-t border-white/5 bg-[#0A0A0B]">
+            <div className="max-w-7xl mx-auto flex flex-col items-center gap-10">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-12 md:gap-24">
+                    <div className="space-y-4">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Product</span>
+                        <ul className="space-y-2">
+                            <li><a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</a></li>
+                            <li><a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Zenith Mode</a></li>
+                        </ul>
+                    </div>
+                    <div className="space-y-4">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Company</span>
+                        <ul className="space-y-2">
+                            <li><a href="#philosophy" className="text-sm text-slate-400 hover:text-white transition-colors">Philosophy</a></li>
+                            <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">GitHub</a></li>
+                        </ul>
+                    </div>
+                    <div className="space-y-4">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Get Started</span>
+                        <ul className="space-y-2">
+                            <li><a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a></li>
+                            <li><a href="#philosophy" className="text-sm text-slate-400 hover:text-white transition-colors">Our Story</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <p className="text-xs text-slate-700 font-medium">
+                        © 2026 FocusOS. Designed for thinkers and executors.
+                    </p>
+                    <div className="px-4 py-1.5 rounded-full bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] font-mono text-primary font-bold tracking-widest">
+                            SYSTEM_STATUS: FLOWING.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+}
+
