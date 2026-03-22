@@ -21,10 +21,10 @@ export function MomentumSection() {
                         BEHAVIORAL_INSIGHTS
                     </span>
                     <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight leading-tight">
-                        Your focus has a <br /> <span className="text-slate-500">Momentum Scorecard.</span>
+                        Close your laptop<br /> <span className="text-slate-500">with energy to spare.</span>
                     </h2>
                     <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-2xl mx-auto">
-                        FocusOS doesn't just track time. It tracks focus quality, session frequency, and distraction resistance to calculate your daily momentum.
+                        Traditional apps leave you feeling guilty about what you didn&apos;t do. FocusOS measures the quality of what you did — then tells you you&apos;re winning.
                     </p>
                 </motion.div>
 
@@ -84,7 +84,7 @@ export function MomentumSection() {
 
                         <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-emerald-400/10 border border-emerald-400/20">
                             <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">High Energy Pattern Detected</span>
+                            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">You&apos;re running above capacity</span>
                         </div>
                     </div>
                 </motion.div>
