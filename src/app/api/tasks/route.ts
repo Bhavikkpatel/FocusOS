@@ -42,6 +42,9 @@ export async function GET(req: Request) {
         const difficulty = searchParams.get("difficulty");
         const categoryId = searchParams.get("categoryId");
         const tagId = searchParams.get("tagId");
+        const dueDate = searchParams.get("dueDate");
+        const unallocatedOnly = searchParams.get("unallocatedOnly") === "true";
+        const search = searchParams.get("search");
 
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "20");
@@ -52,6 +55,13 @@ export async function GET(req: Request) {
             userId: session.user.id,
             status: { not: "ARCHIVED" }, // Default to not showing archived
         };
+
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+            ];
+        }
 
         if (status && status !== "ALL") {
             where.status = status as TaskStatus;
@@ -80,6 +90,23 @@ export async function GET(req: Request) {
         if (tagId) {
             where.tags = {
                 some: { id: tagId }
+            };
+        }
+
+        if (dueDate === "today") {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+            where.dueDate = {
+                gte: startOfDay,
+                lte: endOfDay,
+            };
+        }
+
+        if (unallocatedOnly) {
+            where.calendarEvents = {
+                none: {}
             };
         }
 

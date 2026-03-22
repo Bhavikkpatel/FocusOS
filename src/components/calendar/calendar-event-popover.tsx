@@ -12,7 +12,7 @@ interface CalendarEventPopoverProps {
     event: CalendarEvent;
     position: { x: number; y: number };
     onClose: () => void;
-    onStartFocus?: (taskId: string) => void;
+    onStartFocus?: (taskId: string, calendarEventId?: string | null) => void;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -123,7 +123,7 @@ export function CalendarEventPopover({
                                 size="sm"
                                 className="w-full gap-2 text-xs"
                                 onClick={() => {
-                                    onStartFocus(task.id);
+                                    onStartFocus(task.id, event.id);
                                     onClose();
                                 }}
                             >
@@ -138,7 +138,7 @@ export function CalendarEventPopover({
                                 variant="outline"
                                 className="w-full gap-2 text-xs"
                                 onClick={() => {
-                                    router.push(`/tasks?task=${task.id}`);
+                                    router.push(`/tasks?task=${task.id}&event=${event.id}`);
                                     onClose();
                                 }}
                             >
