@@ -16,7 +16,7 @@ export async function GET(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const attachment = await prisma.attachment.findUnique({
+        const attachment = await prisma.attachment.findFirst({
             where: {
                 id: params.id,
                 userId: session.user.id,

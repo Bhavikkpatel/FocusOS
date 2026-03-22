@@ -90,6 +90,11 @@ export async function getPresignedUrl(key: string, expiresIn = 3600): Promise<st
         return key.replace(LOCAL_PREFIX, "");
     }
 
+    // Legacy or external links: return as is
+    if (key.startsWith("http://") || key.startsWith("https://")) {
+        return key;
+    }
+
     if (!s3Client) {
         throw new Error("S3 client not configured");
     }
