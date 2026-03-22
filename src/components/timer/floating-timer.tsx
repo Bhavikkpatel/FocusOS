@@ -21,6 +21,7 @@ export function FloatingTimer() {
         resume,
         reset,
         setFocusMode,
+        currentCalendarEventId,
     } = useTimerStore();
     const pathname = usePathname();
     const isTaskPage = pathname?.includes("/tasks/");
@@ -167,6 +168,7 @@ export function FloatingTimer() {
                     <TaskExpandedView
                         task={currentTask}
                         onClose={() => setShowTask(false)}
+                        calendarEventId={currentCalendarEventId}
                     />
                 )}
             </AnimatePresence>

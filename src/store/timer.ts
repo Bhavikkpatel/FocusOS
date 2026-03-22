@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 export type SessionType = "FOCUS" | "SHORT_BREAK" | "LONG_BREAK";
 
@@ -39,6 +40,7 @@ export interface TimerState {
 
     activeSubtaskId: string | null;
     autoStartFocusTab: boolean;
+    currentCalendarEventId: string | null;
 
     // Preset
     currentPreset: PomodoroPreset | null;
@@ -52,7 +54,7 @@ export interface TimerState {
 
     // Actions
     initWorker: () => void;
-    start: (duration: number, type: SessionType, taskId?: string, estimatedPomodoros?: number) => void;
+    start: (duration: number, type: SessionType, taskId?: string, estimatedPomodoros?: number, calendarEventId?: string | null) => void;
     pause: () => void;
     resume: () => void;
     reset: () => void;
@@ -101,11 +103,12 @@ export const useTimerStore = create<TimerState>()(
                 worker: null,
                 isZenithMode: true,
                 energyLevel: "HIGH",
-                setEnergyLevel: (level) => set({ energyLevel: level }),
+                setEnergyLevel: (level: "HIGH" | "LOW") => set({ energyLevel: level }),
                 sessionDistractions: [],
                 deepWorkSessionId: null,
                 activeSubtaskId: null,
                 autoStartFocusTab: true,
+                currentCalendarEventId: null,
 
                 initWorker: () => {
                     if (typeof window === "undefined") return;
@@ -163,7 +166,7 @@ export const useTimerStore = create<TimerState>()(
                     }
                 },
 
-                start: (duration, type, taskId, estimatedPomodoros) => {
+                start: (duration: number, type: SessionType, taskId?: string, estimatedPomodoros?: number, calendarEventId?: string | null) => {
                     const state = get();
                     const { worker, isRunning, currentTaskId } = state;
 
@@ -196,6 +199,7 @@ export const useTimerStore = create<TimerState>()(
                         total: totalSeconds,
                         sessionType: type,
                         currentTaskId: taskId || null,
+                        currentCalendarEventId: calendarEventId || null,
                         estimatedPomodoros: estimatedPomodoros !== undefined ? estimatedPomodoros : state.estimatedPomodoros,
                         interruptions: 0,
                         lastInterruptionTime: 0,
@@ -269,11 +273,11 @@ export const useTimerStore = create<TimerState>()(
                     get().completeSession();
                 },
 
-                setCurrentPreset: (preset) => {
+                setCurrentPreset: (preset: PomodoroPreset) => {
                     set({ currentPreset: preset });
                 },
 
-                setPresets: (presets) => {
+                setPresets: (presets: PomodoroPreset[]) => {
                     set({ presets });
                     const defaultPreset = presets.find((p) => p.isDefault);
                     if (defaultPreset && !get().currentPreset) {
@@ -281,13 +285,13 @@ export const useTimerStore = create<TimerState>()(
                     }
                 },
 
-                updateTimerState: (payload) => {
+                updateTimerState: (payload: Partial<TimerState>) => {
                     set(payload);
                 },
 
                 completeSession: () => {
                     const state = get();
-                    const { sessionType, sessionsCompleted, currentPreset, elapsed, interruptions, currentTaskId, estimatedPomodoros } = state;
+                    const { sessionType, sessionsCompleted, currentPreset, elapsed, total, interruptions, currentTaskId, currentCalendarEventId, estimatedPomodoros } = state;
 
                     set({ isRunning: false, isPaused: false });
 
@@ -307,6 +311,45 @@ export const useTimerStore = create<TimerState>()(
                     }
 
                     set({ sessionsCompleted: nextSessionsCompleted });
+
+                    // Story 8.1: Elastic Timeline - Shift subsequent tasks if overrun
+                    if (sessionType === "FOCUS" && currentCalendarEventId && elapsed > total) {
+                        const overrunSeconds = elapsed - total;
+                        const shiftMinutes = Math.ceil(overrunSeconds / 60);
+                        
+                        fetch("/api/calendar/shift-after", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                eventId: currentCalendarEventId,
+                                shiftMinutes: shiftMinutes,
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.shiftedCount > 0) {
+                                toast.info(`Timeline adjusted by ${shiftMinutes}m`, {
+                                    description: `${data.shiftedCount} tasks shifted forward.`,
+                                    action: {
+                                        label: "Undo",
+                                        onClick: () => {
+                                            fetch("/api/calendar/shift-after", {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({
+                                                    eventId: currentCalendarEventId,
+                                                    shiftMinutes: -shiftMinutes,
+                                                })
+                                            }).then(() => {
+                                                toast.success("Timeline restored");
+                                            }).catch(err => console.error("Error restoring timeline:", err));
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .catch(err => console.error("Error shifting timeline:", err));
+                    }
 
                     // Story 3 & 4: Link session to task and store metadata
                     if (sessionType === "FOCUS" && currentTaskId) {
@@ -426,6 +469,7 @@ export const useTimerStore = create<TimerState>()(
                     lastUpdated: state.lastUpdated,
                     isZenithMode: state.isZenithMode,
                     deepWorkSessionId: state.deepWorkSessionId,
+                    currentCalendarEventId: state.currentCalendarEventId,
                 }),
             }
         )

@@ -34,6 +34,9 @@ export interface TaskFilters {
     project?: string;
     tagId?: string;
     categoryId?: string;
+    dueDate?: "today" | "all";
+    unallocatedOnly?: boolean;
+    search?: string;
 }
 
 export interface CreateTaskInput {
@@ -98,6 +101,9 @@ export function useTasks(filters: TaskFilters = {}) {
             if (filters.project) params.append("project", filters.project);
             if (filters.tagId) params.append("tagId", filters.tagId);
             if (filters.categoryId) params.append("categoryId", filters.categoryId);
+            if (filters.dueDate) params.append("dueDate", filters.dueDate);
+            if (filters.unallocatedOnly) params.append("unallocatedOnly", "true");
+            if (filters.search) params.append("search", filters.search);
 
             const response = await fetch(`/api/tasks?${params.toString()}`);
             if (!response.ok) {

@@ -61,8 +61,6 @@ export function Header() {
         setCalendarViewMode,
         setCalendarCommand,
         setProjectCommand,
-        calendarZoom,
-        setCalendarZoom,
         headerConfig,
         lowEnergyMode,
         setLowEnergyMode,
@@ -319,29 +317,6 @@ export function Header() {
                             {/* Calendar Actions */}
                             {pathname === "/calendar" && (
                                 <>
-                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-7 w-7"
-                                            onClick={() => setCalendarZoom(Math.max(calendarZoom - 1, 1))}
-                                            disabled={calendarZoom === 1}
-                                        >
-                                            -
-                                        </Button>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter w-8 text-center bg-white dark:bg-slate-900 py-0.5 rounded shadow-sm border border-slate-100 dark:border-slate-800">
-                                            z{calendarZoom}
-                                        </span>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-7 w-7"
-                                            onClick={() => setCalendarZoom(Math.min(calendarZoom + 1, 4))}
-                                            disabled={calendarZoom === 4}
-                                        >
-                                            +
-                                        </Button>
-                                    </div>
                                     <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1" />
                                     <Button 
                                         variant="outline" 
