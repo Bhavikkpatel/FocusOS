@@ -2,6 +2,7 @@
   "name": "focusoso",
   "version": "0.1.0",
   "private": true,
+  "license": "BSL-1.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

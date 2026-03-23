@@ -12,7 +12,7 @@ interface DayRibbonProps {
     taskTitle: string;
 }
 
-export function DayRibbon({ taskId, taskTitle }: DayRibbonProps) {
+export const DayRibbon = React.memo(function DayRibbon({ taskId, taskTitle }: DayRibbonProps) {
     const today = new Date();
     const { data: events = [] } = useCalendarEvents({
         start: startOfDay(today).toISOString(),
@@ -122,4 +122,4 @@ export function DayRibbon({ taskId, taskTitle }: DayRibbonProps) {
             </div>
         </div>
     );
-}
+});

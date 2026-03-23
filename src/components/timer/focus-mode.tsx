@@ -439,7 +439,7 @@ export function FocusMode() {
 
                             {/* Distraction Scratchpad */}
                             <div className={cn(
-                                "w-full max-w-md transition-all duration-500 mt-20 mb-12",
+                                "w-full max-w-md transition-[opacity,transform] duration-500 mt-20 mb-12",
                                 isInactive ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
                             )}>
                                 <div className="relative group">
@@ -456,7 +456,7 @@ export function FocusMode() {
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute bottom-0 left-0 h-1 bg-primary/20 transition-all duration-1000" style={{ width: `${progress}%` }} />
+                        <div className="absolute bottom-0 left-0 h-1 bg-primary/20 transition-[width] duration-1000" style={{ width: `${progress}%` }} />
                     </div>
                 )}
                 

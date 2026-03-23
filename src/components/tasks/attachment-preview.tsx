@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
     Dialog,
     DialogContent,
@@ -126,11 +127,12 @@ export function AttachmentPreview({ isOpen, onClose, attachment }: AttachmentPre
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
                         </div>
                     ) : isImage && effectiveUrl ? (
-                        <div className="flex items-center justify-center h-full p-4">
-                            <img
+                        <div className="relative flex items-center justify-center h-full p-4 w-full">
+                            <Image
                                 src={effectiveUrl}
                                 alt={attachment.name}
-                                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                                fill
+                                className="object-contain rounded-lg shadow-lg p-4"
                             />
                         </div>
                     ) : isPdf && effectiveUrl ? (

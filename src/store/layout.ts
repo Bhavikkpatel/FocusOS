@@ -50,7 +50,8 @@ interface LayoutState {
 
     // Command Capture Visibility
     isCommandCaptureOpen: boolean;
-    setCommandCaptureOpen: (open: boolean) => void;
+    commandCaptureMode: "search" | "create";
+    setCommandCaptureOpen: (open: boolean, mode?: "search" | "create") => void;
 
     // Energy Mode
     lowEnergyMode: boolean;
@@ -87,7 +88,8 @@ export const useLayoutStore = create<LayoutState>((set) => ({
     setNoPadding: (isNoPadding) => set({ isNoPadding }),
 
     isCommandCaptureOpen: false,
-    setCommandCaptureOpen: (open) => set({ isCommandCaptureOpen: open }),
+    commandCaptureMode: "search",
+    setCommandCaptureOpen: (open, mode = "search") => set({ isCommandCaptureOpen: open, commandCaptureMode: mode }),
 
     lowEnergyMode: false,
     setLowEnergyMode: (enabled) => set({ lowEnergyMode: enabled }),
