@@ -216,12 +216,20 @@ function KanbanColumn({
                     ) : (
                         <div className="flex items-center gap-2 group/header">
                             <Icon className="h-4 w-4 text-muted-foreground" />
-                            <h3
-                                className="text-sm font-semibold cursor-pointer hover:text-foreground"
+                            <div
+                                role="button"
+                                tabIndex={0}
+                                className="text-sm font-semibold cursor-pointer hover:text-foreground outline-none"
                                 onClick={() => setIsEditingName(true)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        setIsEditingName(true);
+                                    }
+                                }}
                             >
                                 {column.name}
-                            </h3>
+                            </div>
                         </div>
                     )}
                     <span className={cn(

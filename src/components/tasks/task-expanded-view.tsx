@@ -649,7 +649,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                 <div className="space-y-4">
                                                     {/* Priority Selector (Opacity 20% -> 100%) */}
                                                     <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Priority</label>
+                                                        <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Priority</div>
                                                         <Select
                                                             value={task.priority}
                                                             onValueChange={(val: TaskPriority) => updateTask({ id: task.id, priority: val })}
@@ -668,7 +668,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
 
                                                     {/* Due Date (Opacity 20% -> 100%) */}
                                                     <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Target Date</label>
+                                                        <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Target Date</div>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
                                                                 <Button
@@ -899,7 +899,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Link Name</label>
+                            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Link Name</div>
                             <Input
                                 placeholder="e.g. Design Specs, PR, Research"
                                 value={linkName}
@@ -908,7 +908,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">URL</label>
+                            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">URL</div>
                             <Input
                                 placeholder="https://example.com"
                                 value={linkUrl}

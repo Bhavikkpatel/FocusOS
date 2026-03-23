@@ -313,7 +313,7 @@ export function TaskList() {
                         >
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Tags</label>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Tags</div>
                                     <Select value={tagFilter} onValueChange={setTagFilter}>
                                         <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                                             <SelectValue placeholder="All Tags" />
@@ -327,7 +327,7 @@ export function TaskList() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Difficulty</label>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Difficulty</div>
                                     <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                                         <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                                             <SelectValue placeholder="All Difficulties" />
@@ -341,7 +341,7 @@ export function TaskList() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Group By</label>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Group By</div>
                                     <Select value={groupBy} onValueChange={handleGroupChange}>
                                         <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                                             <SelectValue placeholder="Group" />
@@ -354,7 +354,7 @@ export function TaskList() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Sort By</label>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Sort By</div>
                                     <Select value={sortBy} onValueChange={handleSortChange}>
                                         <SelectTrigger className="h-10 bg-white dark:bg-slate-800 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                                             <SelectValue placeholder="Sort" />
