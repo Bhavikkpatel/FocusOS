@@ -271,3 +271,9 @@ After each deep work session:
 FocusOS is not just a task manager.
 
 It is a **complete system for thinking, focusing, and executing work at a high level** — where the UI itself becomes your guardian against distraction.
+
+---
+
+## 📜 License
+
+FocusOS is source-available under the **BSL 1.1**. It becomes Open Source (Apache 2.0) on Jan 1, 2030. See the [LICENSE](./LICENSE) file for more details.

@@ -1,0 +1,21 @@
+FocusOS
+Copyright (c) 2026 Bhavikk Patel
+
+This product includes software developed by third parties:
+
+* **React** and **Next.js** (MIT License) - Copyright (c) Vercel, Inc. and Meta Platforms, Inc.
+* **Tailwind CSS** (MIT License) - Copyright (c) Tailwind Labs, Inc.
+* **Framer Motion** (MIT License) - Copyright (c) Framer B.V.
+* **Lucide Icons** (ISC License) - Copyright (c) Lucide Contributors
+* **shadcn/ui** (MIT License) - Copyright (c) shadcn
+* **Prisma** (Apache License 2.0) - Copyright (c) Prisma Data, Inc.
+* **Zustand** (MIT License) - Copyright (c) Poimandres
+* **dnd-kit** (MIT License) - Copyright (c) Claudéric Demers
+* **date-fns** (MIT License) - Copyright (c) Sasha Koss and Lesha Koss
+* **AWS SDK** (Apache License 2.0) - Copyright (c) Amazon Web Services, Inc.
+
+Fonts:
+* **Inter** (OFL-1.1) - Copyright (c) Rasmus Andersson
+* **JetBrains Mono** (OFL-1.1) - Copyright (c) JetBrains s.r.o.
+
+All other trademarks and copyrights are property of their respective owners.
