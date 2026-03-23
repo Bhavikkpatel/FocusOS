@@ -1,3 +1,4 @@
+// Licensed under the Business Source License 1.1. See LICENSE file for details.
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
