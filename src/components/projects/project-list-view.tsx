@@ -23,7 +23,7 @@ export function ProjectListView({
     const [taskToEdit, setTaskToEdit] = useState<Task | undefined>(undefined);
     const [sortBy, setSortBy] = useState<"createdAt" | "priority" | "dueDate">("createdAt");
     const [quickTitle, setQuickTitle] = useState("");
-    const { projectFilters } = useLayoutStore();
+    const { projectFilters, setCommandCaptureOpen } = useLayoutStore();
     const createTask = useCreateTask();
     const queryClient = useQueryClient();
 
@@ -47,8 +47,7 @@ export function ProjectListView({
     };
 
     const handleCreate = () => {
-        setTaskToEdit(undefined);
-        setIsDialogOpen(true);
+        setCommandCaptureOpen(true, "create");
     };
 
     // Flatten all tasks from project columns

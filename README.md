@@ -4,13 +4,24 @@ FocusOS is a modern productivity system designed for **deep work, task managemen
 
 ---
 
+## 🛠️ Tech Stack
+
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+
+---
+
 ## 🧠 Core Philosophy
 
 * **Silence the noise. Reclaim your flow.**
-* **Execution over clutter**
-* **Context-aware UI**
-* **Deep work first**
-* **Minimal cognitive load**
+* **Execution over Planning**: We believe that spending hours organizing your tasks is a trap. FocusOS forces you to pick a task and execute. No infinite nested folders. Minimal friction. High velocity.
+* **Context-aware UI**: The interface adapts to your state. It fades away when you are focused.
+* **Deep work first**: Everything is oriented towards getting into the "Zone" and staying there.
+* **Minimal cognitive load**: Clean, brutalist design that reduces decision fatigue and keeps visual noise to a strict minimum.
 
 ---
 
@@ -106,11 +117,16 @@ Replaces traditional dashboard with a **3-mode task view**:
 * Timeline of focus sessions
 * Unified session scorecard
 
+**Auto-Drift Timeline**
+![Auto-Drift Timeline](https://raw.githubusercontent.com/Bhavikkpatel/FocusOS/main/public/docs/timeline.gif)
+
 ---
 
 ## 🔥 Zenith Focus Mode
 
 A full-screen deep work environment:
+
+![Zenith Focus Mode](https://raw.githubusercontent.com/Bhavikkpatel/FocusOS/main/public/docs/zenith.gif)
 
 * Single **Hero Task**
 * Minimal UI

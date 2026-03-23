@@ -7,7 +7,7 @@ import { Search, Rocket, Zap, Command, Calendar as CalendarIcon, Paperclip, Flag
 import { cn } from "@/lib/utils";
 import { useGlobalSearch } from "@/hooks/use-search";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useTimerStore } from "@/store/timer";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useProjects } from "@/hooks/use-projects";
@@ -28,10 +28,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function CommandBar() {
-    const { isCommandCaptureOpen, setCommandCaptureOpen } = useLayoutStore();
+    const { isCommandCaptureOpen, setCommandCaptureOpen, commandCaptureMode } = useLayoutStore();
     const [query, setQuery] = useState("");
     const [description, setDescription] = useState("");
-    const [mode, setMode] = useState<"search" | "create">("search");
+    const [mode, setMode] = useState<"search" | "create">(commandCaptureMode);
     const debouncedQuery = useDebounce(query, 200);
     const { data: results, isLoading } = useGlobalSearch(debouncedQuery);
     const [isGhosted, setIsGhosted] = useState(false);
@@ -53,14 +53,12 @@ export function CommandBar() {
 
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                setMode("search");
-                setCommandCaptureOpen(!isCommandCaptureOpen);
+                setCommandCaptureOpen(!isCommandCaptureOpen, "search");
             }
 
             if (e.key === "t" && !isCommandCaptureOpen) {
                 e.preventDefault();
-                setMode("create");
-                setCommandCaptureOpen(true);
+                setCommandCaptureOpen(true, "create");
             }
 
             if (e.key === "Escape" && isCommandCaptureOpen) {
@@ -71,9 +69,11 @@ export function CommandBar() {
         return () => window.removeEventListener("keydown", down);
     }, [isCommandCaptureOpen, setCommandCaptureOpen]);
 
+    const params = useParams();
+    const defaultProjectId = params?.id as string | undefined;
     const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
     const [dueDate, setDueDate] = useState<Date | null>(null);
-    const [projectId, setProjectId] = useState<string | null>(null);
+    const [projectId, setProjectId] = useState<string | null>(defaultProjectId || null);
     const { data: projects } = useProjects();
 
     const selectedProject = projects?.find(p => p.id === projectId);
@@ -125,13 +125,17 @@ export function CommandBar() {
     }, [isCommandCaptureOpen]);
 
     useEffect(() => {
-        if (isCommandCaptureOpen && inputRef.current) {
-            inputRef.current.focus();
+        if (isCommandCaptureOpen) {
+            setMode(commandCaptureMode);
+            setProjectId(defaultProjectId || null);
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
         } else {
             setQuery("");
             setDescription("");
         }
-    }, [isCommandCaptureOpen]);
+    }, [isCommandCaptureOpen, commandCaptureMode, defaultProjectId]);
 
     const handleLaunch = useCallback((taskId: string, duration: number = 25) => {
         setCommandCaptureOpen(false);

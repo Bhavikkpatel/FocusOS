@@ -8,8 +8,16 @@ import { TimerInitializer } from "@/components/timer/timer-initializer";
 import NextTopLoader from 'nextjs-toploader';
 import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
+const inter = Inter({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter" 
+});
+const jetbrains = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "700"],
+  variable: "--font-jetbrains" 
+});
 
 export const metadata: Metadata = {
     title: "FocusOS - Pomodoro Productivity App",

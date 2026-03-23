@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskItem } from "./task-item";
 import { TaskDialog } from "./task-dialog";
 import { KanbanBoard } from "./kanban-board";
+import { useLayoutStore } from "@/store/layout";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -104,9 +105,9 @@ export function TaskList() {
         setIsDialogOpen(true);
     };
 
+    const { setCommandCaptureOpen } = useLayoutStore();
     const handleCreate = () => {
-        setTaskToEdit(undefined);
-        setIsDialogOpen(true);
+        setCommandCaptureOpen(true, "create");
     };
 
     const handleSelectTask = (id: string | null) => {
