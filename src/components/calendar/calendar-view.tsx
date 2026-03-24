@@ -4,7 +4,8 @@ import * as React from "react";
 import { CalendarDays } from "lucide-react";
 import { useCalendarEvents, useUpdateCalendarEvent, type CalendarEvent } from "@/hooks/use-calendar";
 import { CalendarEventPopover } from "./calendar-event-popover";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarSlotModal } from "./calendar-slot-modal";
 import { CalendarHeaderStats } from "./calendar-header-stats";
@@ -287,14 +288,38 @@ export function CalendarView() {
                     eventResize={handleEventResize}
                     eventReceive={handleEventReceive}
                     eventContent={(eventInfo: any) => {
-                        const isUnderBudget = eventInfo.event.extendedProps.isUnderBudget;
+                        const { event } = eventInfo;
+                        const isUnderBudget = event.extendedProps.isUnderBudget;
+                        const color = event.backgroundColor || "#6366f1";
+                        const isShort = (event.end && event.start) && (event.end.getTime() - event.start.getTime()) < 45 * 60 * 1000;
+                        
                         return (
                             <div className={cn(
-                                "flex items-center gap-1.5 px-2 py-1 h-full w-full overflow-hidden",
-                                isUnderBudget && "border-2 border-amber-500 rounded-md bg-amber-500/10"
-                            )}>
-                                {isUnderBudget && <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />}
-                                <span className="truncate flex-1 font-semibold">{eventInfo.event.title}</span>
+                                "flex flex-col h-full w-full overflow-hidden rounded-md border-l-[4px] transition-all",
+                                isUnderBudget ? "border-amber-500 bg-amber-500/10" : "bg-white/10 backdrop-blur-sm shadow-sm hover:shadow-md"
+                            )} style={{ borderLeftColor: isUnderBudget ? undefined : color }}>
+                                <div className={cn(
+                                    "flex-1 flex flex-col gap-0.5 px-2 py-1.5",
+                                    isShort ? "justify-center" : "justify-start"
+                                )}>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        {isUnderBudget && <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />}
+                                        <span className={cn(
+                                            "truncate font-black tracking-tight leading-tight",
+                                            isShort ? "text-[10px]" : "text-xs"
+                                        )}>
+                                            {event.title}
+                                        </span>
+                                    </div>
+                                    {!isShort && (
+                                        <div className="flex items-center gap-1 text-[9px] font-bold opacity-60 uppercase tracking-widest">
+                                            <Clock className="h-2.5 w-2.5" />
+                                            <span>
+                                                {format(event.start, "h:mm a")}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         );
                     }}

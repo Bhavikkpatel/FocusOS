@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    Bell,
     Plus,
     Menu,
     ChevronLeft,
@@ -384,13 +383,6 @@ export function Header() {
                     </span>
                 </button>
 
-                {/* Default Actions (Search Mobile, Notifications) */}
-                <div className="flex items-center gap-1 md:gap-2">
-                    <button className="p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg transition-colors relative" title="Notifications">
-                        <Bell className="h-5 w-5" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-                    </button>
-                </div>
 
                 {/* Global New Task (Show on Dashboard or if not in project detail) */}
                 {(pathname === "/app" || pathname === "/tasks") && (
