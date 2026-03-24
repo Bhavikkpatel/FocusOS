@@ -2,15 +2,24 @@
 
 import * as React from "react";
 import { format, isSameDay } from "date-fns";
-import { CalendarEvent } from "@/hooks/use-calendar";
+import { CalendarEvent, useDeleteCalendarEvent } from "@/hooks/use-calendar";
 import { cn } from "@/lib/utils";
-import { Clock, Play } from "lucide-react";
+import { Clock, ExternalLink, Timer, Trash2, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+
+const PRIORITY_COLORS: Record<string, string> = {
+    LOW: "bg-slate-100 text-slate-800",
+    MEDIUM: "bg-blue-100 text-blue-800",
+    HIGH: "bg-orange-100 text-orange-800",
+    URGENT: "bg-red-500/20 text-red-200",
+};
 
 interface CalendarHorizontalDayProps {
     date: Date;
     events: CalendarEvent[];
-    onEventClick: (event: CalendarEvent, element: HTMLElement) => void;
+    onEventClick?: (event: CalendarEvent, element: HTMLElement) => void;
     onStartFocus?: (taskId: string, eventId: string) => void;
     onSlotSelect?: (start: Date) => void;
     onTaskDrop?: (task: { id: string, title: string, duration: number }, start: Date) => void;
@@ -21,13 +30,14 @@ interface CalendarHorizontalDayProps {
 export function CalendarHorizontalDay({ 
     date, 
     events, 
-    onEventClick,
     onStartFocus,
     onSlotSelect,
     onTaskDrop,
     onEventMove,
     onEventResize
 }: CalendarHorizontalDayProps) {
+    const router = useRouter();
+    const { mutate: deleteEvent, isPending } = useDeleteCalendarEvent();
     const [now, setNow] = React.useState(new Date());
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -182,10 +192,6 @@ export function CalendarHorizontalDay({
                                             }}
                                             className="absolute top-0 group/tile z-10 hover:z-50 transition-all"
                                             style={{ left: `${left}px`, width: `${width}px` }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onEventClick(event, e.currentTarget);
-                                            }}
                                         >
                                             <div 
                                                 className={cn(
@@ -193,10 +199,11 @@ export function CalendarHorizontalDay({
                                                     isCompleted 
                                                         ? "bg-slate-900 border-slate-800 opacity-60 grayscale" 
                                                         : "bg-[#152033]",
-                                                    "max-h-[42px] group-hover/tile:max-h-[200px]"
+                                                    "max-h-[42px] group-hover/tile:max-h-[300px]",
+                                                    "w-full group-hover/tile:min-w-[260px]"
                                                 )}
                                             >
-                                                {/* Always Visible Header (The Pill) */}
+                                            {/* Always Visible Header (The Pill) */}
                                                 <div className="h-[42px] px-3 flex items-center justify-between gap-2 shrink-0">
                                                     <h4 className="font-bold text-sm text-blue-100 truncate">
                                                         {event.title}
@@ -208,30 +215,87 @@ export function CalendarHorizontalDay({
                                                 </div>
 
                                                 {/* Expanded Hover Content */}
-                                                <div className="px-3 pb-3 flex flex-col gap-2 opacity-0 group-hover/tile:opacity-100 transition-opacity duration-300">
-                                                    <span className="text-[10px] font-black text-blue-300/60 uppercase tracking-widest truncate">
-                                                        {event.task?.projectRef?.name || "Task"}
-                                                    </span>
+                                                <div className="px-3 pb-3 flex flex-col gap-2 opacity-0 group-hover/tile:opacity-100 transition-opacity duration-300 max-h-0 group-hover/tile:max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                    <div className="flex flex-col gap-1.5 pt-1 border-t border-slate-700/50">
+                                                        {/* Project Name */}
+                                                        {event.task?.projectRef && (
+                                                            <span className="text-[10px] font-black text-blue-300/60 uppercase tracking-widest truncate">
+                                                                {event.task.projectRef.name}
+                                                            </span>
+                                                        )}
 
-                                                    <div className="flex items-center justify-between mt-1 gap-1">
-                                                        <div className="flex items-center gap-1.5 min-w-0">
-                                                            <Clock className="h-3 w-3 text-blue-400 shrink-0" />
-                                                            <span className="text-[10px] font-bold text-blue-200/80 truncate">
-                                                                {format(start, "h:mm a")}
+                                                        {/* Time */}
+                                                        <div className="flex items-center gap-1.5 text-xs text-blue-200/80">
+                                                            <CalendarIcon className="h-3 w-3 shrink-0" />
+                                                            <span>
+                                                                {format(start, "h:mm a")} – {format(end, "h:mm a")} ({Math.round((end.getTime() - start.getTime()) / 60000)}m)
                                                             </span>
                                                         </div>
-                                                        {event.task && !isCompleted && onStartFocus && (
+
+                                                        {/* Task Info */}
+                                                        {event.task && (
+                                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                                <Badge className={cn("text-[9px] font-bold px-1.5 py-0 border-none", PRIORITY_COLORS[event.task.priority] || PRIORITY_COLORS.MEDIUM)}>
+                                                                    {event.task.priority}
+                                                                </Badge>
+                                                                <span className="text-xs text-blue-300/60 font-medium tracking-tight">
+                                                                    🍅 {event.task.completedPomodoros}/{event.task.estimatedPomodoros}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Notes */}
+                                                        {event.notes && (
+                                                            <p className="text-[10px] text-blue-300/50 line-clamp-2 leading-relaxed mt-0.5">
+                                                                {event.notes}
+                                                            </p>
+                                                        )}
+
+                                                        {/* Actions */}
+                                                        <div className="flex flex-col gap-1 mt-1">
+                                                            {event.task && onStartFocus && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="w-full justify-start gap-2 h-7 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-md"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onStartFocus(event.task!.id, event.id);
+                                                                    }}
+                                                                >
+                                                                    <Timer className="h-3.5 w-3.5" />
+                                                                    Start Focus Session
+                                                                </Button>
+                                                            )}
+
+                                                            {event.task && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    className="w-full justify-start gap-2 h-7 text-[11px] font-bold border-slate-600 bg-transparent text-blue-100 hover:bg-white/10 hover:text-white rounded-md"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/tasks?task=${event.task!.id}&event=${event.id}`);
+                                                                    }}
+                                                                >
+                                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                                    Open Task
+                                                                </Button>
+                                                            )}
+
                                                             <Button
-                                                                size="icon"
-                                                                className="h-7 w-7 shrink-0 rounded-lg bg-white text-black hover:scale-105"
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="w-full justify-start gap-2 h-7 text-[11px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md"
+                                                                disabled={isPending}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    onStartFocus(event.task!.id, event.id);
+                                                                    deleteEvent(event.id);
                                                                 }}
                                                             >
-                                                                <Play className="h-3 w-3 fill-current ml-0.5" />
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                {event.taskId ? "Unschedule" : "Delete Event"}
                                                             </Button>
-                                                        )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
