@@ -140,6 +140,14 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
                             <Card
                                 key={task.id}
                                 data-task-id={task.id}
+                                draggable="true"
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData("taskId", task.id);
+                                    e.dataTransfer.setData("taskTitle", task.title);
+                                    const duration = (task.estimatedPomodoros || 1) * (task.pomodoroDuration || 25);
+                                    e.dataTransfer.setData("taskDuration", String(duration));
+                                    e.dataTransfer.effectAllowed = "copy";
+                                }}
                                 className={cn(
                                     "draggable-task group relative p-4 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-all border-2",
                                     "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm"

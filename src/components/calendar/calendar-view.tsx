@@ -252,6 +252,44 @@ export function CalendarView() {
                                 eventId
                             );
                         }}
+                        onSlotSelect={(start) => {
+                            setSlotModal({ start });
+                        }}
+                        onTaskDrop={(taskData, start) => {
+                            const end = new Date(start.getTime() + taskData.duration * 60000);
+
+                            createEvent({
+                                title: taskData.title,
+                                start: start.toISOString(),
+                                end: end.toISOString(),
+                                taskId: taskData.id,
+                            });
+                        }}
+                        onEventMove={(eventId, start) => {
+                            const event = events.find(e => e.id === eventId);
+                            if (!event) return;
+                            
+                            const duration = new Date(event.end).getTime() - new Date(event.start).getTime();
+                            const end = new Date(start.getTime() + duration);
+                            
+                            updateEvent({
+                                id: eventId,
+                                start: start.toISOString(),
+                                end: end.toISOString(),
+                            });
+                        }}
+                        onEventResize={(eventId, durationMinutes) => {
+                            const event = events.find(e => e.id === eventId);
+                            if (!event) return;
+                            
+                            const end = new Date(new Date(event.start).getTime() + durationMinutes * 60000);
+                            
+                            updateEvent({
+                                id: eventId,
+                                start: event.start,
+                                end: end.toISOString(),
+                            });
+                        }}
                     />
                 ) : null}
 
