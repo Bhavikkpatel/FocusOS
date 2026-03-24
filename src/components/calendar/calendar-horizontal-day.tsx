@@ -8,6 +8,7 @@ import { Clock, ExternalLink, Timer, Trash2, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { useTimerStore } from "@/store/timer";
 
 const PRIORITY_COLORS: Record<string, string> = {
     LOW: "bg-slate-100 text-slate-800",
@@ -37,6 +38,7 @@ export function CalendarHorizontalDay({
     onEventResize
 }: CalendarHorizontalDayProps) {
     const router = useRouter();
+    const { currentTaskId, isRunning } = useTimerStore();
     const { mutate: deleteEvent, isPending } = useDeleteCalendarEvent();
     const [now, setNow] = React.useState(new Date());
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -253,19 +255,36 @@ export function CalendarHorizontalDay({
 
                                                         {/* Actions */}
                                                         <div className="flex flex-col gap-1 mt-1">
-                                                            {event.task && onStartFocus && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="w-full justify-start gap-2 h-7 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-md"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        onStartFocus(event.task!.id, event.id);
-                                                                    }}
-                                                                >
-                                                                    <Timer className="h-3.5 w-3.5" />
-                                                                    Start Focus Session
-                                                                </Button>
-                                                            )}
+                                                            {event.task && onStartFocus && (() => {
+                                                                const isActive = currentTaskId === event.task?.id && isRunning;
+                                                                return (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className={cn(
+                                                                            "w-full justify-start gap-2 h-7 text-[11px] font-bold rounded-md",
+                                                                            isActive 
+                                                                                ? "bg-slate-100 dark:bg-slate-800 text-blue-500 hover:bg-slate-200 dark:hover:bg-slate-700" 
+                                                                                : "text-white bg-blue-600 hover:bg-blue-500"
+                                                                        )}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            onStartFocus(event.task!.id, event.id);
+                                                                        }}
+                                                                    >
+                                                                        {isActive ? (
+                                                                            <>
+                                                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse ml-0.5 shrink-0" />
+                                                                                Active Session
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Timer className="h-3.5 w-3.5 shrink-0" />
+                                                                                Start Focus Session
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                );
+                                                            })()}
 
                                                             {event.task && (
                                                                 <Button
