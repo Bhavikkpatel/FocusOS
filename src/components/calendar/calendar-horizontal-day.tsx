@@ -162,14 +162,14 @@ export function CalendarHorizontalDay({
                     )}
 
                     {/* Events Matrix */}
-                    <div className="relative z-10 space-y-4 px-2">
+                    <div className="relative z-10 space-y-2 px-2">
                         {eventRows.map((row, rowIndex) => (
-                            <div key={rowIndex} className="relative h-24">
+                            <div key={rowIndex} className="relative h-[52px]">
                                 {row.map(event => {
                                     const start = new Date(event.start);
                                     const end = new Date(event.end);
                                     const left = getTimePosition(start);
-                                    const width = Math.max(getTimePosition(end) - left, 60);
+                                    const width = Math.max(getTimePosition(end) - left, 72);
                                     const color = event.task?.projectRef?.color || event.color || "#6366f1";
                                     const isCompleted = event.task?.status === "COMPLETED";
 
@@ -180,63 +180,65 @@ export function CalendarHorizontalDay({
                                             onDragStart={(e) => {
                                                 e.dataTransfer.setData("eventId", event.id);
                                             }}
-                                            className="absolute top-0 h-full group"
+                                            className="absolute top-0 group/tile z-10 hover:z-50 transition-all"
                                             style={{ left: `${left}px`, width: `${width}px` }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEventClick(event, e.currentTarget);
+                                            }}
                                         >
                                             <div 
                                                 className={cn(
-                                                    "h-full rounded-2xl border border-slate-700/50 p-4 px-5 flex flex-col justify-between cursor-pointer transition-all relative overflow-hidden",
+                                                    "rounded-xl border border-[#2a3b5b]/50 flex flex-col cursor-pointer transition-all duration-300 relative overflow-hidden shadow-sm hover:shadow-xl",
                                                     isCompleted 
                                                         ? "bg-slate-900 border-slate-800 opacity-60 grayscale" 
-                                                        : "bg-[#1a2b4b] shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 active:scale-95"
+                                                        : "bg-[#152033]",
+                                                    "max-h-[42px] group-hover/tile:max-h-[200px]"
                                                 )}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEventClick(event, e.currentTarget);
-                                                }}
                                             >
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                                                        <h4 className="font-bold text-xs text-blue-100 leading-tight truncate">
-                                                            {event.title}
-                                                        </h4>
-                                                        <div 
-                                                            className="w-2 h-2 rounded-full shrink-0" 
-                                                            style={{ backgroundColor: color }} 
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] font-black text-blue-300/60 uppercase tracking-widest truncate">
-                                                            {event.task?.projectRef?.name || "Task"}
-                                                        </span>
-                                                    </div>
+                                                {/* Always Visible Header (The Pill) */}
+                                                <div className="h-[42px] px-3 flex items-center justify-between gap-2 shrink-0">
+                                                    <h4 className="font-bold text-sm text-blue-100 truncate">
+                                                        {event.title}
+                                                    </h4>
+                                                    <div 
+                                                        className="w-2 h-2 rounded-full shrink-0" 
+                                                        style={{ backgroundColor: color }} 
+                                                    />
                                                 </div>
 
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="h-3 w-3 text-blue-400" />
-                                                        <span className="text-[10px] font-bold text-blue-200/80">
-                                                            {format(start, "h:mm a")}
-                                                        </span>
+                                                {/* Expanded Hover Content */}
+                                                <div className="px-3 pb-3 flex flex-col gap-2 opacity-0 group-hover/tile:opacity-100 transition-opacity duration-300">
+                                                    <span className="text-[10px] font-black text-blue-300/60 uppercase tracking-widest truncate">
+                                                        {event.task?.projectRef?.name || "Task"}
+                                                    </span>
+
+                                                    <div className="flex items-center justify-between mt-1 gap-1">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <Clock className="h-3 w-3 text-blue-400 shrink-0" />
+                                                            <span className="text-[10px] font-bold text-blue-200/80 truncate">
+                                                                {format(start, "h:mm a")}
+                                                            </span>
+                                                        </div>
+                                                        {event.task && !isCompleted && onStartFocus && (
+                                                            <Button
+                                                                size="icon"
+                                                                className="h-7 w-7 shrink-0 rounded-lg bg-white text-black hover:scale-105"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onStartFocus(event.task!.id, event.id);
+                                                                }}
+                                                            >
+                                                                <Play className="h-3 w-3 fill-current ml-0.5" />
+                                                            </Button>
+                                                        )}
                                                     </div>
-                                                    {event.task && !isCompleted && onStartFocus && (
-                                                        <Button
-                                                            size="icon"
-                                                            className="h-8 w-8 rounded-xl bg-white text-black opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onStartFocus(event.task!.id, event.id);
-                                                            }}
-                                                        >
-                                                            <Play className="h-3 w-3 fill-current" />
-                                                        </Button>
-                                                    )}
                                                 </div>
 
                                                 {/* Resize Handle */}
                                                 {!isCompleted && onEventResize && (
                                                     <div 
-                                                        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize group-hover:bg-blue-400/20 active:bg-blue-400/40 transition-colors"
+                                                        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize group-hover/tile:bg-blue-400/20 active:bg-blue-400/40 transition-colors"
                                                         onMouseDown={(e) => {
                                                             e.stopPropagation();
                                                             const startX = e.clientX;
