@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -38,10 +39,12 @@ export function ConversionSection() {
                     className="space-y-6"
                 >
                     <Button 
-                        onClick={() => setIsAuthModalOpen(true)}
-                        className="rounded-full bg-white text-black hover:bg-slate-200 px-12 h-20 text-2xl font-bold shadow-2xl shadow-white/20 transition-all hover:scale-110 active:scale-95"
+                        asChild
+                        className="rounded-full bg-white text-black hover:bg-slate-200 px-10 h-24 shadow-2xl shadow-white/20 transition-all hover:scale-110 active:scale-95"
                     >
-                        Start Your Flow
+                        <a href="https://github.com/Bhavikkpatel/FocusOS" target="_blank">
+                            <GithubIcon className="h-16 w-16" />
+                        </a>
                     </Button>
                     <div className="flex items-center justify-center gap-6 text-xs text-slate-600 font-bold uppercase tracking-widest">
                         <span>Open Source</span>
@@ -69,8 +72,9 @@ export function Footer() {
                     <div className="space-y-4">
                         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Product</span>
                         <ul className="space-y-2">
-                            <li><Link href="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</Link></li>
-                            <li><Link href="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Zenith Mode</Link></li>
+                            <li><Link href="/features" className="text-slate-500 hover:text-white transition-colors">Features</Link></li>
+                            <li><Link href="/docs" className="text-slate-500 hover:text-white transition-colors">Setup Guide</Link></li>
+                            <li><Link href="/about" className="text-slate-500 hover:text-white transition-colors">Our Story</Link></li>
                         </ul>
                     </div>
                     <div className="space-y-4">

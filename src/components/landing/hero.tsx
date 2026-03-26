@@ -4,7 +4,8 @@ import { useState, useRef } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { Button } from "@/components/ui/button";
-import { Github, Brain, Sparkles, Shield, Eye } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
+import { Brain, Sparkles, Shield, Eye } from "lucide-react";
 
 // Individual chaos element — each gets its own component so hooks are called at top-level
 function ChaosIcon({
@@ -164,7 +165,7 @@ export function Hero() {
                         target="_blank"
                         className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-4 shadow-2xl hover:bg-white/10 transition-colors group"
                     >
-                         <Github className="h-3 w-3 group-hover:scale-110 transition-transform" /> Source Available
+                         <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> Source Available
                     </a>
 
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.85]">
@@ -183,10 +184,12 @@ export function Hero() {
                     className="pt-6 pb-16 relative z-10"
                 >
                     <Button 
-                        onClick={() => setIsAuthModalOpen(true)}
-                        className="rounded-full bg-white text-black hover:bg-slate-200 px-10 h-16 text-lg font-bold shadow-2xl shadow-white/20 transition-all hover:scale-105 active:scale-95"
+                        asChild
+                        className="rounded-full bg-white text-black hover:bg-slate-200 px-10 h-24 font-black shadow-2xl shadow-white/20 transition-all hover:scale-110 active:scale-95"
                     >
-                        Start Your Session
+                        <a href="https://github.com/Bhavikkpatel/FocusOS" target="_blank">
+                            <GithubIcon className="h-16 w-16" />
+                        </a>
                     </Button>
                 </motion.div>
 

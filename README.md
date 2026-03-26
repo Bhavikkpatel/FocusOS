@@ -1,260 +1,97 @@
-# 🚀 FocusOS — Feature Overview
+# 🚀 FocusOS: Anti-Gravity Execution Environment
 
-FocusOS is a modern productivity system designed for **deep work, task management, and focus-driven execution**. It combines task organization, Pomodoro-based focus, and behavioral insights into a single workflow.
-
----
-
-## 🛠️ Tech Stack
-
-![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+FocusOS is a minimalist, keyboard-first, and distraction-free execution system built for thinkers and makers who value deep work. It silences the noise and provides a "Zero-Gravity" portal to your tasks.
 
 ---
 
-## 🧠 Core Philosophy
+## 🏗️ Architecture & Philosophy
 
-* **Silence the noise. Reclaim your flow.**
-* **Execution over Planning**: We believe that spending hours organizing your tasks is a trap. FocusOS forces you to pick a task and execute. No infinite nested folders. Minimal friction. High velocity.
-* **Context-aware UI**: The interface adapts to your state. It fades away when you are focused.
-* **Deep work first**: Everything is oriented towards getting into the "Zone" and staying there.
-* **Minimal cognitive load**: Clean, brutalist design that reduces decision fatigue and keeps visual noise to a strict minimum.
-
----
-
-# 🏗️ Core Features
+- **Execution over Management**: No infinite folders. No metric traps. Just pick a task and enter the flow.
+- **Ghost UI**: The interface adapts to your state, fading away when you are focused.
+- **Privacy First**: Fully self-hostable with **AGPLv3** open-source code.
+- **Modern Stack**: Built with Next.js 14, Prisma, PostgreSQL (Supabase), and Cloudflare R2.
 
 ---
 
----
+## ⚡ Quick Start (Self-Hosting)
 
-## 📌 Project & Task Management
+FocusOS is designed to be deployed and owned by you. Follow these steps to spin up your personal sanctuary.
 
-* Create and manage **Projects**
-* Organize tasks within projects (Kanban/List)
-* Task features:
+### 1. Prerequisites
 
-  * Title, description, notes
-  * Subtasks
-  * Tags & priorities
-  * Due dates
-  * Difficulty level
-  * Categories
-* Task completion with:
+- **Node.js** (v20 or higher)
+- **PNPM** or **NPM**
+- **PostgreSQL** (We recommend [Supabase](https://supabase.com))
+- **Google Auth** (For secure sign-in via NextAuth)
+- **Cloudflare R2** (Optional, for task attachments)
 
-  * Auto-complete (based on Pomodoro estimate)
-  * Archive support
-  * Completion animations
+### 2. Clone and Install
 
----
+```bash
+git clone https://github.com/Bhavikkpatel/FocusOS.git
+cd FocusOS
+npm install
+```
 
-## ⚡ Pomodoro Focus System
+### 3. Environment Setup
 
-* Built-in **Pomodoro timer**
-* Start focus session directly from a task
-* Session tracking:
+Create a `.env` file in the root directory and populate it with your credentials. See `.env.example` for the required keys.
 
-  * Completed sessions
-  * Total focus time
-* Active task highlighting
-* Auto-update task progress on session completion
+```env
+# Database
+DATABASE_URL="postgres://..."
 
----
+# NextAuth
+NEXTAUTH_SECRET="your-secret"
+NEXTAUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID="your-id"
+GOOGLE_CLIENT_SECRET="your-secret"
 
-## 🍅 Pomodoro Estimation
+# Storage (Optional)
+R2_ACCESS_KEY_ID="..."
+R2_SECRET_ACCESS_KEY="..."
+R2_BUCKET_NAME="..."
+R2_ENDPOINT="..."
+```
 
-* Set **estimated Pomodoros per task**
-* Track **completed Pomodoros**
-* Visual progress bar on task
-* Detect and highlight **overestimation / underestimation**
+### 4. Database Setup
 
----
+```bash
+npx prisma db push
+npx prisma generate
+```
 
-## 🧭 Contextual Task Workspace
+### 5. Running FocusOS
 
-Replaces traditional dashboard with a **3-mode task view**:
-
-### 1. Execute (Execution Mode)
-
-* Hero task + timer
-* Centered subtasks ("Focus Rows")
-* Minimal UI for zero distraction
-* Ghost UI (fades after inactivity)
-
-### 2. Compose (Composition Mode)
-
-* Split-pane layout:
-
-  * Notes (Markdown)
-  * Attachments & metadata
-* Contextual visibility (low-opacity metadata)
-
-### 3. Reflect (Reflection Mode)
-
-* Session analytics
-* Timeline of focus sessions
-* Unified session scorecard
-
-**Auto-Drift Timeline**
-![Auto-Drift Timeline](https://raw.githubusercontent.com/Bhavikkpatel/FocusOS/main/public/docs/timeline.gif)
+```bash
+npm run dev
+```
 
 ---
 
-## 🔥 Zenith Focus Mode
+## 🛡️ Deployment
 
-A full-screen deep work environment:
+### Vercel / Cloudflare Pages
 
-![Zenith Focus Mode](https://raw.githubusercontent.com/Bhavikkpatel/FocusOS/main/public/docs/zenith.gif)
-
-* Single **Hero Task**
-* Minimal UI
-* Ghosting logic (UI fades after 5s inactivity)
-* Integrated timer
-* Distraction Scratchpad:
-
-  * Capture thoughts using `!` or `?`
-  * Stored for later review
+1. Fork this repository.
+2. Link your repository to Vercel/Cloudflare.
+3. Add your Environment Variables.
+4. Set the build command to `npm run build` and the output directory to `.next`.
 
 ---
 
-## 🧠 Deep Work Sessions
+## 🤝 Community & Contributing
 
-* Group multiple focus sessions into one workflow
-* Continue / End flow between sessions
-* Optional break handling
-* Track:
+FocusOS is a community-driven sanctuary. We value **Execution** over corporate fluff.
 
-  * Total time
-  * Session count
-  * Interruptions
+- **Found a bug?** Open an Issue.
+- **Have an idea?** Start a Discussion.
+- **Want to build?** PRs are welcome. 
 
----
-
-## ⚡ Momentum Summary (Post-Focus)
-
-After each deep work session:
-
-* Session summary (time, sessions, interruptions)
-* **Energy check-in** (Low / Medium / High)
-* Distraction review:
-
-  * Convert to tasks
-  * Dismiss entries
-
----
-
-## 📊 Analytics & Insights
-
-* Focus time tracking
-* Session history timeline
-* Task-level statistics:
-
-  * Total time spent
-  * Average session duration
-  * Estimation accuracy
-* Project-level insights (planned)
-
----
-
-## 📅 Calendar Planning
-
-* Google Calendar–style interface
-* Schedule tasks as events
-* Drag & resize events
-* Create tasks directly from calendar
-* Start focus sessions from calendar
-* Current time indicator (live)
-* Zoom levels (hour → day → week)
-* **Unallocated Tasks Sidebar** — drag & drop tasks from sidebar onto calendar
-* **Tag-based filtering** — filter unallocated tasks by tag
-* **Search bar** — search within unallocated tasks
-
----
-
-## 🏷️ Organization Features
-
-* Tags (multi-select)
-* Categories (single classification)
-* Difficulty levels (energy-based work planning)
-* Filters:
-
-  * By tag
-  * By difficulty
-  * By priority
-
----
-
-## 🎧 Focus Music Integration
-
-* Background work/study music via YouTube
-* Hidden player with custom controls
-* Features:
-
-  * Play / Pause
-  * Volume control
-  * Playlist selection
-* Auto-play on focus start
-* Floating music widget
-* User preference persistence
-
----
-
-## 🧩 UI/UX System (FlowState DLS)
-
-* **2-Second Capture** (command-style input)
-* **Contextual Visibility** (low-opacity metadata)
-* **Ghost UI** (fade inactive elements on inactivity)
-* Minimalist, execution-focused design
-* Fonts:
-
-  * Inter (content)
-  * JetBrains Mono (data/timer)
-
----
-
-## 🏗️ Architecture
-
-* Frontend: Next.js (Vercel)
-* Database: PostgreSQL (Supabase)
-* Storage: Cloudflare R2 (attachments)
-* API: Serverless functions
-
----
-
-## 🔐 Storage & Attachments
-
-* File uploads (images, PDFs, docs)
-* Secure storage using Cloudflare R2
-* Structured file organization:
-
-  ```
-  userId / taskId / files
-  ```
-* Presigned URL support (secure, time-limited access)
-
----
-
-## 🧠 Future Scope
-
-* AI-based task prioritization
-* Energy-based scheduling
-* Smart focus recommendations
-* Advanced analytics dashboard
-* Recurring tasks & dependencies
-
----
-
-# 🚀 Vision
-
-FocusOS is not just a task manager.
-
-It is a **complete system for thinking, focusing, and executing work at a high level** — where the UI itself becomes your guardian against distraction.
+See the [Features Page](https://focusos.io/features) and [Our Story](https://focusos.io/about) for more depth.
 
 ---
 
 ## 📜 License
 
-FocusOS is source-available under the **BSL 1.1**. It becomes Open Source (Apache 2.0) on Jan 1, 2030. See the [LICENSE](./LICENSE) file for more details.
+FocusOS is licensed under the **GNU Affero General Public License v3 (AGPLv3)**. See the [LICENSE](./LICENSE) file for more details.
