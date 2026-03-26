@@ -29,25 +29,6 @@ FocusOS is a modern productivity system designed for **deep work, task managemen
 
 ---
 
-## 🌐 Landing Page (FlowState)
-
-A high-conversion, narrative-driven landing page designed to guide the visitor from chaos → clarity.
-
-* **Glassmorphic Navbar** — Fixed with `backdrop-filter: blur(12px)`, scroll-responsive border
-* **Auth Integration** — Log In / Sign Up trigger modal; no page redirect
-* **Hero Section** — Storytelling headline: *"Silence the noise. Reclaim your flow."*
-* **Chaos Dissolution Animation** — Ghost notification badges (Slack, Jira, email, calendar conflicts) drift across screen and dissolve during scroll — visually demonstrating the "cleansing" before Ghost UI activates
-* **Ghost UI Scroll Sequence** — 400vh Apple-style sticky scroll:
-  * Sidebar, header, tabs, and checklist slide off-screen in different directions
-  * Title + timer remain centered and scale up
-  * "You've entered the zone." immersive overlay
-* **Problem Section** — *"Your tools are the ones drowning you."* — frames traditional apps as the antagonist
-* **Feature Showcase** — Three-tab workspace: *Execute / Compose / Reflect*
-* **Bento Feature Grid** — Auto-Drift, Energy Batching, Liquid Blocks, Velocity Learning
-* **Momentum Scorecard** — *"Close your laptop with energy to spare."* — positions the app as a reward, not a burden
-* **CTA Section** — *"Your focus is a finite resource. Protect it."*
-* **Footer** — Anchor links to all on-page sections; no dead `#` hrefs
-
 ---
 
 ## 📌 Project & Task Management

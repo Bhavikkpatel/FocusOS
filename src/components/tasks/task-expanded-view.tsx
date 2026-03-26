@@ -393,10 +393,13 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                 <div className="max-w-3xl w-full flex flex-col items-center gap-12 py-12">
                                     {/* Task Title in Focus mode */}
                                     <div className="text-center space-y-2">
-                                        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white line-clamp-3">
+                                        <h2 className={cn(
+                                            "font-black tracking-tight text-slate-900 dark:text-white line-clamp-4 leading-tight",
+                                            task.title.length > 100 ? "text-xl" : task.title.length > 60 ? "text-2xl" : "text-3xl"
+                                        )}>
                                             {task.title}
                                         </h2>
-                                        <p className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground opacity-60">
+                                        <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-muted-foreground opacity-60">
                                             Currently Executing
                                         </p>
                                     </div>

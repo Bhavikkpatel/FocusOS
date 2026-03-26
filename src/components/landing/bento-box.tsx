@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, Coffee } from "lucide-react";
+import { Zap, Coffee, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Epics 4-6 Feature Card Mockups
@@ -87,7 +87,7 @@ function LiquidMockup() {
                 transition={{ delay: 2.2, duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
                 className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-bold"
             >
-                Budget Under-run Warning
+                Capacity Overflow Warning
             </motion.div>
         </div>
     );
@@ -156,7 +156,7 @@ const FEATURES = [
         id: "liquid",
         tag: "Liquid Blocks",
         title: "Tasks that bend to reality.",
-        description: "Tasks morph into calendar blocks dynamically, visually warning you of budget under-runs.",
+        description: "Tasks morph into calendar blocks dynamically, visually warning you of capacity overruns before they happen.",
         className: "md:col-span-1 min-h-[260px]",
         color: "text-purple-400",
         bg: "bg-purple-400/5",
@@ -179,11 +179,16 @@ const FEATURES = [
 export function BentoBox() {
     return (
         <section className="py-32 max-w-7xl mx-auto px-6">
-            <div className="space-y-4 max-w-3xl mb-12">
-                <span className="font-mono text-xs uppercase tracking-[0.4em] text-primary font-bold">Adaptive System</span>
-                <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-                    Adaptive logic for <span className="text-slate-500 text-3xl md:text-4xl block mt-2 font-medium italic">how you actually work.</span>
-                </h2>
+            <div className="space-y-6 max-w-3xl mb-12">
+                <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-fit">
+                    <Github className="h-3 w-3" /> Fully Auditable Source
+                </div>
+                <div className="space-y-2">
+                    <span className="font-mono text-xs uppercase tracking-[0.4em] text-primary font-bold">Adaptive System</span>
+                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
+                        Adaptive logic for <span className="text-slate-500 text-3xl md:text-4xl block mt-2 font-medium italic">how you actually work.</span>
+                    </h2>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-max">

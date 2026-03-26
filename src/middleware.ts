@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
     const token = await getToken({ req: request });
     const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
-    const isPublicPage = request.nextUrl.pathname === "/";
+    const isPublicPage = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/features" || request.nextUrl.pathname === "/about";
 
     if (isAuthPage && token) {
         return NextResponse.redirect(new URL("/timer", request.url));

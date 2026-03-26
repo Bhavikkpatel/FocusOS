@@ -364,12 +364,29 @@ export function FocusMode() {
                                             {currentTask?.priority} Priority
                                         </span>
                                     </div>
-                                    <h1 
-                                        className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white max-w-3xl animate-in fade-in slide-in-from-bottom-6 duration-1000 leading-[1.1]"
-                                        style={{ fontFamily: "Inter, sans-serif" }}
-                                    >
-                                        {currentTask?.title || "Deep Work Session"}
-                                    </h1>
+                                    {(() => {
+                                        const title = currentTask?.title || "Deep Work Session";
+                                        const titleLength = title.length;
+                                        let sizeClass = "text-4xl sm:text-6xl lg:text-7xl";
+                                        
+                                        if (titleLength > 100) {
+                                            sizeClass = "text-2xl sm:text-4xl lg:text-5xl";
+                                        } else if (titleLength > 60) {
+                                            sizeClass = "text-3xl sm:text-5xl lg:text-6xl";
+                                        }
+
+                                        return (
+                                            <h1 
+                                                className={cn(
+                                                    sizeClass,
+                                                    "font-bold tracking-tight text-white max-w-4xl animate-in fade-in slide-in-from-bottom-6 duration-1000 leading-[1.1] text-center"
+                                                )}
+                                                style={{ fontFamily: "Inter, sans-serif" }}
+                                            >
+                                                {title}
+                                            </h1>
+                                        );
+                                    })()}
                                 </motion.div>
                             </div>
 

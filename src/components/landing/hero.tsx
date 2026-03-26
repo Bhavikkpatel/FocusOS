@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { Button } from "@/components/ui/button";
+import { Github, Brain, Sparkles, Shield, Eye } from "lucide-react";
 
 // Individual chaos element — each gets its own component so hooks are called at top-level
 function ChaosIcon({
@@ -49,49 +50,129 @@ export function Hero() {
         offset: ["start start", "end end"]
     });
 
-    // SCROLL ANIMATION TIMELINE (0.0 to 1.0 over 400vh)
-    // 0.0  → 0.12: Chaos icons drift & dissolve (the "cleansing")
-    // 0.15 → 0.40: Ghost UI slide-out (sidebar, header, tabs, checklist vanish)
-    // 0.45 → 0.55: "Ghost UI Active" text appears
-    // 0.65 → 0.75: Overlay message fades in
-    // 0.90 → 0.98: Message fades out
+    // SCROLL ANIMATION TIMELINE (0.0 to 1.0 over 300vh)
+    // 0.0  → 0.1: Chaos icons drift & dissolve (the "cleansing")
+    // 0.1  → 0.2: Ghost UI slide-out (sidebar, header, tabs, checklist vanish) - FAST
+    // 0.3  → 0.4: "Ghost UI Active" text appears
+    // 0.5  → 0.7: Overlay message fades in
+    // 0.9  → 1.0: Message fades out (into next section)
 
-    const mockupScale = useTransform(scrollYProgress, [0, 0.15, 1], [0.95, 1.02, 1.02]);
-    const uiOpacity = useTransform(scrollYProgress, [0.15, 0.4], [1, 0]);
+    const mockupScale = useTransform(scrollYProgress, [0, 0.1, 1], [0.95, 1.02, 1.02]);
+    const uiOpacity = useTransform(scrollYProgress, [0.1, 0.2, 1], [1, 0, 0]);
 
-    const slideLeft = useTransform(scrollYProgress, [0.15, 0.4], [0, -80]);
-    const slideRight = useTransform(scrollYProgress, [0.15, 0.4], [0, 80]);
-    const slideUp = useTransform(scrollYProgress, [0.15, 0.4], [0, -80]);
-    const slideDown = useTransform(scrollYProgress, [0.15, 0.4], [0, 80]);
+    const slideLeft = useTransform(scrollYProgress, [0.1, 0.2, 1], [0, -500, -500]);
+    const slideRight = useTransform(scrollYProgress, [0.1, 0.2, 1], [0, 500, 500]);
+    const slideUp = useTransform(scrollYProgress, [0.1, 0.2, 1], [0, -500, -500]);
+    const slideDown = useTransform(scrollYProgress, [0.1, 0.2, 1], [0, 500, 500]);
 
-    const titleScale = useTransform(scrollYProgress, [0.15, 0.4], [1, 1.1]);
-    const titleY = useTransform(scrollYProgress, [0.15, 0.4], [0, -60]);
+    const titleScale = useTransform(scrollYProgress, [0.1, 0.2, 1], [1, 1.3, 1.3]);
+    const titleY = useTransform(scrollYProgress, [0.1, 0.2, 1], [0, 0, 0]); // Keep it centered
 
-    const ghostTextOpacity = useTransform(scrollYProgress, [0.45, 0.55], [0, 1]);
+    const ghostTextOpacity = useTransform(scrollYProgress, [0.3, 0.4, 1], [0, 1, 1]);
     
-    const messageOpacity = useTransform(scrollYProgress, [0.65, 0.75, 0.9, 0.98], [0, 1, 1, 0]);
-    const messageY = useTransform(scrollYProgress, [0.65, 0.75, 0.9, 0.98], [30, 0, 0, -30]);
+    const messageOpacity = useTransform(scrollYProgress, [0.5, 0.7, 0.9, 1.0], [0, 1, 1, 0]);
+    const messageY = useTransform(scrollYProgress, [0.5, 0.7, 0.9, 1.0], [30, 0, 0, -30]);
     const messageScale = useTransform(scrollYProgress, [0.65, 0.75], [0.95, 1]);
 
-    const bgColor = useTransform(scrollYProgress, [0, 0.15], ["#121214", "#0A0A0B"]);
+    const bgColor = useTransform(scrollYProgress, [0, 0.15, 0.9, 1], ["#121214", "#0A0A0B", "#0A0A0B", "#000000"]);
+    
+    // Aggregate opacity for the entire sticky content to fade out at the very end
+    const finalFadeOpacity = useTransform(scrollYProgress, [0.9, 1], [1, 0]);
 
     return (
         <section className="relative bg-[#0A0A0B]">
-            {/* Hero Copy */}
-            <div className="relative pt-40 px-6 z-10 w-full max-w-5xl mx-auto text-center space-y-12">
-                <div className="absolute top-[30%] left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[400px] bg-primary/10 blur-[130px] rounded-full pointer-events-none" />
+            {/* Hero Copy Section */}
+            <div className="relative min-h-screen flex flex-col items-center justify-center px-4 z-10 w-full max-w-7xl mx-auto text-center space-y-12 overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] h-[600px] bg-primary/10 blur-[130px] rounded-full pointer-events-none" />
                 
+                {/* Background Large Text Decor */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                    <span className="text-[26vw] font-black text-white/[0.015] whitespace-nowrap tracking-[0.15em] uppercase opacity-50">
+                        Open Source
+                    </span>
+                </div>
+
+                {/* Floating OSS Bubbles */}
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                    className="absolute top-[18%] left-[5%] hidden lg:flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
+                >
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Brain className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-[10px] font-bold text-white uppercase tracking-widest">Public Mind</div>
+                        <div className="text-[9px] text-slate-500 font-mono">Open Source Architecture</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7, duration: 1 }}
+                    className="absolute top-[25%] right-[5%] hidden lg:flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
+                >
+                    <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                        <Eye className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-[10px] font-bold text-white uppercase tracking-widest">Transparent</div>
+                        <div className="text-[9px] text-slate-500 font-mono">Zero Hidden Trackers</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9, duration: 1 }}
+                    className="absolute bottom-[28%] left-[5%] hidden xl:flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
+                >
+                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <Shield className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-[10px] font-bold text-white uppercase tracking-widest">Privacy First</div>
+                        <div className="text-[9px] text-slate-500 font-mono">Self-Hostable</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.1, duration: 1 }}
+                    className="absolute bottom-[32%] right-[5%] hidden xl:flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
+                >
+                    <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                        <Sparkles className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-[10px] font-bold text-white uppercase tracking-widest">Minimalist</div>
+                        <div className="text-[9px] text-slate-500 font-mono">Zero Visual Noise</div>
+                    </div>
+                </motion.div>
+
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="space-y-6"
+                    className="space-y-8 relative z-10 flex flex-col items-center"
                 >
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight">
-                        Silence the noise.<br /><span className="text-primary italic">Reclaim your flow.</span>
+                    <a 
+                        href="https://github.com/Bhavikkpatel/FocusOS" 
+                        target="_blank"
+                        className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-4 shadow-2xl hover:bg-white/10 transition-colors group"
+                    >
+                         <Github className="h-3 w-3 group-hover:scale-110 transition-transform" /> Source Available
+                    </a>
+
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.85]">
+                        Silence the noise.<br /><span className="text-primary italic font-light">Reclaim your flow.</span>
                     </h1>
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-                        FocusOS isn&apos;t a to-do list. It&apos;s a sanctuary. We stripped the UI-gravity of traditional tools so you can finally do your best work.
+                    <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed mt-6">
+                        FocusOS is a community-first open source sanctuary. <br/>
+                        <span className="text-slate-500 font-mono text-sm uppercase tracking-widest">Built for the community, by the community.</span>
                     </p>
                 </motion.div>
 
@@ -99,30 +180,40 @@ export function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                    className="pt-6"
+                    className="pt-6 pb-16 relative z-10"
                 >
                     <Button 
                         onClick={() => setIsAuthModalOpen(true)}
-                        className="rounded-full bg-white text-black hover:bg-slate-200 px-10 h-14 text-lg font-bold shadow-2xl shadow-white/10 transition-all hover:scale-105"
+                        className="rounded-full bg-white text-black hover:bg-slate-200 px-10 h-16 text-lg font-bold shadow-2xl shadow-white/20 transition-all hover:scale-105 active:scale-95"
                     >
-                        Enter Flow State — It&apos;s Free
+                        Start Your Session
                     </Button>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="absolute bottom-12 left-0 right-0 flex flex-col items-center justify-center animate-bounce gap-2 text-slate-500"
+                >
+                    <span className="text-[9px] font-bold uppercase tracking-[0.3em] leading-none">Scroll to Enter the Zone</span>
+                    <div className="h-4 w-px bg-slate-800" />
                 </motion.div>
             </div>
 
             {/* Scroll-Jacked Sticky Container — 400vh */}
-            <div ref={containerRef} className="relative h-[400vh] mt-24">
+            <div ref={containerRef} className="relative h-[300vh] mt-24">
                 <motion.div
-                    style={{ backgroundColor: bgColor }}
+                    style={{ backgroundColor: bgColor, opacity: finalFadeOpacity }}
                     className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden px-6 box-border"
                 >
                     {/* ── Phase 1: Chaos Icons (dissolve as user scrolls) ── */}
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="12 unread" icon="✉" color="text-red-400" xFrom="20%" xTo="130%" top="15%" fadeEnd={0.12} />
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="@mentioned you" icon="#" color="text-blue-400" xFrom="-10%" xTo="115%" top="65%" fadeEnd={0.12} />
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="× 3 conflicts" icon="⚠" color="text-amber-400" xFrom="75%" xTo="-20%" top="30%" fadeEnd={0.12} />
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="JIRA-419 overdue" icon="!" color="text-rose-500" xFrom="50%" xTo="140%" top="72%" fadeEnd={0.12} />
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="Meeting in 5 min" icon="⏰" color="text-purple-400" xFrom="-5%" xTo="120%" top="48%" fadeEnd={0.12} />
-                    <ChaosIcon scrollYProgress={scrollYProgress} label="Slack: 47 DMs" icon="⚡" color="text-yellow-400" xFrom="35%" xTo="-25%" top="82%" fadeEnd={0.12} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="12 unread" icon="✉" color="text-red-400" xFrom="20%" xTo="130%" top="15%" fadeEnd={0.1} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="@mentioned you" icon="#" color="text-blue-400" xFrom="-10%" xTo="115%" top="65%" fadeEnd={0.1} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="× 3 conflicts" icon="⚠" color="text-amber-400" xFrom="75%" xTo="-20%" top="30%" fadeEnd={0.1} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="JIRA-419 overdue" icon="!" color="text-rose-500" xFrom="50%" xTo="140%" top="72%" fadeEnd={0.1} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="Meeting in 5 min" icon="⏰" color="text-purple-400" xFrom="-5%" xTo="120%" top="48%" fadeEnd={0.1} />
+                    <ChaosIcon scrollYProgress={scrollYProgress} label="Slack: 47 DMs" icon="⚡" color="text-yellow-400" xFrom="35%" xTo="-25%" top="82%" fadeEnd={0.1} />
 
                     {/* ── The Zenith UI Mockup ── */}
                     <div className="relative w-full max-w-6xl mx-auto z-30">
@@ -195,20 +286,25 @@ export function Hero() {
                                     </motion.div>
 
                                     {/* 4. Center Stage — always visible, pulls to center */}
-                                    <div className="flex-1 flex flex-col items-center justify-center relative z-20">
+                                    <div className="flex-1 flex flex-col items-center justify-center relative z-20 overflow-hidden">
                                         <motion.div style={{ scale: titleScale, y: titleY }} className="flex flex-col items-center text-center w-full max-w-2xl px-6">
-                                            <h2 className="text-xl md:text-2xl font-bold text-white leading-snug">
-                                                new event creation, should be able to select existing task
+                                            <h2 className="text-xl md:text-3xl font-bold text-white leading-tight mb-8">
+                                                revisiting open-source roadmap, community first approach
                                             </h2>
-                                            <motion.div 
-                                                style={{ opacity: uiOpacity }}
-                                                className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mt-3"
-                                            >
-                                                Currently Executing
-                                            </motion.div>
-                                            <div className="mt-4 font-extrabold text-[4.5rem] md:text-[6.5rem] flex justify-center text-white tabular-nums tracking-tighter leading-none mb-6">
+                                            
+                                            <div className="font-extrabold text-[5rem] md:text-[8.5rem] flex justify-center text-white tabular-nums tracking-tighter leading-none mb-10">
                                                 24:53
                                             </div>
+
+                                            <motion.div 
+                                                style={{ opacity: uiOpacity }}
+                                                className="flex items-center justify-center gap-6"
+                                            >
+                                                <div className="h-16 w-16 rounded-full border-2 border-white/10 flex items-center justify-center gap-1.5 hover:bg-white/5 transition-colors cursor-pointer group">
+                                                    <div className="w-2 h-6 bg-white/60 rounded-full group-hover:bg-white transition-colors" />
+                                                    <div className="w-2 h-6 bg-white/60 rounded-full group-hover:bg-white transition-colors" />
+                                                </div>
+                                            </motion.div>
                                         </motion.div>
                                     </div>
 
