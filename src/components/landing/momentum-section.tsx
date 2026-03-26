@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Users } from "lucide-react";
 
 export function MomentumSection() {
     return (
@@ -82,9 +83,14 @@ export function MomentumSection() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-emerald-400/10 border border-emerald-400/20">
-                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">You&apos;re running above capacity</span>
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-emerald-400/10 border border-emerald-400/20">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">You&apos;re running above capacity</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[9px] font-mono text-slate-600 uppercase tracking-widest font-bold">
+                                <Users className="h-3 w-3" /> Community Benchmark
+                            </div>
                         </div>
                     </div>
                 </motion.div>

@@ -4,16 +4,11 @@ import * as React from "react";
 import { CalendarDays } from "lucide-react";
 import { useCalendarEvents, useUpdateCalendarEvent, type CalendarEvent } from "@/hooks/use-calendar";
 import { CalendarEventPopover } from "./calendar-event-popover";
-import { AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { CalendarSlotModal } from "./calendar-slot-modal";
 import { CalendarHeaderStats } from "./calendar-header-stats";
 import { useLayoutStore } from "@/store/layout";
-import { useTimerStore } from "@/store/timer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { CalendarDaySchedule } from "./calendar-day-schedule";
-import { UnallocatedSidebar } from "./unallocated-sidebar";
-import { useCreateCalendarEvent } from "@/hooks/use-calendar";
 
 export function CalendarView() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,8 +57,6 @@ export function CalendarView() {
 
     const { data: events = [], isLoading } = useCalendarEvents(dateRange);
     const { mutate: updateEvent } = useUpdateCalendarEvent();
-    const { mutate: createEvent } = useCreateCalendarEvent();
-    const timer = useTimerStore();
 
     // Popover state
     const [popover, setPopover] = React.useState<{
@@ -91,28 +84,18 @@ export function CalendarView() {
     }, []);
 
     // Convert API events to FullCalendar format
-    // Convert API events to FullCalendar format
     const fcEvents = React.useMemo(() => {
-        return events.map((e) => {
-            const estimatedMinutes = (e.task?.estimatedPomodoros || 0) * (e.task?.pomodoroDuration || 25);
-            const durationMinutes = (new Date(e.end).getTime() - new Date(e.start).getTime()) / 60000;
-            const isUnderBudget = !!(e.task && durationMinutes < estimatedMinutes);
-
-            return {
-                id: e.id,
-                title: e.title,
-                start: e.start,
-                end: e.end,
-                allDay: e.allDay,
-                backgroundColor: e.task?.projectRef?.color || e.color || "#6366f1",
-                borderColor: e.task?.projectRef?.color || e.color || "#6366f1",
-                textColor: "#ffffff",
-                extendedProps: { 
-                    calendarEvent: e,
-                    isUnderBudget
-                },
-            };
-        });
+        return events.map((e) => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+            allDay: e.allDay,
+            backgroundColor: e.task?.projectRef?.color || e.color || "#6366f1",
+            borderColor: e.task?.projectRef?.color || e.color || "#6366f1",
+            textColor: "#ffffff",
+            extendedProps: { calendarEvent: e },
+        }));
     }, [events]);
 
     const slotDuration = React.useMemo(() => {
@@ -181,24 +164,6 @@ export function CalendarView() {
         });
     };
 
-    const handleEventReceive = (info: any) => {
-        const { event } = info;
-        const taskId = event.extendedProps.taskId;
-        const task = event.extendedProps.task;
-
-        if (!taskId || !task) return;
-
-        createEvent({
-            title: task.title,
-            start: event.startStr,
-            end: event.endStr,
-            taskId: taskId,
-        });
-
-        // Remove the temporary event from the calendar since we'll get a real one from the API
-        event.remove();
-    };
-
     if (!FCComponent || plugins.length === 0) {
         return (
             <div className="flex-1 flex items-center justify-center text-slate-400">
@@ -211,8 +176,7 @@ export function CalendarView() {
     }
 
     return (
-        <div className="flex h-full gap-4 overflow-hidden">
-            <div className="flex-1 flex flex-col h-full gap-4 min-w-0">
+        <div className="flex flex-col h-full gap-4">
             {/* Stats bar */}
 
             {/* Stats bar */}
@@ -285,21 +249,7 @@ export function CalendarView() {
                     select={handleSelect}
                     eventDrop={handleEventDrop}
                     eventResize={handleEventResize}
-                    eventReceive={handleEventReceive}
-                    eventContent={(eventInfo: any) => {
-                        const isUnderBudget = eventInfo.event.extendedProps.isUnderBudget;
-                        return (
-                            <div className={cn(
-                                "flex items-center gap-1.5 px-2 py-1 h-full w-full overflow-hidden",
-                                isUnderBudget && "border-2 border-amber-500 rounded-md bg-amber-500/10"
-                            )}>
-                                {isUnderBudget && <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />}
-                                <span className="truncate flex-1 font-semibold">{eventInfo.event.title}</span>
-                            </div>
-                        );
-                    }}
                     editable={true}
-                    droppable={true}
                     selectable={true}
                     selectMirror={true}
                     nowIndicator={true}
@@ -323,10 +273,6 @@ export function CalendarView() {
                     }}
                 />
             </div>
-            </div>
-
-            {/* Unallocated Sidebar */}
-            <UnallocatedSidebar />
 
             {/* Event Popover */}
             {popover && (
@@ -334,18 +280,6 @@ export function CalendarView() {
                     event={popover.event}
                     position={popover.position}
                     onClose={() => setPopover(null)}
-                    onStartFocus={(taskId, eventId) => {
-                        const task = popover.event.task;
-                        if (!task) return;
-                        
-                        timer.start(
-                            task.pomodoroDuration || 25,
-                            "FOCUS",
-                            taskId,
-                            task.estimatedPomodoros,
-                            eventId
-                        );
-                    }}
                 />
             )}
 
@@ -360,7 +294,7 @@ export function CalendarView() {
 
             {/* Day Schedule Sheet */}
             <Sheet open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-                <SheetContent className="overflow-y-auto sm:max-w-md lg:max-w-lg">
+                <SheetContent className="p-0 bg-white dark:bg-[#0f172a] border-slate-200 dark:border-slate-800 border-l sm:max-w-md lg:max-w-lg [&>button]:text-slate-500 dark:[&>button]:text-slate-400 [&>button]:top-6 [&>button]:right-6">
                     {selectedDate && (
                         <CalendarDaySchedule 
                             date={selectedDate} 

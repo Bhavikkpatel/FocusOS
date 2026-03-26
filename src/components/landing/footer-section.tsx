@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function ConversionSection() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -40,14 +41,14 @@ export function ConversionSection() {
                         onClick={() => setIsAuthModalOpen(true)}
                         className="rounded-full bg-white text-black hover:bg-slate-200 px-12 h-20 text-2xl font-bold shadow-2xl shadow-white/20 transition-all hover:scale-110 active:scale-95"
                     >
-                        Deploy FocusOS
+                        Start Your Flow
                     </Button>
                     <div className="flex items-center justify-center gap-6 text-xs text-slate-600 font-bold uppercase tracking-widest">
-                        <span>No credit card</span>
+                        <span>Open Source</span>
                         <div className="h-1 w-1 rounded-full bg-slate-800" />
-                        <span>No bloat</span>
+                        <span>Community Owned</span>
                         <div className="h-1 w-1 rounded-full bg-slate-800" />
-                        <span>Pure execution</span>
+                        <span>Self-Hostable</span>
                     </div>
                 </motion.div>
             </div>
@@ -68,22 +69,22 @@ export function Footer() {
                     <div className="space-y-4">
                         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Product</span>
                         <ul className="space-y-2">
-                            <li><a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</a></li>
-                            <li><a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Zenith Mode</a></li>
+                            <li><Link href="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</Link></li>
+                            <li><Link href="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Zenith Mode</Link></li>
                         </ul>
                     </div>
                     <div className="space-y-4">
                         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Company</span>
                         <ul className="space-y-2">
-                            <li><a href="#philosophy" className="text-sm text-slate-400 hover:text-white transition-colors">Philosophy</a></li>
+                            <li><Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">Philosophy</Link></li>
                             <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">GitHub</a></li>
                         </ul>
                     </div>
                     <div className="space-y-4">
-                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Get Started</span>
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">Community</span>
                         <ul className="space-y-2">
-                            <li><a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a></li>
-                            <li><a href="#philosophy" className="text-sm text-slate-400 hover:text-white transition-colors">Our Story</a></li>
+                            <li><a href="https://github.com/Bhavikkpatel/FocusOS" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">Open Source</a></li>
+                            <li><Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">Our Story</Link></li>
                         </ul>
                     </div>
                 </div>

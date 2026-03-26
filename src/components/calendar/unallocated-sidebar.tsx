@@ -12,6 +12,7 @@ import { Calendar, AlertCircle, Clock, GripVertical, Search, Tag as TagIcon, X }
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTags } from "@/hooks/use-tags";
+import { useLayoutStore } from "@/store/layout";
 
 interface UnallocatedSidebarProps {}
 
@@ -20,6 +21,7 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
     const [search, setSearch] = React.useState("");
     const [tagId, setTagId] = React.useState<string>("ALL");
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const { calendarViewMode } = useLayoutStore();
 
     const { data: tags = [] } = useTags();
 
@@ -34,7 +36,11 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
     const tasks = data?.pages.flatMap((page) => page.tasks) || [];
 
     React.useEffect(() => {
-        if (!containerRef.current || tasks.length === 0) return;
+        // Only use FullCalendar Draggable for FullCalendar views (Month, Week Grid etc)
+        // For the custom Horizontal Day View, we use native HTML5 drag and drop
+        const isFullCalendarView = calendarViewMode === "dayGridMonth" || calendarViewMode === "timeGridWeek";
+        
+        if (!containerRef.current || tasks.length === 0 || !isFullCalendarView) return;
 
         const draggable = new Draggable(containerRef.current, {
             itemSelector: ".draggable-task",
@@ -61,7 +67,7 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
         });
 
         return () => draggable.destroy();
-    }, [tasks]);
+    }, [tasks, calendarViewMode]);
 
     return (
         <div className="flex flex-col h-full w-80 border-l border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
@@ -140,6 +146,14 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
                             <Card
                                 key={task.id}
                                 data-task-id={task.id}
+                                draggable="true"
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData("taskId", task.id);
+                                    e.dataTransfer.setData("taskTitle", task.title);
+                                    const duration = (task.estimatedPomodoros || 1) * (task.pomodoroDuration || 25);
+                                    e.dataTransfer.setData("taskDuration", String(duration));
+                                    e.dataTransfer.effectAllowed = "copy";
+                                }}
                                 className={cn(
                                     "draggable-task group relative p-4 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-all border-2",
                                     "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm"

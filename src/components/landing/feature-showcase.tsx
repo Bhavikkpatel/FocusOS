@@ -198,7 +198,7 @@ export function FeatureShowcase() {
                                                         </motion.div>
                                                         
                                                         <div className="flex items-center gap-2 text-white/90">
-                                                            <span className="text-primary font-mono font-bold">/</span>
+                                                            <span className="text-primary font-mono font-bold">git commit -m &quot;feat: ghost ui&quot;</span>
                                                             <div className="w-0.5 h-4 bg-primary animate-[pulse_1s_ease-in-out_infinite]" />
                                                         </div>
 
