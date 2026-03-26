@@ -6,7 +6,6 @@ import { Footer } from "@/components/landing/footer-section";
 import { 
     Zap, 
     Users, 
-    Github, 
     Terminal, 
     Database,
     Youtube,
@@ -14,6 +13,7 @@ import {
     Layers,
     Lock
 } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useState } from "react";
@@ -59,9 +59,9 @@ const TIMELINE_EVENTS = [
 
 const OATH_ITEMS = [
     {
-        title: "Open Source (BSL 1.1)",
-        description: "The code is yours to audit. We use the Business Source License to ensure FocusOS remains sustainable and community-owned, not venture-fueled.",
-        icon: Github
+        title: "Open Source (AGPLv3)",
+        description: "The code is yours to audit. FocusOS is licensed under the GNU Affero General Public License v3 to ensure it remains a free and shared engine for everyone.",
+        icon: GithubIcon
     },
     {
         title: "Own Your Data",
@@ -214,18 +214,11 @@ export default function AboutPage() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                         <Button 
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-slate-200 px-12 h-20 text-xl font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
-                        >
-                            Start Focus Session
-                        </Button>
-                        <Button 
-                            variant="outline"
-                            className="w-full sm:w-auto rounded-full border-white/10 bg-white/5 hover:bg-white/10 text-white px-10 h-20 text-xl font-bold backdrop-blur-xl"
                             asChild
+                            className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-slate-200 px-12 h-36 shadow-2xl transition-all hover:scale-105 active:scale-95"
                         >
                             <a href="https://github.com/Bhavikkpatel/FocusOS" target="_blank">
-                                <Github className="mr-2 h-6 w-6" /> View Repository
+                                <GithubIcon className="h-24 w-24" />
                             </a>
                         </Button>
                     </div>
@@ -237,7 +230,7 @@ export default function AboutPage() {
                             </div>
                             <div className="w-1 h-1 rounded-full bg-slate-800" />
                             <div className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase">
-                                <Terminal className="h-4 w-4" /> BSL 1.1 LICENSED
+                                <Terminal className="h-4 w-4" /> AGPLv3 LICENSED
                             </div>
                         </div>
                     </div>

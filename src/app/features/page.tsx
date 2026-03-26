@@ -9,11 +9,13 @@ import {
     Calendar, 
     Target, 
     CheckCircle2,
-    ArrowRight,
-    Github,
+    Clock,
+    Circle,
     Globe,
-    Users
+    Users,
+    Terminal
 } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useState } from "react";
@@ -23,43 +25,43 @@ const FEATURE_GROUPS = [
         title: "Deep Work & Focus",
         icon: Target,
         features: [
-            { name: "Zenith Focus Mode", description: "Immersive full-screen environment for absolute concentration." },
-            { name: "Ghost UI", description: "Interface elements dissolve during deep focus to reduce distractions." },
-            { name: "Distraction Scratchpad", description: "Capture intrusive thoughts instantly using '!' or '?' keys without leaving flow." },
-            { name: "Built-in Pomodoro", description: "Integrated timer tied directly to your tasks and analytics." },
-            { name: "Contextual Tabs", description: "Switch between Execute, Compose, and Reflect modes based on your current need." }
+            { name: "Zenith Focus Mode", description: "Immersive full-screen environment for absolute concentration.", status: "completed" },
+            { name: "Ghost UI", description: "Interface elements dissolve during deep focus to reduce distractions.", status: "completed" },
+            { name: "Distraction Scratchpad", description: "Capture intrusive thoughts instantly using '!' or '?' keys without leaving flow.", status: "in-progress" },
+            { name: "Built-in Pomodoro", description: "Integrated timer tied directly to your tasks and analytics.", status: "completed" },
+            { name: "Contextual Tabs", description: "Switch between Execute, Compose, and Reflect modes based on your current need.", status: "completed" }
         ]
     },
     {
         title: "Task & Project Logic",
         icon: Layout,
         features: [
-            { name: "Adaptive Task System", description: "Organize tasks within projects using Kanban or List views." },
-            { name: "Pomodoro Estimation", description: "Predict how many sessions a task will take and track actual velocity." },
-            { name: "Auto-Drift Timeline", description: "Schedule that automatically adjusts when sessions overrun or under-run." },
-            { name: "Subtask Focus Rows", description: "Break down complex tasks into atomic, focusable subtasks." },
-            { name: "Tagging & Categories", description: "Flexible classification by energy level, priority, or project type." }
+            { name: "Adaptive Task System", description: "Organize tasks within projects using Kanban or List views.", status: "completed" },
+            { name: "Pomodoro Estimation", description: "Predict how many sessions a task will take and track actual velocity.", status: "completed" },
+            { name: "Auto-Drift Timeline", description: "Schedule that automatically adjusts when sessions overrun or under-run.", status: "in-progress" },
+            { name: "Subtask Focus Rows", description: "Break down complex tasks into atomic, focusable subtasks.", status: "completed" },
+            { name: "Tagging & Categories", description: "Flexible classification by energy level, priority, or project type.", status: "completed" }
         ]
     },
     {
         title: "Insights & Analytics",
         icon: BarChart3,
         features: [
-            { name: "Momentum Scorecard", description: "Daily quality metrics that focus on your execution, not just completion." },
-            { name: "Focus Analytics", description: "Track session duration, estimation accuracy, and deep work patterns." },
-            { name: "Energy Check-ins", description: "Identify which hours are your 'Prime Time' vs 'Shallow Work' phases." },
-            { name: "Timeline History", description: "A visual log of exactly how your day unfolded across different focus blocks." }
+            { name: "Momentum Scorecard", description: "Daily quality metrics that focus on your execution, not just completion.", status: "completed" },
+            { name: "Focus Analytics", description: "Track session duration, estimation accuracy, and deep work patterns.", status: "completed" },
+            { name: "Energy Check-ins", description: "Identify which hours are your 'Prime Time' vs 'Shallow Work' phases.", status: "planned" },
+            { name: "Timeline History", description: "A visual log of exactly how your day unfolded across different focus blocks.", status: "completed" }
         ]
     },
     {
         title: "Planning & Workflow",
         icon: Calendar,
         features: [
-            { name: "Full Calendar System", description: "Drag-and-drop task scheduling with live time indicators." },
-            { name: "Unallocated Sidebar", description: "Keep your unassigned tasks visible and ready to be slotted into your day." },
-            { name: "Focus Music", description: "Ambient background study music integrated directly into the workspace." },
-            { name: "2-Second Capture", description: "Command-style interface for capturing tasks at the speed of thought." },
-            { name: "Secure Storage", description: "Cloudflare R2 integration for attachments, PDFs, and deep dive context." }
+            { name: "Full Calendar System", description: "Drag-and-drop task scheduling with live time indicators.", status: "completed" },
+            { name: "Unallocated Sidebar", description: "Keep your unassigned tasks visible and ready to be slotted into your day.", status: "completed" },
+            { name: "Focus Music", description: "Ambient background study music integrated directly into the workspace.", status: "in-progress" },
+            { name: "2-Second Capture", description: "Command-style interface for capturing tasks at the speed of thought.", status: "completed" },
+            { name: "Secure Storage", description: "Cloudflare R2 integration for attachments, PDFs, and deep dive context.", status: "completed" }
         ]
     }
 ];
@@ -94,7 +96,7 @@ export default function FeaturesPage() {
                             target="_blank"
                             className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-10 shadow-2xl hover:bg-white/10 transition-colors group"
                         >
-                             <Github className="h-3 w-3 group-hover:scale-110 transition-transform" /> Community Powered
+                             <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> Community Powered
                         </a>
 
                         <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9]">
@@ -119,13 +121,13 @@ export default function FeaturesPage() {
                             </div>
                             <div className="w-1 h-1 rounded-full bg-slate-800" />
                             <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                                <Github className="h-4 w-4" /> BSL 1.1 Licensed
+                                <Terminal className="h-4 w-4" /> AGPLv3 LICENSED
                             </div>
                         </div>
                     </motion.div>
                 </div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1, duration: 1 }}
@@ -164,8 +166,26 @@ export default function FeaturesPage() {
                                         className="group p-8 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all hover:border-white/10"
                                     >
                                         <div className="flex items-start justify-between mb-4">
-                                            <div className="h-2 w-2 rounded-full bg-primary/40 group-hover:bg-primary transition-colors mt-2" />
-                                            <CheckCircle2 className="h-5 w-5 text-white/10 group-hover:text-primary transition-colors" />
+                                            {feature.status === 'completed' && (
+                                                <CheckCircle2 className="h-6 w-6 text-[#10B981] drop-shadow-[0_0_8px_rgba(16,185,129,0.3)] transition-colors" />
+                                            )}
+                                            {feature.status === 'in-progress' && (
+                                                <div className="flex items-center gap-2">
+                                                    <motion.div
+                                                        animate={{ rotate: 360 }}
+                                                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                                    >
+                                                        <Clock className="h-6 w-6 text-[#F59E0B] drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]" />
+                                                    </motion.div>
+                                                    <span className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest">In Progress</span>
+                                                </div>
+                                            )}
+                                            {feature.status === 'planned' && (
+                                                <div className="flex items-center gap-2">
+                                                    <Circle className="h-6 w-6 text-[#3B82F6] drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]" />
+                                                    <span className="text-[10px] font-bold text-[#3B82F6] uppercase tracking-widest">Planned</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{feature.name}</h3>
                                         <p className="text-slate-400 text-sm leading-relaxed font-medium">
@@ -200,18 +220,11 @@ export default function FeaturesPage() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
                         <Button 
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-slate-200 px-12 h-20 text-xl font-bold shadow-2xl shadow-white/20 transition-all hover:scale-105"
-                        >
-                            Open the Source <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                        <Button 
-                            variant="outline"
-                            className="w-full sm:w-auto rounded-full border-white/10 bg-white/5 hover:bg-white/10 text-white px-10 h-20 text-xl font-bold backdrop-blur-xl"
                             asChild
+                            className="w-full sm:w-auto rounded-full bg-white text-black hover:bg-slate-200 px-12 h-36 shadow-2xl shadow-white/20 transition-all hover:scale-105"
                         >
                             <a href="https://github.com/Bhavikkpatel/FocusOS" target="_blank">
-                                <Github className="mr-2 h-6 w-6" /> Star on GitHub
+                                <GithubIcon className="h-24 w-24" />
                             </a>
                         </Button>
                     </div>

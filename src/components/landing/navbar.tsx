@@ -5,9 +5,13 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { AuthModal } from "@/components/auth/auth-modal";
 
+import { useSession } from "next-auth/react";
+
 export function Navbar() {
+    const { data: session } = useSession();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -42,24 +46,31 @@ export function Navbar() {
                         <span className="text-xl font-bold tracking-tight text-white">FocusOS</span>
                     </Link>
 
-                    <div className="hidden md:flex items-center gap-8">
-                        <Link href="/features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Features</Link>
-                        <Link href="/about" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Philosophy</Link>
-                    </div>
+                    <div className="flex items-center gap-8">
+                        <div className="hidden md:flex items-center gap-6">
+                            <Link href="/features" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Features</Link>
+                            <Link href="/about" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Philosophy</Link>
+                            <Link href="/docs" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Docs</Link>
+                        </div>
 
-                    <div className="flex items-center gap-4">
-                        <button 
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
-                        >
-                            Log In
-                        </button>
-                        <Button 
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="rounded-full bg-white text-black hover:bg-slate-200 px-6 font-bold shadow-xl shadow-white/5"
-                        >
-                            Get Started
-                        </Button>
+                        <div className="flex items-center gap-4">
+                            {session ? (
+                                <Button 
+                                    asChild
+                                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 font-bold shadow-xl shadow-primary/10"
+                                >
+                                    <Link href="/timer">Go to Workspace</Link>
+                                </Button>
+                            ) : (
+                                <a 
+                                    href="https://github.com/Bhavikkpatel/FocusOS" 
+                                    target="_blank"
+                                    className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-all font-bold"
+                                >
+                                    <GithubIcon className="h-5 w-5" variant="light" />
+                                </a>
+                            )}
+                        </div>
                     </div>
                 </div>
             </nav>

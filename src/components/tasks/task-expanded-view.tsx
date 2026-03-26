@@ -388,7 +388,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3 }}
-                                className="h-full w-full flex flex-col items-center justify-center p-8 overflow-y-auto custom-scrollbar"
+                                className="h-full w-full flex flex-col items-center justify-start p-8 overflow-y-auto custom-scrollbar"
                             >
                                 <div className="max-w-3xl w-full flex flex-col items-center gap-12 py-12">
                                     {/* Task Title in Focus mode */}
