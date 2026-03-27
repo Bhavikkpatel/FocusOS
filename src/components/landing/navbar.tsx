@@ -46,11 +46,11 @@ export function Navbar() {
                         <span className="text-xl font-bold tracking-tight text-white">FocusOS</span>
                     </Link>
 
-                    <div className="flex items-center gap-8">
-                        <div className="hidden md:flex items-center gap-6">
-                            <Link href="/features" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Features</Link>
-                            <Link href="/about" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Philosophy</Link>
-                            <Link href="/docs" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Docs</Link>
+                    <div className="flex items-center gap-4 md:gap-8">
+                        <div className="flex items-center gap-3 md:gap-6">
+                            <div className="h-4 w-px bg-white/10 mx-1 md:hidden" />
+                            <Link href="/features" className="text-[10px] md:text-sm font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest md:normal-case md:tracking-normal">Features</Link>
+                            <Link href="/about" className="text-[10px] md:text-sm font-bold text-slate-400 hover:text-white transition-colors hidden sm:block uppercase tracking-widest md:normal-case md:tracking-normal">About</Link>
                         </div>
 
                         <div className="flex items-center gap-4">

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 function TimelineMockup() {
     return (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-64 md:w-80 h-32 pr-8 opacity-90 group-hover:opacity-100 transition-opacity">
+        <div className="relative md:absolute right-0 top-0 md:top-1/2 md:-translate-y-1/2 w-full md:w-80 h-32 md:pr-8 opacity-90 group-hover:opacity-100 transition-opacity mt-4 md:mt-0">
             <div className="flex flex-col gap-2 relative h-full justify-center">
                 {/* Current Task overrunning */}
                 <motion.div 
@@ -95,7 +95,7 @@ function LiquidMockup() {
 
 function PredictiveMockup() {
     return (
-        <div className="absolute right-0 md:right-8 top-1/2 -translate-y-1/2 w-56 md:w-64 bg-[#1A1A1C] border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col justify-between gap-6 mr-4 opacity-90 group-hover:opacity-100 transition-opacity">
+        <div className="relative md:absolute right-0 md:right-8 top-0 md:top-1/2 md:-translate-y-1/2 w-full md:w-64 bg-[#1A1A1C] border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col justify-between gap-6 md:mr-4 opacity-90 group-hover:opacity-100 transition-opacity mt-4 md:mt-0">
             <div className="space-y-2">
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold font-mono">Actual Velocity</div>
                 <div className="flex items-center text-xl font-bold font-mono tracking-tight text-white">

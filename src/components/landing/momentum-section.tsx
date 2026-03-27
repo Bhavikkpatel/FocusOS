@@ -5,7 +5,7 @@ import { Users } from "lucide-react";
 
 export function MomentumSection() {
     return (
-        <section className="py-32 relative overflow-hidden bg-black/20">
+        <section className="py-20 md:py-32 relative overflow-hidden bg-black/20">
             {/* Ambient background ring decoration */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/5 opacity-10 animate-[spin_20s_linear_infinite]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white/[0.02] opacity-5 animate-[spin_30s_linear_infinite_reverse]" />
@@ -35,9 +35,9 @@ export function MomentumSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 1, delay: 0.2 }}
-                    className="relative max-w-lg mx-auto p-1 border border-white/5 rounded-[40px] bg-white/[0.02] backdrop-blur-3xl shadow-2xl"
+                    className="relative max-w-lg mx-auto p-1 border border-white/5 rounded-[2rem] md:rounded-[40px] bg-white/[0.02] backdrop-blur-3xl shadow-2xl"
                 >
-                    <div className="relative p-12 rounded-[38px] bg-black/40 border border-white/5 flex flex-col items-center gap-8">
+                    <div className="relative p-6 md:p-12 rounded-[1.8rem] md:rounded-[38px] bg-black/40 border border-white/5 flex flex-col items-center gap-6 md:gap-8">
                         {/* Progress Ring */}
                         <div className="relative h-48 w-48 flex items-center justify-center">
                             <svg className="h-full w-full -rotate-90">

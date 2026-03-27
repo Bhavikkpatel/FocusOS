@@ -219,10 +219,10 @@ export function Hero() {
                     <ChaosIcon scrollYProgress={scrollYProgress} label="Slack: 47 DMs" icon="⚡" color="text-yellow-400" xFrom="35%" xTo="-25%" top="82%" fadeEnd={0.1} />
 
                     {/* ── The Zenith UI Mockup ── */}
-                    <div className="relative w-full max-w-6xl mx-auto z-30">
+                    <div className="relative w-full max-w-6xl mx-auto z-30 sm:scale-100 scale-[0.5] sm:origin-center origin-top">
                         <motion.div
                             style={{ scale: mockupScale }}
-                            className="relative mx-auto rounded-3xl border border-white/5 bg-white/5 p-4 md:p-6 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+                            className="relative mx-auto rounded-[2rem] md:rounded-3xl border border-white/5 bg-white/5 p-3 md:p-6 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)] transition-all"
                         >
                             <div className="aspect-[16/9] w-full rounded-2xl overflow-hidden bg-[#0F111A] border border-white/5 relative shadow-inner flex">
                                 

@@ -8,7 +8,7 @@ export function ProblemSection() {
     const [isHovered, setIsHovered] = useState(false);
 
     return (
-        <section id="philosophy" className="py-32 bg-[#111112] border-y border-white/5 relative overflow-hidden">
+        <section id="philosophy" className="py-20 md:py-32 bg-[#111112] border-y border-white/5 relative overflow-hidden">
             {/* Grid Pattern Decoration */}
             <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
                  style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} 
