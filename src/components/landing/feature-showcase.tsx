@@ -88,14 +88,14 @@ export function FeatureShowcase() {
 
                 <div className="space-y-12">
                     {/* Tab Switcher */}
-                    <div className="flex justify-center">
-                        <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-xl">
+                    <div className="flex justify-center px-4">
+                        <div className="flex p-1 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-xl overflow-x-auto no-scrollbar">
                             {MODES.map((mode) => (
                                 <button
                                     key={mode.id}
                                     onClick={() => setActiveMode(mode.id)}
                                     className={cn(
-                                        "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative",
+                                        "flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-xl text-[10px] md:text-sm font-bold transition-all duration-300 relative whitespace-nowrap",
                                         activeMode === mode.id ? "text-white" : "text-slate-500 hover:text-slate-300"
                                     )}
                                 >
@@ -123,10 +123,10 @@ export function FeatureShowcase() {
                                 transition={{ duration: 0.4, ease: "easeOut" }}
                                 className="absolute inset-0 flex flex-col md:flex-row"
                             >
-                                <div className="md:w-1/3 p-12 flex flex-col justify-center space-y-6 bg-gradient-to-r from-black/40 to-transparent">
-                                    <div className={cn("inline-flex h-12 w-12 rounded-2xl flex items-center justify-center", MODES.find(m => m.id === activeMode)?.bg)}>
+                                <div className="w-full md:w-1/3 p-6 md:p-12 flex flex-col justify-center space-y-4 md:space-y-6 bg-gradient-to-b md:bg-gradient-to-r from-black/60 md:from-black/40 to-transparent z-20">
+                                    <div className={cn("inline-flex h-10 md:h-12 w-10 md:w-12 rounded-xl md:rounded-2xl flex items-center justify-center", MODES.find(m => m.id === activeMode)?.bg)}>
                                         {MODES.find(m => m.id === activeMode)?.icon && (
-                                            <div className={cn("h-6 w-6 font-bold", MODES.find(m => m.id === activeMode)?.color)}>
+                                            <div className={cn("h-5 w-5 md:h-6 md:w-6 font-bold", MODES.find(m => m.id === activeMode)?.color)}>
                                                 {(() => {
                                                     const Icon = MODES.find(m => m.id === activeMode)?.icon;
                                                     return Icon ? <Icon /> : null;
@@ -134,10 +134,10 @@ export function FeatureShowcase() {
                                             </div>
                                         )}
                                     </div>
-                                    <h3 className="text-3xl font-bold text-white tracking-tight">
+                                    <h3 className="text-xl md:text-3xl font-bold text-white tracking-tight">
                                         {MODES.find(m => m.id === activeMode)?.title}
                                     </h3>
-                                    <p className="text-lg text-slate-400 font-medium leading-relaxed">
+                                    <p className="text-sm md:text-lg text-slate-400 font-medium leading-relaxed max-w-[85%] md:max-w-none">
                                         {MODES.find(m => m.id === activeMode)?.description}
                                     </p>
                                 </div>
