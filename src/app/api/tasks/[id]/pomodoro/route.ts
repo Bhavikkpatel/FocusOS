@@ -33,31 +33,39 @@ export async function POST(
 
         const nextCompleted = type === "FOCUS" ? task.completedPomodoros + 1 : task.completedPomodoros;
         let nextStatus = task.status;
-
-        // Auto-complete logic (only if it was a focus session that actually incremented the count)
         let nextColumnId = task.columnId;
+
+        // Auto-progression logic
         const shouldAutoComplete = (task as unknown as { autoComplete: boolean }).autoComplete;
-        if (type === "FOCUS" && shouldAutoComplete && nextCompleted >= task.estimatedPomodoros) {
+        
+        if (type === "FOCUS" && nextCompleted >= task.estimatedPomodoros) {
+            // 1. Mandatory progression to READY_FOR_REVIEW if currently in progress/todo
+            if (nextStatus === "TODO" || nextStatus === "IN_PROGRESS") {
+                nextStatus = "READY_FOR_REVIEW";
+            }
 
-            // Check if all subtasks are completed before auto-completing
-            const subtasks = await prisma.subTask.findMany({
-                where: { taskId: task.id }
-            });
-            const allSubtasksCompleted = subtasks.length === 0 || subtasks.every((st) => st.isCompleted);
+            // 2. Optional progression to COMPLETED if autoComplete is true
+            if (shouldAutoComplete) {
+                // Check if all subtasks are completed before auto-completing
+                const subtasks = await prisma.subTask.findMany({
+                    where: { taskId: task.id }
+                });
+                const allSubtasksCompleted = subtasks.length === 0 || subtasks.every((st) => st.isCompleted);
 
-            if (allSubtasksCompleted) {
-                nextStatus = "COMPLETED";
+                if (allSubtasksCompleted) {
+                    nextStatus = "COMPLETED";
 
-                // Story 2: If auto-completing, try to move to "Done" column
-                if (task.projectId) {
-                    const doneColumn = await prisma.column.findFirst({
-                        where: {
-                            projectId: task.projectId,
-                            name: { in: ["Done", "Completed", "COMPLETED", "DONE"], mode: 'insensitive' }
+                    // Move to "Done" column if applicable
+                    if (task.projectId) {
+                        const doneColumn = await prisma.column.findFirst({
+                            where: {
+                                projectId: task.projectId,
+                                name: { in: ["Done", "Completed", "COMPLETED", "DONE"], mode: 'insensitive' }
+                            }
+                        });
+                        if (doneColumn) {
+                            nextColumnId = doneColumn.id;
                         }
-                    });
-                    if (doneColumn) {
-                        nextColumnId = doneColumn.id;
                     }
                 }
             }
