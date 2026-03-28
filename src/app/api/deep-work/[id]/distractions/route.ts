@@ -21,7 +21,7 @@ export async function POST(
             return new NextResponse("Missing text", { status: 400 });
         }
 
-        const deepWorkSession = await (prisma as any).deepWorkSession.findUnique({
+        const deepWorkSession = await prisma.deepWorkSession.findUnique({
             where: { id: params.id, userId: session.user.id }
         });
 
@@ -36,13 +36,13 @@ export async function POST(
 
         console.log(`[DEEP_WORK_DISTRACTIONS_POST] Session ${params.id}: Adding distraction "${text}"`);
 
-        const currentDistractions = (deepWorkSession as any).distractions || [];
+        const currentDistractions = (deepWorkSession.distractions as { text: string; createdAt: string }[]) || [];
         const updatedDistractions = [...currentDistractions, distraction];
 
-        const updatedSession = await (prisma as any).deepWorkSession.update({
+        const updatedSession = await prisma.deepWorkSession.update({
             where: { id: params.id },
             data: {
-                distractions: updatedDistractions,
+                distractions: updatedDistractions as any,
             }
         });
 

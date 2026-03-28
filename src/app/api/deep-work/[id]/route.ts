@@ -14,7 +14,7 @@ export async function GET(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const deepWorkSession = await (prisma as any).deepWorkSession.findUnique({
+        const deepWorkSession = await prisma.deepWorkSession.findUnique({
             where: { 
                 id: params.id,
                 userId: session.user.id
@@ -49,7 +49,7 @@ export async function PATCH(
         const body = await req.json();
         const { distractions, energy } = body;
 
-        const updatedSession = await (prisma as any).deepWorkSession.update({
+        const updatedSession = await prisma.deepWorkSession.update({
             where: { 
                 id: params.id,
                 userId: session.user.id

@@ -34,7 +34,7 @@ export async function GET() {
 
         // Flatten distractions with session context
         const allDistractions = sessions.flatMap(session => {
-            const distractions = (session.distractions as any[]) || [];
+            const distractions = (session.distractions as { text: string; createdAt?: string }[]) || [];
             if (distractions.length > 0) {
                 console.log(`[DISTRACTIONS_GET] Session ${session.id} (Task: ${session.task?.title}) has ${distractions.length} distractions`);
             }
