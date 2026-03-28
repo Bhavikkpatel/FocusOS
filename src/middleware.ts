@@ -10,11 +10,18 @@ export async function middleware(request: NextRequest) {
                          request.nextUrl.pathname === "/about" ||
                          request.nextUrl.pathname === "/docs";
 
+    const isSelfHosted = process.env.IS_SELF_HOSTED === "true" || process.env.NODE_ENV === "development";
+    const isAdminSetup = request.nextUrl.pathname.startsWith("/admin/setup");
+
     if (isAuthPage && token) {
         return NextResponse.redirect(new URL("/timer", request.url));
     }
 
     if (!isAuthPage && !isPublicPage && !token) {
+        // Allow unauthenticated access to admin setup only in self-hosted mode
+        if (isAdminSetup && isSelfHosted) {
+            return NextResponse.next();
+        }
         return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
 

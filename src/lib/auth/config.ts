@@ -1,21 +1,60 @@
 import { type NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { initializeUserData } from "./user-init";
 import type { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma) as Adapter,
     secret: process.env.NEXTAUTH_SECRET,
     providers: [
+        CredentialsProvider({
+            name: "credentials",
+            credentials: {
+                identifier: { label: "Username or Email", type: "text" },
+                password: { label: "Password", type: "password" }
+            },
+            async authorize(credentials) {
+                if (!credentials?.identifier || !credentials?.password) {
+                    throw new Error("Missing credentials");
+                }
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        OR: [
+                            { email: credentials.identifier },
+                            { username: credentials.identifier }
+                        ]
+                    }
+                });
+
+                if (!user || !user.password) {
+                    throw new Error("Invalid credentials");
+                }
+
+                const isPasswordValid = await bcrypt.compare(
+                    credentials.password,
+                    user.password
+                );
+
+                if (!isPasswordValid) {
+                    throw new Error("Invalid credentials");
+                }
+
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    username: user.username,
+                };
+            }
+        }),
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-        }),
-        GitHubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID || "",
-            clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
         }),
     ],
     pages: {
@@ -27,87 +66,26 @@ export const authOptions: NextAuthOptions = {
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
     callbacks: {
-        async jwt({ token, user, account }) {
+        async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-            }
-            if (account) {
-                token.accessToken = account.access_token;
+                token.email = user.email;
+                token.name = user.name;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
+                session.user.email = token.email as string;
+                session.user.name = token.name as string;
             }
             return session;
         },
     },
     events: {
         async createUser({ user }) {
-            try {
-                console.log("Creating default data for user:", user.id);
-                // Create Daily project for new user
-                await prisma.project.create({
-                    data: {
-                        name: "Daily",
-                        color: "#3B82F6",
-                        userId: user.id,
-                        columns: {
-                            create: [
-                                { name: "To Do", sortOrder: 0 },
-                                { name: "In Progress", sortOrder: 1 },
-                                { name: "Review", sortOrder: 2 },
-                                { name: "Done", sortOrder: 3 },
-                            ],
-                        },
-                    },
-                });
-
-                // Create default presets for new user
-                const defaultPresets = [
-                    {
-                        name: "Classic Pomodoro",
-                        focusDuration: 25,
-                        shortBreakDuration: 5,
-                        longBreakDuration: 15,
-                        sessionsUntilLongBreak: 4,
-                        autoStartBreaks: true,
-                        autoStartFocus: false,
-                        isDefault: true,
-                        userId: user.id,
-                    },
-                    {
-                        name: "Deep Work",
-                        focusDuration: 50,
-                        shortBreakDuration: 10,
-                        longBreakDuration: 30,
-                        sessionsUntilLongBreak: 3,
-                        autoStartBreaks: true,
-                        autoStartFocus: false,
-                        isDefault: false,
-                        userId: user.id,
-                    },
-                    {
-                        name: "Flow State",
-                        focusDuration: 90,
-                        shortBreakDuration: 15,
-                        longBreakDuration: 30,
-                        sessionsUntilLongBreak: 2,
-                        autoStartBreaks: false,
-                        autoStartFocus: false,
-                        isDefault: false,
-                        userId: user.id,
-                    },
-                ];
-
-                for (const preset of defaultPresets) {
-                    await prisma.pomodoroPreset.create({ data: preset });
-                }
-            } catch (error) {
-                console.error("FAILED to create default data for user:", error);
-                // We DON'T re-throw here so the user can still log in
-            }
+            await initializeUserData(user.id);
         },
     },
     debug: true,

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Tag as TagIcon, Check, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag as TagIcon, Check, X } from "lucide-react";
+import { LoadingSpinner, LoadingBox } from "@/components/ui/loading-state";
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from "@/hooks/use-tags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,9 +94,7 @@ export function TagManagement() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <LoadingBox text="SYNCING TAGS..." className="min-h-[300px]" />
         );
     }
 
@@ -137,7 +136,7 @@ export function TagManagement() {
                                 ))}
                             </div>
                             <Button type="submit" disabled={!newName.trim() || createTag.isPending}>
-                                {createTag.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Tag"}
+                                {createTag.isPending ? <LoadingSpinner spinnerSize={16} /> : "Add Tag"}
                             </Button>
                         </div>
                     </form>

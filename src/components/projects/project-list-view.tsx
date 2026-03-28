@@ -6,7 +6,8 @@ import { TaskItem } from "@/components/tasks/task-item";
 import { motion } from "framer-motion";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Task } from "@prisma/client";
-import { PlusSquare, ArrowDownUp, Plus, Loader2 } from "lucide-react";
+import { PlusSquare, ArrowDownUp, Plus } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useQueryClient } from "@tanstack/react-query";
@@ -142,7 +143,7 @@ export function ProjectListView({
                         disabled={createTask.isPending}
                     />
                     {createTask.isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/30" />
+                        <LoadingSpinner spinnerSize={16} />
                     )}
                 </div>
 

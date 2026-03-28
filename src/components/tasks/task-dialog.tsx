@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Flag, Timer, Minus, Plus, Repeat, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { format } from "date-fns";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
 import { TagSelector } from "./tags/tag-selector";
 import { Task } from "@prisma/client";
+import { Flag, Calendar as CalendarIcon, Minus, Plus, Repeat, Timer } from "lucide-react";
 
 const taskSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -630,7 +631,7 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
                                     className="rounded-full h-10 px-6 bg-primary hover:bg-primary/90 text-white shadow-sm"
                                 >
                                     {(createTask.isPending || updateTask.isPending) && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <LoadingSpinner spinnerSize={16} className="mr-2" />
                                     )}
                                     {taskToEdit ? "Save Changes" : "Create Task"}
                                 </Button>

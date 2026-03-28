@@ -14,12 +14,26 @@ import { useTimerStore } from "@/store/timer";
 import { useRateSession } from "@/hooks/use-tasks";
 import { Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export function FocusRatingDialog() {
-    const { sessionToRate, setSessionToRate } = useTimerStore();
+    const { sessionToRate, setSessionToRate, currentTaskId } = useTimerStore();
     const rateSession = useRateSession();
     const [rating, setRating] = useState<number>(0);
     const [hoveredRating, setHoveredRating] = useState<number>(0);
+    const queryClient = useQueryClient();
+
+    // Story: Instant History Update
+    useEffect(() => {
+        if (sessionToRate) {
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            if (currentTaskId) {
+                queryClient.invalidateQueries({ queryKey: ["task", currentTaskId] });
+            }
+        }
+    }, [sessionToRate, currentTaskId, queryClient]);
 
     const handleDismiss = () => {
         setSessionToRate(null);
