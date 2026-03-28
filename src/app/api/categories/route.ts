@@ -17,8 +17,8 @@ export async function GET() {
         });
 
         return NextResponse.json(categories);
-    } catch (error: any) {
-        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+    } catch (error) {
+        if (error instanceof Error && (error.message?.includes('Dynamic server usage') || (error as any).digest === 'DYNAMIC_SERVER_USAGE')) {
             throw error;
         }
         console.error("[CATEGORIES_GET]", error);

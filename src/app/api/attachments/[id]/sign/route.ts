@@ -35,8 +35,8 @@ export async function GET(
         const signedUrl = await getPresignedUrl(attachment.url);
 
         return NextResponse.json({ signedUrl });
-    } catch (error: any) {
-        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+    } catch (error) {
+        if (error instanceof Error && (error.message?.includes('Dynamic server usage') || (error as any).digest === 'DYNAMIC_SERVER_USAGE')) {
             throw error;
         }
         console.error("[ATTACHMENT_SIGN_GET]", error);

@@ -69,8 +69,8 @@ export async function GET(
         }
 
         return NextResponse.json(task);
-    } catch (error: any) {
-        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+    } catch (error) {
+        if (error instanceof Error && (error.message?.includes('Dynamic server usage') || (error as any).digest === 'DYNAMIC_SERVER_USAGE')) {
             throw error;
         }
         console.error("[TASK_GET]", error);
@@ -109,7 +109,7 @@ export async function PATCH(
             }
         }
 
-        const updateData: any = {
+        const updateData: Record<string, any> = {
             ...validatedData,
             dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
         };
@@ -209,12 +209,12 @@ export async function PATCH(
             include: { tags: true, projectRef: true }
         });
 
-        const t = task as any;
+        const t = task;
         // If task was just marked COMPLETED and is recurring, spawn next one
         if (validatedData.status === "COMPLETED" && t.isRecurring && !t.lastOccurrenceId) {
             const nextDueDate = calculateNextOccurrence(
                 t.dueDate || new Date(),
-                t.recurrenceType,
+                t.recurrenceType as any,
                 t.recurrenceInterval || 1,
                 t.recurrenceDays || undefined
             );
@@ -237,18 +237,18 @@ export async function PATCH(
                     recurrenceInterval: t.recurrenceInterval,
                     recurrenceDays: t.recurrenceDays,
                     tags: {
-                        connect: t.tags.map((tag: any) => ({ id: tag.id }))
+                        connect: t.tags.map((tag) => ({ id: tag.id }))
                     },
                     // If it belongs to a project, put it in the first column or same column?
                     // Usually first column (To Do)
                     columnId: t.columnId,
-                } as any
+                }
             });
 
             // Link them to avoid double generation
             await prisma.task.update({
                 where: { id: task.id },
-                data: { lastOccurrenceId: nextTask.id } as any
+                data: { lastOccurrenceId: nextTask.id }
             });
         }
 

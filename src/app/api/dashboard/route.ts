@@ -38,7 +38,7 @@ export async function GET(req: Request) {
                     completedAt: { gte: todayStart, lte: todayEnd },
                 },
             }),
-            (prisma as any).user.findUnique({
+            prisma.user.findUnique({
                 where: { id: userId },
                 select: { dailyFocusGoal: true }
             })
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
         // 4. Upcoming Tasks (Filtered by Energy if applicable)
         const energyFilter = energy === "low" ? {
             OR: [
-                { difficulty: "EASY" as any },
+                { difficulty: "EASY" as const },
                 { tags: { some: { name: { in: ["Admin", "Quick", "Low Energy"] } } } }
             ]
         } : {};
@@ -114,7 +114,7 @@ export async function GET(req: Request) {
             where: {
                 userId,
                 status: { not: "COMPLETED" },
-                ...energyFilter as any
+                ...(energyFilter as any)
             },
             include: { projectRef: true, tags: true },
             orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
@@ -181,7 +181,7 @@ export async function GET(req: Request) {
                 totalFocusTimeToday: Math.round(totalFocusTimeToday / 60),
                 sessionsCompletedToday,
                 tasksCompletedToday: todayCompletedTasks,
-                dailyFocusGoal: (userData as any)?.dailyFocusGoal || 240,
+                dailyFocusGoal: userData?.dailyFocusGoal || 240,
             },
             weeklyFocusData,
             projectDistributionData,
@@ -189,8 +189,8 @@ export async function GET(req: Request) {
             activeProjects: projectStats,
             heroTask: upcomingTasks.length > 0 ? upcomingTasks[0] : null,
         });
-    } catch (error: any) {
-        if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {
+    } catch (error) {
+        if (error instanceof Error && (error.message?.includes('Dynamic server usage') || (error as any).digest === 'DYNAMIC_SERVER_USAGE')) {
             throw error;
         }
         console.error("[DASHBOARD_GET]", error);
