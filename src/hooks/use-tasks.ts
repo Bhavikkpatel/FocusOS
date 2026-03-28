@@ -6,7 +6,7 @@ export type TaskWithSessions = Task & {
     projectRef: Project | null;
     pomodoroSessions: (PomodoroSession & { 
         rating?: number | null;
-        deepWorkSession?: (DeepWorkSession & { distractions?: any }) | null;
+        deepWorkSession?: (DeepWorkSession & { distractions?: { text: string; createdAt: string }[] }) | null;
     })[];
     subtasks: SubTask[];
     tags: Tag[];

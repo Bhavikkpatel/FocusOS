@@ -12,7 +12,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json().catch(() => ({}));
-        let { taskId, projectId } = body;
+        const { taskId } = body;
+        let { projectId } = body;
 
         // Auto-fetch projectId from task if not provided
         if (taskId && !projectId) {

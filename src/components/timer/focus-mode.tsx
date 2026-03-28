@@ -156,7 +156,7 @@ export function FocusMode() {
                 pause();
             }
         }
-    }, [isFocusModeOpen]); // Only run when open state changes
+    }, [isFocusModeOpen, currentTask?.pomodoroDuration, currentTaskId, isPaused, isRunning, pause, start]); // Sync with open state and task changes
 
     const handleSwitchTask = (direction: 'next' | 'prev') => {
         if (!allTasks.length) return;

@@ -51,7 +51,7 @@ export function CapturedThoughts() {
     }, [hasNewDistraction, refetch, resetDistractionSync]);
 
     const removeMutation = useMutation({
-        mutationFn: async ({ sessionId, updatedDistractions }: { sessionId: string, updatedDistractions: any[] }) => {
+        mutationFn: async ({ sessionId, updatedDistractions }: { sessionId: string, updatedDistractions: { text: string, createdAt: string }[] }) => {
             const res = await fetch(`/api/deep-work/${sessionId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

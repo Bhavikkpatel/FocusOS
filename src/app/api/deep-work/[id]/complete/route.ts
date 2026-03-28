@@ -17,7 +17,7 @@ export async function POST(
         const body = await req.json().catch(() => ({}));
         const { energy } = body;
 
-        const deepWorkSession = await (prisma as any).deepWorkSession.update({
+        const deepWorkSession = await prisma.deepWorkSession.update({
             where: { id: params.id, userId: session.user.id },
             data: {
                 endTime: new Date(),
