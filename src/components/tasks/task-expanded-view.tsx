@@ -161,7 +161,7 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
         if (activeTab === "FOCUS" && autoStartFocusTab && !isRunning && !isPaused && currentTaskId !== task.id) {
             handleTimerToggle();
         }
-    }, [activeTab, autoStartFocusTab, isRunning, isPaused, currentTaskId, task.id]);
+    }, [activeTab, autoStartFocusTab, isRunning, isPaused, currentTaskId, task.id, handleTimerToggle]);
 
 
     // Auto-save notes debounce

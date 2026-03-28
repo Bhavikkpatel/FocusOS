@@ -93,9 +93,9 @@ export function TaskDetailsDialog({ task, open, onOpenChange }: TaskDetailsDialo
                                             </div>
                                         </div>
                                         {/* Display distractions from this session's focus block */}
-                                        {session.deepWorkSession?.distractions && (session.deepWorkSession.distractions as any[]).length > 0 && (
+                                        {session.deepWorkSession?.distractions && (session.deepWorkSession.distractions as { text: string }[]).length > 0 && (
                                             <div className="pl-4 border-l-2 border-primary/20 space-y-1">
-                                                {(session.deepWorkSession.distractions as any[]).map((d, i) => (
+                                                {(session.deepWorkSession.distractions as { text: string }[]).map((d, i) => (
                                                     <div key={i} className="text-[11px] text-muted-foreground flex items-start gap-2 italic">
                                                         <span className="text-primary mt-0.5">•</span>
                                                         <span>{d.text}</span>

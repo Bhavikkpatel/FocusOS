@@ -7,7 +7,7 @@ import { History as HistoryIcon, Star, AlertCircle, CheckCircle2, XCircle } from
 import { Badge } from "@/components/ui/badge";
 
 interface SessionTimelineProps {
-    sessions: (PomodoroSession & { deepWorkSession?: (DeepWorkSession & { distractions?: any }) | null })[];
+    sessions: (PomodoroSession & { deepWorkSession?: (DeepWorkSession & { distractions?: { text: string; createdAt: string }[] }) | null })[];
 }
 
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
@@ -30,7 +30,7 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
             }
             acc[dateKey].sessions.push(session);
             return acc;
-        }, {} as Record<string, { date: Date; sessions: any[] }>);
+        }, {} as Record<string, { date: Date; sessions: typeof sessions }>);
 
         // Convert to array and sort by date descending
         return Object.values(groups).sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -125,16 +125,16 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                                 </div>
 
                                 {/* Captured Thoughts (Distractions) */}
-                                {session.deepWorkSession?.distractions && (session.deepWorkSession.distractions as any[]).length > 0 && (
-                                    <div className="mt-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
-                                        {(session.deepWorkSession.distractions as any[]).map((d: any, i: number) => (
-                                            <div key={i} className="text-[10px] text-muted-foreground flex items-start gap-2 italic leading-relaxed">
-                                                <span className="text-primary mt-1 min-w-[4px]">•</span>
-                                                <span className="line-clamp-2">{d.text}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                {session.deepWorkSession?.distractions && (session.deepWorkSession.distractions as { text: string }[]).length > 0 && (
+                    <div className="mt-2 pl-3 border-l-2 border-primary/20 space-y-1.5">
+                        {(session.deepWorkSession.distractions as { text: string }[]).map((d, i) => (
+                            <div key={i} className="text-[10px] text-muted-foreground flex items-start gap-2 italic leading-relaxed">
+                                <span className="text-primary mt-1 min-w-[4px]">•</span>
+                                <span className="line-clamp-2">{d.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
                             </div>
                         ))}
                     </div>
