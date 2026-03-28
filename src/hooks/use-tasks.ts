@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import { Task, TaskStatus, TaskPriority, PomodoroSession, SubTask, Project, Tag, Category, TaskDifficulty, Attachment } from "@prisma/client";
+import { Task, TaskStatus, TaskPriority, PomodoroSession, SubTask, Project, Tag, Category, TaskDifficulty, Attachment, DeepWorkSession } from "@prisma/client";
 import { toast } from "sonner";
 
 export type TaskWithSessions = Task & {
     projectRef: Project | null;
-    pomodoroSessions: (PomodoroSession & { rating?: number | null })[];
+    pomodoroSessions: (PomodoroSession & { 
+        rating?: number | null;
+        deepWorkSession?: (DeepWorkSession & { distractions?: any }) | null;
+    })[];
     subtasks: SubTask[];
     tags: Tag[];
     category: Category | null;

@@ -6,8 +6,8 @@ import {
     CheckCircle2, 
     Circle, 
     Tag as TagIcon, 
-    Loader2
 } from "lucide-react";
+import { LoadingBox } from "@/components/ui/loading-state";
 import { useDebounce } from "../hooks/use-debounce";
 import { useGlobalSearch } from "../hooks/use-search";
 import {
@@ -79,10 +79,7 @@ export function GlobalSearch({ open, onOpenChange, projectId, projectName }: Glo
             />
             <CommandList>
                 {isLoading && (
-                    <div className="p-4 flex items-center justify-center text-sm text-slate-500">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
-                        Searching...
-                    </div>
+                    <LoadingBox text="Searching..." className="min-h-[300px]" />
                 )}
                 
                 {!isLoading && !hasResults && debouncedQuery.length > 0 && (

@@ -84,14 +84,18 @@ function TaskItem({ task }: { task: TaskWithSessions }) {
                     {task.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                    {task.projectRef && (
+                    {task.projectRef ? (
                         <span 
                             className="text-[10px] font-bold uppercase tracking-tight opacity-60"
                             style={{ color: task.projectRef.color }}
                         >
                             {task.projectRef.name}
                         </span>
-                    )}
+                    ) : task.project ? (
+                        <span className="text-[10px] font-bold uppercase tracking-tight opacity-60 text-slate-400">
+                            {task.project}
+                        </span>
+                    ) : null}
                     <span className="text-[10px] text-muted-foreground font-medium">
                         {task.dueDate ? format(new Date(task.dueDate), "MMM dd") : ''}
                     </span>

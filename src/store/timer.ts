@@ -46,6 +46,10 @@ export interface TimerState {
     currentPreset: PomodoroPreset | null;
     presets: PomodoroPreset[];
 
+    // Distraction Sync
+    hasNewDistraction: boolean;
+    resetDistractionSync: () => void;
+
     // Conflict state
     isConfirmingNewSession: { duration: number; type: SessionType; taskId: string } | null;
 
@@ -109,6 +113,7 @@ export const useTimerStore = create<TimerState>()(
                 activeSubtaskId: null,
                 autoStartFocusTab: true,
                 currentCalendarEventId: null,
+                hasNewDistraction: false,
 
                 initWorker: () => {
                     if (typeof window === "undefined") return;
@@ -210,16 +215,21 @@ export const useTimerStore = create<TimerState>()(
                         isFocusPromptOpen: type === "FOCUS" && !state.isFocusModeOpen
                     });
 
-                    // Start Deep Work Session if focusing and not already in one
-                    if (type === "FOCUS" && !state.deepWorkSessionId) {
+                    // Start Deep Work Session if focusing and not already in one, 
+                    // OR if the taskId has changed (we want a fresh session for a new task)
+                    const isNewTask = taskId && state.currentTaskId !== taskId;
+                    if (type === "FOCUS" && (!state.deepWorkSessionId || isNewTask)) {
                         fetch("/api/deep-work/start", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ taskId, projectId: state.currentPreset?.id }) // Using preset or task project
+                            body: JSON.stringify({ taskId }) // Removed incorrect projectId: state.currentPreset?.id
                         })
                         .then(res => res.json())
                         .then(data => {
-                            if (data?.id) set({ deepWorkSessionId: data.id });
+                            if (data?.id) {
+                                set({ deepWorkSessionId: data.id });
+                                console.log(`[TimerStore] Deep work session started for task ${taskId}: ${data.id}`);
+                            }
                         })
                         .catch(err => console.error("Error starting deep work session:", err));
                     }
@@ -265,6 +275,8 @@ export const useTimerStore = create<TimerState>()(
                         interruptions: 0,
                         lastInterruptionTime: 0,
                         lastUpdated: Date.now(),
+                        deepWorkSessionId: null, // Reset session ID on fresh start
+                        sessionDistractions: []
                     });
                 },
 
@@ -426,9 +438,21 @@ export const useTimerStore = create<TimerState>()(
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ text: note })
-                        }).catch(err => console.error("Error syncing distraction:", err));
+                        })
+                        .then(res => {
+                            if (res.ok) {
+                                set({ hasNewDistraction: true }); // Only trigger sync AFTER success
+                            } else {
+                                toast.error("Failed to sync distraction");
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error syncing distraction:", err);
+                            toast.error("Connectivity error: Distraction not saved");
+                        });
                     }
                 },
+                resetDistractionSync: () => set({ hasNewDistraction: false }),
                 setActiveSubtask: (id: string | null) => set({ activeSubtaskId: id }),
                 setFocusMode: (open: boolean) => set({ isFocusModeOpen: open }),
                 setFocusPrompt: (open: boolean) => set({ isFocusPromptOpen: open }),
@@ -470,6 +494,7 @@ export const useTimerStore = create<TimerState>()(
                     isZenithMode: state.isZenithMode,
                     deepWorkSessionId: state.deepWorkSessionId,
                     currentCalendarEventId: state.currentCalendarEventId,
+                    hasNewDistraction: state.hasNewDistraction,
                 }),
             }
         )

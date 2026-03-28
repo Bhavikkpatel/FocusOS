@@ -56,12 +56,16 @@ export function HeroTask({ task }: HeroTaskProps) {
                                 {task.title}
                             </h2>
                             <div className="flex items-center gap-4">
-                                {task.projectRef && (
+                                {task.projectRef ? (
                                     <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5">
                                         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: task.projectRef.color }} />
                                         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">{task.projectRef.name}</span>
                                     </div>
-                                )}
+                                ) : task.project ? (
+                                    <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{task.project}</span>
+                                    </div>
+                                ) : null}
                                 <span className="text-[10px] font-jetbrains text-slate-400 dark:text-slate-500 uppercase tracking-widest">EST. {task.estimatedPomodoros || 1} POMODOROS</span>
                             </div>
                         </div>

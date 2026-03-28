@@ -27,6 +27,7 @@ import { useUpdateTask, useCreateTask } from "@/hooks/use-tasks";
 import { useCreateColumn, useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, MoreHorizontal, Pencil, Trash2, Circle, Loader2, Eye, CheckCircle2, PauseCircle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { cn } from "@/lib/utils";
 import { KanbanCard } from "@/components/tasks/kanban-card";
 import {
@@ -303,7 +304,7 @@ function KanbanColumn({
                             />
                             {createTask.isPending && (
                                 <div className="absolute right-0 top-1">
-                                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+                                    <LoadingSpinner spinnerSize={12} />
                                 </div>
                             )}
                         </div>
@@ -541,7 +542,7 @@ export function ProjectKanban({
                                 />
                                 {createColumn.isPending && (
                                     <div className="absolute right-0 top-2">
-                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/50" />
+                                        <LoadingSpinner spinnerSize={16} />
                                     </div>
                                 )}
                             </div>

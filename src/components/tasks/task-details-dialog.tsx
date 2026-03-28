@@ -78,18 +78,31 @@ export function TaskDetailsDialog({ task, open, onOpenChange }: TaskDetailsDialo
                         {task.pomodoroSessions && task.pomodoroSessions.length > 0 ? (
                             <div className="space-y-4">
                                 {task.pomodoroSessions.map((session) => (
-                                    <div key={session.id} className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant={session.type === "FOCUS" ? "default" : "secondary"} className="text-[10px]">
-                                                {session.type}
-                                            </Badge>
-                                            <span className="text-muted-foreground">
-                                                {format(new Date(session.completedAt), "PP p")}
-                                            </span>
+                                    <div key={session.id} className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={session.type === "FOCUS" ? "default" : "secondary"} className="text-[10px]">
+                                                    {session.type}
+                                                </Badge>
+                                                <span className="text-muted-foreground">
+                                                    {format(new Date(session.completedAt), "PP p")}
+                                                </span>
+                                            </div>
+                                            <div className="font-medium">
+                                                {Math.round(session.duration / 60)} mins
+                                            </div>
                                         </div>
-                                        <div className="font-medium">
-                                            {Math.round(session.duration / 60)} mins
-                                        </div>
+                                        {/* Display distractions from this session's focus block */}
+                                        {session.deepWorkSession?.distractions && (session.deepWorkSession.distractions as any[]).length > 0 && (
+                                            <div className="pl-4 border-l-2 border-primary/20 space-y-1">
+                                                {(session.deepWorkSession.distractions as any[]).map((d, i) => (
+                                                    <div key={i} className="text-[11px] text-muted-foreground flex items-start gap-2 italic">
+                                                        <span className="text-primary mt-0.5">•</span>
+                                                        <span>{d.text}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

@@ -34,6 +34,8 @@ export async function POST(
             createdAt: new Date().toISOString(),
         };
 
+        console.log(`[DEEP_WORK_DISTRACTIONS_POST] Session ${params.id}: Adding distraction "${text}"`);
+
         const currentDistractions = (deepWorkSession as any).distractions || [];
         const updatedDistractions = [...currentDistractions, distraction];
 
@@ -43,6 +45,8 @@ export async function POST(
                 distractions: updatedDistractions,
             }
         });
+
+        console.log(`[DEEP_WORK_DISTRACTIONS_POST] Session ${params.id} updated. Total: ${updatedDistractions.length}`);
 
         return NextResponse.json(updatedSession);
     } catch (error) {

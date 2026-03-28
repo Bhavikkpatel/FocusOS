@@ -47,7 +47,14 @@ export async function GET(
             },
             include: {
                 projectRef: true,
-                pomodoroSessions: true,
+                pomodoroSessions: {
+                    include: {
+                        deepWorkSession: true
+                    },
+                    orderBy: {
+                        completedAt: "desc"
+                    }
+                },
                 category: true,
                 tags: true,
                 attachments: true,

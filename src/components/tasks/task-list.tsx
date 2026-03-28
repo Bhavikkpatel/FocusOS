@@ -17,6 +17,7 @@ import { useLayoutStore } from "@/store/layout";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { LoadingBox } from "@/components/ui/loading-state";
 
 
 type ViewMode = "list" | "kanban";
@@ -207,27 +208,6 @@ export function TaskList() {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <List className="h-8 w-8 text-primary" />
-                        Tasks
-                    </h2>
-                    <p className="text-muted-foreground font-medium">
-                        {activeTab === "active" ? `You have ${activeTasks.length} tasks to focus on.` : 
-                         activeTab === "completed" ? `Great job! You've finished ${completedTasks.length} tasks.` : 
-                         `Viewing ${archivedTasks.length} archived items.`}
-                    </p>
-                </div>
-                <Button 
-                    onClick={handleCreate}
-                    className="bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 rounded-xl px-6"
-                >
-                    <PlusSquare className="mr-2 h-5 w-5" />
-                    New Task
-                </Button>
-            </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-1">
@@ -372,7 +352,11 @@ export function TaskList() {
                 </AnimatePresence>
 
                 <TabsContent value="active" className="mt-0 outline-none">
-                    {viewMode === "kanban" ? (
+                    {useTasks({ status: "ALL" }).isLoading ? (
+                        <div className="py-20 flex items-center justify-center">
+                            <LoadingBox text="ORCHESTRATING TASKS..." className="border-none bg-transparent" />
+                        </div>
+                    ) : viewMode === "kanban" ? (
                         <KanbanBoard tasks={kanbanTasks} onSelectTask={handleSelectTask} />
                     ) : (
                         <TaskListView 
@@ -392,36 +376,48 @@ export function TaskList() {
                 </TabsContent>
 
                 <TabsContent value="completed" className="mt-0 outline-none">
-                    <TaskListView 
-                        groupBy={groupBy} 
-                        sortedTasks={sortedTasks} 
-                        groupedTasks={groupedTasks}
-                        expandedGroups={expandedGroups}
-                        toggleGroup={toggleGroup}
-                        handleEdit={handleEdit}
-                        handleSelectTask={handleSelectTask}
-                        handleCreate={handleCreate}
-                        hasNextPage={hasNextPage}
-                        isFetchingNextPage={isFetchingNextPage}
-                        fetchNextPage={fetchNextPage}
-                        isCompletedView
-                    />
+                    {useTasks({ status: "COMPLETED" }).isLoading ? (
+                        <div className="py-20 flex items-center justify-center">
+                            <LoadingBox text="FETCHING ARCHIVES..." className="border-none bg-transparent" />
+                        </div>
+                    ) : (
+                        <TaskListView 
+                            groupBy={groupBy} 
+                            sortedTasks={sortedTasks} 
+                            groupedTasks={groupedTasks}
+                            expandedGroups={expandedGroups}
+                            toggleGroup={toggleGroup}
+                            handleEdit={handleEdit}
+                            handleSelectTask={handleSelectTask}
+                            handleCreate={handleCreate}
+                            hasNextPage={hasNextPage}
+                            isFetchingNextPage={isFetchingNextPage}
+                            fetchNextPage={fetchNextPage}
+                            isCompletedView
+                        />
+                    )}
                 </TabsContent>
 
                 <TabsContent value="archived" className="mt-0 outline-none">
-                    <TaskListView 
-                        groupBy={groupBy} 
-                        sortedTasks={sortedTasks} 
-                        groupedTasks={groupedTasks}
-                        expandedGroups={expandedGroups}
-                        toggleGroup={toggleGroup}
-                        handleEdit={handleEdit}
-                        handleSelectTask={handleSelectTask}
-                        handleCreate={handleCreate}
-                        hasNextPage={hasNextPage}
-                        isFetchingNextPage={isFetchingNextPage}
-                        fetchNextPage={fetchNextPage}
-                    />
+                    {useTasks({ status: "ARCHIVED" }).isLoading ? (
+                        <div className="py-20 flex items-center justify-center">
+                            <LoadingBox text="RETRIVING HISTORY..." className="border-none bg-transparent" />
+                        </div>
+                    ) : (
+                        <TaskListView 
+                            groupBy={groupBy} 
+                            sortedTasks={sortedTasks} 
+                            groupedTasks={groupedTasks}
+                            expandedGroups={expandedGroups}
+                            toggleGroup={toggleGroup}
+                            handleEdit={handleEdit}
+                            handleSelectTask={handleSelectTask}
+                            handleCreate={handleCreate}
+                            hasNextPage={hasNextPage}
+                            isFetchingNextPage={isFetchingNextPage}
+                            fetchNextPage={fetchNextPage}
+                        />
+                    )}
                 </TabsContent>
             </Tabs>
 

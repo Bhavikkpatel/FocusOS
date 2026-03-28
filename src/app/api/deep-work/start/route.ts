@@ -12,7 +12,18 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json().catch(() => ({}));
-        const { taskId, projectId } = body;
+        let { taskId, projectId } = body;
+
+        // Auto-fetch projectId from task if not provided
+        if (taskId && !projectId) {
+            const task = await (prisma as any).task.findUnique({
+                where: { id: taskId },
+                select: { projectId: true }
+            });
+            if (task?.projectId) {
+                projectId = task.projectId;
+            }
+        }
 
         const deepWorkSession = await (prisma as any).deepWorkSession.create({
             data: {

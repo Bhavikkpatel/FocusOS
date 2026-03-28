@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { useQuery } from "@tanstack/react-query";
 import { HeroTask } from "@/components/dashboard/hero-task";
 import { ActiveProjects } from "@/components/dashboard/active-projects";
 import { UpcomingTasks } from "@/components/dashboard/upcoming-tasks";
@@ -9,35 +10,30 @@ import { WeeklyFocusChart } from "@/components/dashboard/weekly-focus-chart";
 import { ProjectDistributionChart } from "@/components/dashboard/project-distribution-chart";
 import { ProductivitySummary } from "@/components/dashboard/productivity-summary";
 import { DailyProgressRing } from "@/components/dashboard/daily-progress-ring";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingBox } from "@/components/ui/loading-state";
 import { LayoutDashboard, Rocket, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CapturedThoughts } from "@/components/dashboard/captured-thoughts";
 
 export default function DashboardPage() {
     const { data, isLoading, error } = useDashboard();
     const [activeTab, setActiveTab] = useState<"OVERVIEW" | "INSIGHTS">("OVERVIEW");
+    const { data: distractions = [] } = useQuery({
+        queryKey: ["distractions"],
+        queryFn: async () => {
+            const res = await fetch("/api/deep-work/distractions");
+            if (!res.ok) return [];
+            return res.json();
+        }
+    });
 
-    if (isLoading) {
-        return (
-            <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="flex items-center gap-3 mb-8">
-                    <Skeleton className="h-10 w-10 rounded-xl" />
-                    <Skeleton className="h-10 w-48" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <Skeleton className="lg:col-span-2 h-64 rounded-[2.5rem]" />
-                    <Skeleton className="h-64 rounded-[2.5rem]" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <Skeleton className="lg:col-span-3 h-[400px] rounded-[2.5rem]" />
-                    <Skeleton className="lg:col-span-2 h-[400px] rounded-[2.5rem]" />
-                </div>
-            </div>
-        );
-    }
+    const tabs = [
+        { id: "OVERVIEW", label: "Launchpad", icon: Rocket, badge: distractions.length > 0 ? distractions.length : null },
+        { id: "INSIGHTS", label: "Insights", icon: BarChart3 },
+    ];
 
-    if (error || !data) {
+    if (error) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center">
                 <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
@@ -54,11 +50,6 @@ export default function DashboardPage() {
             </div>
         );
     }
-
-    const tabs = [
-        { id: "OVERVIEW", label: "Launchpad", icon: Rocket },
-        { id: "INSIGHTS", label: "Insights", icon: BarChart3 },
-    ];
 
     return (
         <div className="space-y-8 pb-16 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -95,55 +86,77 @@ export default function DashboardPage() {
                             <span className="relative z-10 flex items-center gap-2">
                                 <tab.icon className="h-3.5 w-3.5" />
                                 {tab.label}
+                                {tab.badge && (
+                                    <span className={cn(
+                                        "px-1.5 py-0.5 rounded-full text-[8px] font-black tabular-nums transition-colors",
+                                        activeTab === tab.id 
+                                            ? "bg-white/20 text-white dark:bg-black/20 dark:text-black" 
+                                            : "bg-primary text-white"
+                                    )}>
+                                        {tab.badge}
+                                    </span>
+                                )}
                             </span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            <AnimatePresence mode="wait">
-                {activeTab === "OVERVIEW" ? (
-                    <motion.div
-                        key="overview"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                            {/* Left Column: Execution Zone (approx 65%) */}
-                            <div className="lg:col-span-8 space-y-6">
-                                <HeroTask task={data.heroTask} />
-                                <ActiveProjects projects={data.activeProjects} />
-                            </div>
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <LoadingBox text="ORCHESTRATING LAUNCHPAD..." className="border-none bg-transparent" />
+                </div>
+            ) : data && (
+                <AnimatePresence mode="wait">
+                    {activeTab === "OVERVIEW" ? (
+                        <motion.div
+                            key="overview"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                {/* Left Column: Execution Zone (approx 65%) */}
+                                <div className="lg:col-span-8 space-y-6">
+                                    {/* Captured Thoughts Review Section (High Visibility) */}
+                                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                                        <CapturedThoughts />
+                                    </section>
 
-                            {/* Right Column: Context Zone (approx 35%) */}
-                            <div className="lg:col-span-4 space-y-6">
-                                <DailyProgressRing 
-                                    current={data.summary.totalFocusTimeToday} 
-                                    goal={data.summary.dailyFocusGoal} 
-                                />
-                                <UpcomingTasks tasks={data.upcomingTasks} />
+                                    <HeroTask task={data.heroTask} />
+                                    <ActiveProjects projects={data.activeProjects} />
+                                </div>
+
+                                {/* Right Column: Context Zone (approx 35%) */}
+                                <div className="lg:col-span-4 space-y-6">
+                                    <DailyProgressRing 
+                                        current={data.summary.totalFocusTimeToday} 
+                                        goal={data.summary.dailyFocusGoal} 
+                                    />
+                                    <UpcomingTasks tasks={data.upcomingTasks} />
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="insights"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-8"
-                    >
-                        <ProductivitySummary summary={data.summary} />
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <WeeklyFocusChart data={data.weeklyFocusData} />
-                            <ProjectDistributionChart data={data.projectDistributionData} />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="insights"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-12"
+                        >
+                            <ProductivitySummary summary={data.summary} />
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <WeeklyFocusChart data={data.weeklyFocusData} />
+                                <ProjectDistributionChart data={data.projectDistributionData} />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            )}
         </div>
     );
 }
