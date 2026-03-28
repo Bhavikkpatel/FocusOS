@@ -91,7 +91,8 @@ export function TaskList() {
         error,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
+        isLoading
     } = useTasks({
         status: activeTab === "active" ? "ALL" : (activeTab === "completed" ? "COMPLETED" : "ARCHIVED")
     });
@@ -128,9 +129,9 @@ export function TaskList() {
 
     // Unified filtering function
     const applyFilters = (tasks: TaskWithSessions[]) => {
-        return tasks.filter((t: any) => {
+        return tasks.filter((t) => {
             if (tagFilter !== "ALL") {
-                if (!t.tags || !t.tags.find((tag: any) => tag.id === tagFilter)) return false;
+                if (!t.tags || !t.tags.find((tag) => tag.id === tagFilter)) return false;
             }
             if (difficultyFilter !== "ALL") {
                 if (t.difficulty !== difficultyFilter) return false;
@@ -352,7 +353,7 @@ export function TaskList() {
                 </AnimatePresence>
 
                 <TabsContent value="active" className="mt-0 outline-none">
-                    {useTasks({ status: "ALL" }).isLoading ? (
+                    {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
                             <LoadingBox text="ORCHESTRATING TASKS..." className="border-none bg-transparent" />
                         </div>
@@ -376,7 +377,7 @@ export function TaskList() {
                 </TabsContent>
 
                 <TabsContent value="completed" className="mt-0 outline-none">
-                    {useTasks({ status: "COMPLETED" }).isLoading ? (
+                    {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
                             <LoadingBox text="FETCHING ARCHIVES..." className="border-none bg-transparent" />
                         </div>
@@ -399,7 +400,7 @@ export function TaskList() {
                 </TabsContent>
 
                 <TabsContent value="archived" className="mt-0 outline-none">
-                    {useTasks({ status: "ARCHIVED" }).isLoading ? (
+                    {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
                             <LoadingBox text="RETRIVING HISTORY..." className="border-none bg-transparent" />
                         </div>
