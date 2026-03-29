@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ProjectWithStats } from "@/hooks/use-projects";
+import { ProjectMeta } from "@/hooks/use-projects";
 import { TaskItem } from "@/components/tasks/task-item";
 import { motion } from "framer-motion";
 import { TaskDialog } from "@/components/tasks/task-dialog";
@@ -12,12 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLayoutStore } from "@/store/layout";
+import { TaskSkeleton } from "@/components/ui/task-skeleton";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useRef } from "react";
 
 export function ProjectListView({ 
     project, 
+    tasks,
+    isLoadingTasks,
     onSelectTask 
 }: { 
-    project: ProjectWithStats;
+    project: ProjectMeta;
+    tasks: Record<string, any[]>;
+    isLoadingTasks: boolean;
     onSelectTask: (id: string | null) => void;
 }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,6 +34,7 @@ export function ProjectListView({
     const { projectFilters, setCommandCaptureOpen } = useLayoutStore();
     const createTask = useCreateTask();
     const queryClient = useQueryClient();
+    const parentRef = useRef<HTMLDivElement | null>(null);
 
     const handleQuickCreate = () => {
         if (!quickTitle.trim()) return;
@@ -37,7 +45,8 @@ export function ProjectListView({
         }, {
             onSuccess: () => {
                 setQuickTitle("");
-                queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+                queryClient.invalidateQueries({ queryKey: ["project", project.id, "tasks"] });
+                queryClient.invalidateQueries({ queryKey: ["project", project.id, "meta"] });
             }
         });
     };
@@ -51,9 +60,8 @@ export function ProjectListView({
         setCommandCaptureOpen(true, "create");
     };
 
-    // Flatten all tasks from project columns
-    // We already have project.columns because of include in the API
-    const allTasks = project.columns?.flatMap((col) => col.tasks || []) || [];
+    // Flatten all tasks from grouped task object
+    const allTasks = useMemo(() => Object.values(tasks).flat(), [tasks]);
     const activeTasks = allTasks.filter(t => t.status !== "COMPLETED" && t.status !== "ARCHIVED");
     const completedTasks = allTasks.filter(t => t.status === "COMPLETED");
 
@@ -99,6 +107,13 @@ export function ProjectListView({
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
     }, [filteredActiveTasks, sortBy]);
+
+    const rowVirtualizer = useVirtualizer({
+        count: sortedActiveTasks.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 90,
+        overscan: 5,
+    });
 
     return (
         <motion.div
@@ -147,15 +162,47 @@ export function ProjectListView({
                     )}
                 </div>
 
-                {sortedActiveTasks.length > 0 ? (
-                    sortedActiveTasks.map((task) => (
-                        <TaskItem
-                            key={task.id}
-                            task={task}
-                            onEdit={handleEdit}
-                            onSelect={(t) => onSelectTask(t.id)}
-                        />
-                    ))
+                {isLoadingTasks ? (
+                    <div className="space-y-4">
+                        <TaskSkeleton />
+                        <TaskSkeleton />
+                        <TaskSkeleton />
+                    </div>
+                ) : filteredActiveTasks.length > 0 ? (
+                    <div
+                        ref={parentRef}
+                        className="overflow-y-auto max-h-[800px] rounded-xl scroll-smooth thin-scrollbar px-1"
+                    >
+                        <div
+                            style={{
+                                height: `${rowVirtualizer.getTotalSize()}px`,
+                                width: '100%',
+                                position: 'relative',
+                            }}
+                        >
+                            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                const task = sortedActiveTasks[virtualRow.index];
+                                return (
+                                    <div
+                                        key={virtualRow.key}
+                                        data-index={virtualRow.index}
+                                        ref={rowVirtualizer.measureElement}
+                                        className="absolute top-0 left-0 w-full"
+                                        style={{
+                                            transform: `translateY(${virtualRow.start}px)`,
+                                            paddingBottom: '12px'
+                                        }}
+                                    >
+                                        <TaskItem
+                                            task={task}
+                                            onEdit={handleEdit}
+                                            onSelect={(t) => onSelectTask(t.id)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 ) : !quickTitle && (
                     <div
                         role="button"

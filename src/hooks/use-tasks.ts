@@ -3,22 +3,27 @@ import { Task, TaskStatus, TaskPriority, PomodoroSession, SubTask, Project, Tag,
 import { toast } from "sonner";
 
 export type TaskWithSessions = Task & {
-    projectRef: Project | null;
-    pomodoroSessions: (PomodoroSession & { 
+    projectRef?: Project | null;
+    pomodoroSessions?: (PomodoroSession & { 
         rating?: number | null;
         deepWorkSession?: (DeepWorkSession & { distractions?: { text: string; createdAt: string }[] }) | null;
     })[];
-    subtasks: SubTask[];
+    subtasks?: SubTask[];
     tags: Tag[];
-    category: Category | null;
-    pomodoroDuration: number;
+    category?: Category | null;
+    pomodoroDuration?: number;
     autoComplete?: boolean;
-    isRecurring: boolean;
+    isRecurring?: boolean;
     recurrenceType?: string | null;
     recurrenceInterval?: number | null;
     recurrenceDays?: string | null;
     lastOccurrenceId?: string | null;
-    attachments: Attachment[];
+    attachments?: Attachment[];
+    _count?: {
+        subtasks: number;
+        attachments: number;
+        pomodoroSessions: number;
+    };
 };
 
 // Query Keys

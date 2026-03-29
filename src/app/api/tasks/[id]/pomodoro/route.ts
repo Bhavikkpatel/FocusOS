@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
+import { AnalyticsService } from "@/lib/analytics-service";
 
 export async function POST(
     req: Request,
@@ -106,6 +107,16 @@ export async function POST(
                     interruptions: { increment: interruptions },
                 }
             });
+        }
+
+        // 4. Update Analytics for Focus Time
+        if (type === "FOCUS" && duration > 0) {
+            await AnalyticsService.recordFocusTime(session.user.id, duration);
+        }
+
+        // 5. Update Analytics for Task Completion if transitioned to COMPLETED
+        if (nextStatus === "COMPLETED" && task.status !== "COMPLETED") {
+            await AnalyticsService.toggleTaskCompletion(session.user.id, true);
         }
 
         return NextResponse.json({

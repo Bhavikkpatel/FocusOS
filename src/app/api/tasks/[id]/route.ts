@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { calculateNextOccurrence } from "@/lib/recurrence";
+import { AnalyticsService } from "@/lib/analytics-service";
 
 const updateTaskSchema = z.object({
     title: z.string().min(1).optional(),
@@ -209,6 +210,35 @@ export async function PATCH(
             include: { tags: true, projectRef: true }
         });
 
+        // Trigger Analytics update if status changed to/from COMPLETED
+        if (validatedData.status && validatedData.status !== existingTask.status) {
+            if (validatedData.status === "COMPLETED") {
+                await AnalyticsService.toggleTaskCompletion(session.user.id, true);
+                if (task.projectId) await AnalyticsService.toggleProjectTaskCompletion(task.projectId, true);
+            } else if (existingTask.status === "COMPLETED") {
+                await AnalyticsService.toggleTaskCompletion(session.user.id, false);
+                if (task.projectId) await AnalyticsService.toggleProjectTaskCompletion(task.projectId, false);
+            }
+        }
+
+        // Handle Project Change Analytics
+        if (validatedData.projectId !== undefined && validatedData.projectId !== existingTask.projectId) {
+            // Decrement old project
+            if (existingTask.projectId) {
+                await AnalyticsService.updateProjectTotalTasks(existingTask.projectId, "decrement");
+                if (existingTask.status === "COMPLETED") {
+                    await AnalyticsService.toggleProjectTaskCompletion(existingTask.projectId, false);
+                }
+            }
+            // Increment new project
+            if (validatedData.projectId) {
+                await AnalyticsService.updateProjectTotalTasks(validatedData.projectId, "increment");
+                if (task.status === "COMPLETED") {
+                    await AnalyticsService.toggleProjectTaskCompletion(validatedData.projectId, true);
+                }
+            }
+        }
+
         const t = task;
         // If task was just marked COMPLETED and is recurring, spawn next one
         if (validatedData.status === "COMPLETED" && t.isRecurring && !t.lastOccurrenceId) {
@@ -279,6 +309,15 @@ export async function DELETE(
                 userId: session.user.id,
             },
         });
+
+        // Update Project Analytics
+        if (task.projectId) {
+            await AnalyticsService.updateProjectTotalTasks(task.projectId, "decrement");
+            if (task.status === "COMPLETED") {
+                await AnalyticsService.toggleProjectTaskCompletion(task.projectId, false);
+                await AnalyticsService.toggleTaskCompletion(session.user.id, false);
+            }
+        }
 
         return NextResponse.json(task);
     } catch (error) {

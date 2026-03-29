@@ -16,6 +16,8 @@ import {
     Repeat,
     Archive,
     Trash2,
+    CheckSquare,
+    Paperclip,
 } from "lucide-react";
 import { Task } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -72,10 +74,15 @@ const priorityConfig = {
     URGENT: { color: "bg-red-500", light: "bg-red-100", text: "text-red-600", accent: "border-l-red-500 dark:border-l-red-500" },
 };
 
-export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
+import React from "react";
+
+export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) => {
     const updateTask = useUpdateTask();
     const deleteTask = useDeleteTask();
     const { start, currentPreset, currentTaskId, isRunning, pause, reset } = useTimerStore();
+
+    if (!task) return null;
+
     const isActive = currentTaskId === task.id && isRunning;
     const isCompleted = task.status === "COMPLETED";
 
@@ -165,11 +172,21 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
         }
 
         // Prevent completion if there are unfinished subtasks
-        if (newStatus === "COMPLETED" && task.subtasks && task.subtasks.length > 0) {
-            const hasUnfinishedSubtasks = task.subtasks.some((st: any) => !st.isCompleted);
-            if (hasUnfinishedSubtasks) {
-                toast.error("Finish all subtasks before completing the task");
-                return;
+        const subtasks = task.subtasks || [];
+        const subtaskCount = task._count?.subtasks || subtasks.length;
+        
+        if (newStatus === "COMPLETED" && subtaskCount > 0) {
+            // If we have full subtasks loaded
+            if (subtasks.length > 0) {
+                const hasUnfinishedSubtasks = subtasks.some((st: any) => !st.isCompleted);
+                if (hasUnfinishedSubtasks) {
+                    toast.error("Finish all subtasks before completing the task");
+                    return;
+                }
+            } else {
+                // If weightless, we can't easily check internal subtask status without a fetch
+                // For now, allow completion or warn they might have subtasks
+                toast.info("Task has subtasks. Ensure they are completed.");
             }
         }
 
@@ -334,6 +351,24 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
                                                             style={{ width: `${Math.min(100, (task.completedPomodoros / task.estimatedPomodoros) * 100)}%` }}
                                                         />
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            {/* Counts - Ghost Metrics */}
+                                            {task._count && (task._count.subtasks > 0 || task._count.attachments > 0) && (
+                                                <div className="flex items-center gap-2 px-1 rounded-sm bg-slate-50 dark:bg-slate-900/50">
+                                                    {task._count.subtasks > 0 && (
+                                                        <div className="flex items-center gap-0.5" title={`${task._count.subtasks} subtasks`}>
+                                                            <CheckSquare className="h-2.5 w-2.5" />
+                                                            <span>{task._count.subtasks}</span>
+                                                        </div>
+                                                    )}
+                                                    {task._count.attachments > 0 && (
+                                                        <div className="flex items-center gap-0.5" title={`${task._count.attachments} attachments`}>
+                                                            <Paperclip className="h-2.5 w-2.5" />
+                                                            <span>{task._count.attachments}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -504,4 +539,4 @@ export function TaskItem({ task, onEdit, onSelect }: TaskItemProps) {
             </AlertDialog>
         </>
     );
-}
+});

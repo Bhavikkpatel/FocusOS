@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { Prisma, TaskStatus, TaskPriority } from "@prisma/client";
 import { z } from "zod";
+import { AnalyticsService } from "@/lib/analytics-service";
 
 const createTaskSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -214,6 +215,15 @@ export async function POST(req: Request) {
                 recurrenceDays: validatedData.recurrenceDays,
             } as any,
         });
+
+        // Update Project Analytics
+        if (task.projectId) {
+            await AnalyticsService.updateProjectTotalTasks(task.projectId, "increment");
+            if (task.status === "COMPLETED") {
+                await AnalyticsService.toggleProjectTaskCompletion(task.projectId, true);
+                await AnalyticsService.toggleTaskCompletion(session.user.id, true);
+            }
+        }
 
         return NextResponse.json(task);
     } catch (error) {
