@@ -20,6 +20,7 @@ import { TaskDialog } from "@/components/tasks/task-dialog";
 import { GlobalSearch } from "@/components/global-search";
 import { useSidebarStore } from "@/store/sidebar";
 import { useLayoutStore } from "@/store/layout";
+import { useTimerStore } from "@/store/timer";
 import { ProjectDialog } from "./projects/project-dialog";
 import { cn } from "@/lib/utils";
 import { useTags } from "@/hooks/use-tags";
@@ -79,7 +80,6 @@ export function Header() {
         if (pathname.startsWith("/settings")) return "Settings";
         if (pathname.startsWith("/analytics")) return "Analytics";
         if (pathname.startsWith("/tasks")) return "Tasks";
-        if (pathname.startsWith("/timer")) return "Focus Timer";
         return "FocusOS";
     };
 
@@ -383,6 +383,26 @@ export function Header() {
                     </span>
                 </button>
 
+
+                {/* Deep Work / Launch Button */}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 h-9 text-slate-500 hover:text-primary hover:bg-primary/5 font-bold px-3 transition-all group"
+                    onClick={() => {
+                        const { start, setFocusMode, setZenithMode } = useTimerStore.getState();
+                        setZenithMode(true);
+                        setFocusMode(true);
+                        start(25, "FOCUS", undefined);
+                    }}
+                    title="Start Instant Deep Session (25m)"
+                >
+                    <div className="relative">
+                        <Zap className="h-4 w-4 transition-all group-hover:fill-current" />
+                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
+                    </div>
+                    <span className="hidden lg:inline text-[11px] font-black uppercase tracking-wider">Deep Session</span>
+                </Button>
 
                 {/* Global New Task (Show on Dashboard or if not in project detail) */}
                 {(pathname === "/app" || pathname === "/tasks") && (

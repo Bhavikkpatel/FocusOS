@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
     const isAdminSetup = request.nextUrl.pathname.startsWith("/admin/setup");
 
     if (isAuthPage && token) {
-        return NextResponse.redirect(new URL("/timer", request.url));
+        return NextResponse.redirect(new URL("/app", request.url));
     }
 
     if (!isAuthPage && !isPublicPage && !token) {
