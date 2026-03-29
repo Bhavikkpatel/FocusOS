@@ -23,6 +23,7 @@ import {
     verticalListSortingStrategy,
     arrayMove,
 } from "@dnd-kit/sortable";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useUpdateTask, useCreateTask } from "@/hooks/use-tasks";
 import { useCreateColumn, useUpdateColumn, useDeleteColumn } from "@/hooks/use-columns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2, Circle, Loader2, Eye, CheckCircle
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { cn } from "@/lib/utils";
 import { KanbanCard } from "@/components/tasks/kanban-card";
+import { TaskColumnSkeleton } from "@/components/ui/task-skeleton";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,7 +43,7 @@ import { toast } from "sonner";
 import { useLayoutStore } from "@/store/layout";
 
 // ─── Types ─────────────────────────────────────
-interface ColumnWithTasks {
+export interface ColumnWithTasks {
     id: string;
     name: string;
     sortOrder: number;
@@ -51,8 +53,9 @@ interface ColumnWithTasks {
 interface ProjectData {
     id: string;
     name: string;
+    description: string | null;
     color: string;
-    columns: ColumnWithTasks[];
+    columns: { id: string; name: string; sortOrder: number }[];
 }
 
 // Column configuration constants for styling
@@ -111,11 +114,15 @@ const getStatusFromColumnName = (name: string) => {
 // ─── Kanban Column ─────────────────────────────
 function KanbanColumn({
     column,
+    tasks,
+    isLoading,
     projectId,
     onSelectTask,
     projectFilters,
 }: {
-    column: ColumnWithTasks;
+    column: { id: string; name: string; sortOrder: number };
+    tasks: any[];
+    isLoading?: boolean;
     projectId: string;
     onSelectTask: (task: any) => void;
     projectFilters: any;
@@ -128,6 +135,7 @@ function KanbanColumn({
     const updateColumn = useUpdateColumn();
     const deleteColumn = useDeleteColumn();
     const queryClient = useQueryClient();
+    const parentRef = useRef<HTMLDivElement | null>(null);
 
     const { setNodeRef, isOver } = useDroppable({
         id: column.id,
@@ -163,7 +171,7 @@ function KanbanColumn({
     };
 
     const handleDelete = () => {
-        if (column.tasks.length > 0) {
+        if (tasks && tasks.length > 0) {
             alert("Move or delete all tasks before removing this column.");
             return;
         }
@@ -173,21 +181,31 @@ function KanbanColumn({
     const status = getStatusFromColumnName(column.name);
     const style = status ? COLUMN_STYLES[status] : DEFAULT_STYLE;
     const Icon = style.icon;
+    const taskCount = tasks?.length || 0;
 
-    const filteredTasks = column.tasks.filter((t: any) => {
-        if (projectFilters.tag !== "ALL") {
-            if (!t.tags || !t.tags.find((tag: any) => tag.id === projectFilters.tag)) return false;
-        }
-        if (projectFilters.difficulty !== "ALL") {
-            if (t.difficulty !== projectFilters.difficulty) return false;
-        }
-        if (projectFilters.status !== "ALL") {
-            if (t.status !== projectFilters.status) return false;
-        }
-        if (projectFilters.hasTimer) {
-            if (!t.pomodoroSessions || t.pomodoroSessions.length === 0) return false;
-        }
-        return true;
+    const filteredTasks = useMemo(() => {
+        return (tasks || []).filter((t: any) => {
+            if (projectFilters.tag !== "ALL") {
+                if (!t.tags || !t.tags.find((tag: any) => tag.id === projectFilters.tag)) return false;
+            }
+            if (projectFilters.difficulty !== "ALL") {
+                if (t.difficulty !== projectFilters.difficulty) return false;
+            }
+            if (projectFilters.status !== "ALL") {
+                if (t.status !== projectFilters.status) return false;
+            }
+            if (projectFilters.hasTimer) {
+                if (!t.pomodoroSessions || t.pomodoroSessions.length === 0) return false;
+            }
+            return true;
+        });
+    }, [tasks, projectFilters]);
+
+    const rowVirtualizer = useVirtualizer({
+        count: filteredTasks.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 140, // Estimated height of a KanbanCard
+        overscan: 5,
     });
 
     const taskIds = filteredTasks.map((t: any) => t.id);
@@ -237,7 +255,7 @@ function KanbanColumn({
                         "text-[10px] font-mono px-2 py-0.5 rounded-full",
                         style.badge
                     )}>
-                        {column.tasks.length}
+                        {taskCount}
                     </span>
                 </div>
                 <div className="flex items-center gap-0.5">
@@ -268,23 +286,54 @@ function KanbanColumn({
                 </div>
             </div>
 
-            {/* Tasks */}
+            {/* Tasks Container (Virtualized) */}
             <div
-                ref={setNodeRef}
-                className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-260px)] min-h-[100px]"
+                ref={(node) => {
+                    setNodeRef(node);
+                    parentRef.current = node;
+                }}
+                className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-260px)] min-h-[100px] relative scroll-smooth thin-scrollbar"
+                style={{
+                  scrollbarGutter: "stable"
+                }}
             >
-                <SortableContext
-                    items={taskIds}
-                    strategy={verticalListSortingStrategy}
-                >
-                    {filteredTasks.map((task: any) => (
-                        <KanbanCard
-                            key={task.id}
-                            task={task}
-                            onSelect={onSelectTask}
-                        />
-                    ))}
-                </SortableContext>
+                {isLoading ? (
+                    <TaskColumnSkeleton count={3} />
+                ) : (
+                    <div
+                        style={{
+                            height: `${rowVirtualizer.getTotalSize()}px`,
+                            width: '100%',
+                            position: 'relative',
+                        }}
+                    >
+                        <SortableContext
+                            items={taskIds}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                const task = filteredTasks[virtualRow.index];
+                                return (
+                                    <div
+                                        key={virtualRow.key}
+                                        data-index={virtualRow.index}
+                                        ref={rowVirtualizer.measureElement}
+                                        className="absolute top-0 left-0 w-full"
+                                        style={{
+                                            transform: `translateY(${virtualRow.start}px)`,
+                                            paddingBottom: '8px' // Space between cards
+                                        }}
+                                    >
+                                        <KanbanCard
+                                            task={task}
+                                            onSelect={onSelectTask}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </SortableContext>
+                    </div>
+                )}
 
                 {/* Persistent Quick Add Task */}
                 <div className="mt-2 p-1.5 rounded-lg border border-dashed border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all group/add">
@@ -326,23 +375,27 @@ function KanbanColumn({
 // ─── Main Kanban Board ─────────────────────────
 export function ProjectKanban({
     project,
+    tasks,
+    isLoadingTasks,
     onSelectTask
 }: {
     project: ProjectData;
+    tasks: Record<string, any[]>;
+    isLoadingTasks: boolean;
     onSelectTask: (id: string | null) => void;
 }) {
     const { mutate: updateTask } = useUpdateTask();
     const createColumn = useCreateColumn();
     const queryClient = useQueryClient();
     const { projectFilters } = useLayoutStore();
-    const [localColumns, setLocalColumns] = useState<ColumnWithTasks[]>(project.columns);
+    const [localTasks, setLocalTasks] = useState<Record<string, any[]>>(tasks);
     const [activeTask, setActiveTask] = useState<any>(null);
     const [newColumnName, setNewColumnName] = useState("");
 
-    // Sync local state when project updates (e.g. after mutation)
+    // Sync local state when tasks update
     useEffect(() => {
-        setLocalColumns(project.columns);
-    }, [project.columns]);
+        setLocalTasks(tasks);
+    }, [tasks]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -352,8 +405,8 @@ export function ProjectKanban({
 
     // Build a flat list of all tasks from local state
     const allTasks = useMemo(
-        () => localColumns.flatMap((c) => c.tasks),
-        [localColumns]
+        () => Object.values(localTasks).flat(),
+        [localTasks]
     );
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -369,23 +422,19 @@ export function ProjectKanban({
         const overId = over.id as string;
 
         // Find the columns
-        const activeColumn = localColumns.find((col) =>
-            col.tasks.some((t: any) => t.id === activeId)
+        const activeColumnId = Object.keys(localTasks).find(colId => 
+            localTasks[colId].some((t: any) => t.id === activeId)
         );
-        const overColumn = localColumns.find((col) =>
-            col.id === overId || col.tasks.some((t: any) => t.id === overId)
-        );
+        const overColumnId = project.columns.find(col => col.id === overId)?.id || 
+                           Object.keys(localTasks).find(colId => localTasks[colId].some((t: any) => t.id === overId));
 
-        if (!activeColumn || !overColumn || activeColumn === overColumn) {
+        if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) {
             return;
         }
 
-        setLocalColumns((prev) => {
-            const activeColIndex = prev.findIndex((col) => col.id === activeColumn.id);
-            const overColIndex = prev.findIndex((col) => col.id === overColumn.id);
-
-            const activeTasks = [...prev[activeColIndex].tasks];
-            const overTasks = [...prev[overColIndex].tasks];
+        setLocalTasks((prev) => {
+            const activeTasks = [...(prev[activeColumnId] || [])];
+            const overTasks = [...(prev[overColumnId] || [])];
 
             const activeTaskIndex = activeTasks.findIndex((t) => t.id === activeId);
             const task = activeTasks[activeTaskIndex];
@@ -398,13 +447,13 @@ export function ProjectKanban({
             // Add to over column
             const overTaskIndex = overTasks.findIndex((t) => t.id === overId);
             const newIndex = overTaskIndex >= 0 ? overTaskIndex : overTasks.length;
-            overTasks.splice(newIndex, 0, { ...task, columnId: overColumn.id });
+            overTasks.splice(newIndex, 0, { ...task, columnId: overColumnId });
 
-            const newCols = [...prev];
-            newCols[activeColIndex] = { ...prev[activeColIndex], tasks: activeTasks };
-            newCols[overColIndex] = { ...prev[overColIndex], tasks: overTasks };
-
-            return newCols;
+            return {
+                ...prev,
+                [activeColumnId]: activeTasks,
+                [overColumnId]: overTasks
+            };
         });
     };
 
@@ -417,27 +466,26 @@ export function ProjectKanban({
         const activeId = active.id as string;
         const overId = over.id as string;
 
-        const activeColumn = localColumns.find((col) =>
-            col.tasks.some((t: any) => t.id === activeId)
+        const activeColumnId = Object.keys(localTasks).find(colId => 
+            localTasks[colId].some((t: any) => t.id === activeId)
         );
-        const overColumn = localColumns.find((col) =>
-            col.id === overId || col.tasks.some((t: any) => t.id === overId)
-        );
+        const overColumnId = project.columns.find(col => col.id === overId)?.id || 
+                           Object.keys(localTasks).find(colId => localTasks[colId].some((t: any) => t.id === overId));
 
-        if (!activeColumn || !overColumn) return;
+        if (!activeColumnId || !overColumnId) return;
 
         // If in same column and moved position
-        if (activeColumn.id === overColumn.id) {
-            const oldIndex = activeColumn.tasks.findIndex((t: any) => t.id === activeId);
-            const newIndex = activeColumn.tasks.findIndex((t: any) => t.id === overId);
+        if (activeColumnId === overColumnId) {
+            const tasksInCol = localTasks[activeColumnId] || [];
+            const oldIndex = tasksInCol.findIndex((t: any) => t.id === activeId);
+            const newIndex = tasksInCol.findIndex((t: any) => t.id === overId);
 
-            if (oldIndex !== newIndex) {
-                const newTasks = arrayMove(activeColumn.tasks, oldIndex, newIndex);
-                setLocalColumns((prev) =>
-                    prev.map((col) =>
-                        col.id === activeColumn.id ? { ...col, tasks: newTasks } : col
-                    )
-                );
+            if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
+                const newTasks = arrayMove(tasksInCol, oldIndex, newIndex);
+                setLocalTasks((prev) => ({
+                    ...prev,
+                    [activeColumnId]: newTasks
+                }));
             }
         }
 
@@ -445,21 +493,19 @@ export function ProjectKanban({
         const task = allTasks.find(t => t.id === activeId);
         if (!task) return;
 
-        const targetColumnId = overColumn.id;
-        const newStatus = getStatusFromColumnName(overColumn.name);
+        const targetColumnId = overColumnId;
+        const overColumn = project.columns.find(c => c.id === overColumnId);
+        const newStatus = overColumn ? getStatusFromColumnName(overColumn.name) : task.status;
 
-        const originalTask = project.columns
-            .flatMap(c => c.tasks)
-            .find(t => t.id === activeId);
-
-        if (targetColumnId && originalTask && (targetColumnId !== originalTask.columnId || newStatus !== originalTask.status)) {
+        // Check against the initial data if available, otherwise just use task's own status
+        if (targetColumnId && (targetColumnId !== task.columnId || newStatus !== task.status)) {
             // Prevent completion if there are unfinished subtasks
             if (newStatus === "COMPLETED" && task.subtasks && task.subtasks.length > 0) {
                 const hasUnfinishedSubtasks = task.subtasks.some((st: any) => !st.isCompleted);
                 if (hasUnfinishedSubtasks) {
                     toast.error("Finish all subtasks before moving to Done");
                     // Revert local state if validation fails
-                    setLocalColumns(project.columns);
+                    setLocalTasks(tasks);
                     return;
                 }
             }
@@ -473,12 +519,15 @@ export function ProjectKanban({
                 {
                     onSuccess: () => {
                         queryClient.invalidateQueries({
-                            queryKey: ["project", project.id],
+                            queryKey: ["project", project.id, "tasks"],
+                        });
+                        queryClient.invalidateQueries({
+                            queryKey: ["project", project.id, "meta"],
                         });
                     },
                     onError: () => {
                         // Revert on error
-                        setLocalColumns(project.columns);
+                        setLocalTasks(tasks);
                     }
                 }
             );
@@ -510,10 +559,12 @@ export function ProjectKanban({
                 onDragEnd={handleDragEnd}
             >
                 <div className="flex h-full gap-6 overflow-x-auto pb-6 px-2 snap-x snap-mandatory hide-scrollbar">
-                    {localColumns.map((column) => (
+                    {project.columns.map((column) => (
                         <KanbanColumn
                             key={column.id}
                             column={column}
+                            tasks={localTasks[column.id] || []}
+                            isLoading={isLoadingTasks}
                             projectId={project.id}
                             onSelectTask={(t) => onSelectTask(t.id)}
                             projectFilters={projectFilters}

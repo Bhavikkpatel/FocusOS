@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLayoutStore } from "@/store/layout";
-import { useProject, useDeleteProject } from "@/hooks/use-projects";
+import { useProjectMeta, useProjectTasks, useDeleteProject } from "@/hooks/use-projects";
 import { ProjectKanban } from "./project-kanban";
 import { ProjectListView } from "./project-list-view";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,7 +20,8 @@ import {
 import { useRouter } from "next/navigation";
 
 export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element | null {
-    const { data: project, isLoading, error } = useProject(projectId);
+    const { data: project, isLoading: isMetaLoading, error: metaError } = useProjectMeta(projectId);
+    const { data: tasks, isLoading: isTasksLoading } = useProjectTasks(projectId);
     const deleteProject = useDeleteProject();
     const router = useRouter();
     const { 
@@ -30,6 +31,30 @@ export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element
         clearProjectCommand,
         setNoPadding
     } = useLayoutStore();
+
+    const [hydratedTasks, setHydratedTasks] = useState<Record<string, any[]> | null>(null);
+
+    // Progressive Hydration Logic
+    useEffect(() => {
+        if (!tasks) {
+            setHydratedTasks(null);
+            return;
+        }
+
+        // Phase 1: Immediate partial render (first 10 items per column)
+        const partial: Record<string, any[]> = {};
+        Object.keys(tasks).forEach(colId => {
+            partial[colId] = tasks[colId].slice(0, 10);
+        });
+        setHydratedTasks(partial);
+
+        // Phase 2: Deferred full render (after frame paint)
+        const timer = setTimeout(() => {
+            setHydratedTasks(tasks);
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [tasks]);
 
     useEffect(() => {
         if (!projectCommand) return;
@@ -58,15 +83,22 @@ export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element
     };
 
 
-    if (isLoading) {
+    if (isMetaLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <div className="text-muted-foreground">Loading project...</div>
+                <div className="text-muted-foreground flex items-center gap-2">
+                    <motion.div 
+                        animate={{ rotate: 360 }} 
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
+                    />
+                    <span>Loading workspace...</span>
+                </div>
             </div>
         );
     }
 
-    if (error || !project) {
+    if (metaError || !project) {
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="text-red-500">Project not found</div>
@@ -101,6 +133,8 @@ export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element
                         >
                             <ProjectKanban 
                                 project={project} 
+                                tasks={hydratedTasks || {}}
+                                isLoadingTasks={isTasksLoading && !hydratedTasks}
                                 onSelectTask={handleSelectTask}
                             />
                         </motion.div>
@@ -115,6 +149,8 @@ export function ProjectDetail({ projectId }: { projectId: string }): JSX.Element
                         >
                             <ProjectListView 
                                 project={project} 
+                                tasks={hydratedTasks || {}}
+                                isLoadingTasks={isTasksLoading && !hydratedTasks}
                                 onSelectTask={handleSelectTask}
                              />
                         </motion.div>

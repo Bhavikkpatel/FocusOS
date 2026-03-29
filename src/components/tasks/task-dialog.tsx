@@ -139,7 +139,7 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
     }, [taskToEdit, form, defaultProject, open, projects]);
 
     const onSubmit = (values: z.infer<typeof taskSchema>) => {
-        const { project: _p, ...taskData } = values;
+        const { project: _, ...taskData } = values;
 
         if (taskToEdit) {
             updateTask.mutate({

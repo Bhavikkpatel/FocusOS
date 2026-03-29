@@ -26,6 +26,20 @@ export interface Column {
     tasks?: any[];
 }
 
+export interface ProjectMeta {
+    id: string;
+    name: string;
+    description: string | null;
+    color: string;
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
+    columns: Column[];
+    totalTasks: number;
+    completedTasks: number;
+    totalFocusTime: number;
+}
+
 // Fetch all projects
 export function useProjects() {
     return useQuery<ProjectWithStats[]>({
@@ -38,13 +52,39 @@ export function useProjects() {
     });
 }
 
-// Fetch single project with columns + tasks
+// Fetch single project with columns + tasks (Legacy/Monolithic)
 export function useProject(id: string | undefined) {
     return useQuery({
         queryKey: ["project", id],
         queryFn: async () => {
             const res = await fetch(`/api/projects/${id}`);
             if (!res.ok) throw new Error("Failed to fetch project");
+            return res.json();
+        },
+        enabled: !!id,
+    });
+}
+
+// Fetch project metadata only
+export function useProjectMeta(id: string | undefined) {
+    return useQuery<ProjectMeta>({
+        queryKey: ["project", id, "meta"],
+        queryFn: async () => {
+            const res = await fetch(`/api/projects/${id}/meta`);
+            if (!res.ok) throw new Error("Failed to fetch project metadata");
+            return res.json();
+        },
+        enabled: !!id,
+    });
+}
+
+// Fetch project tasks only
+export function useProjectTasks(id: string | undefined) {
+    return useQuery<Record<string, any[]>>({
+        queryKey: ["project", id, "tasks"],
+        queryFn: async () => {
+            const res = await fetch(`/api/projects/${id}/tasks`);
+            if (!res.ok) throw new Error("Failed to fetch project tasks");
             return res.json();
         },
         enabled: !!id,

@@ -31,55 +31,28 @@ export async function GET(
 
         const project = await prisma.project.findFirst({
             where: { id: params.id, userId: session.user.id },
-            include: {
-                columns: {
-                    orderBy: { sortOrder: "asc" },
-                    include: {
-                        tasks: {
-                            orderBy: { columnOrder: "asc" },
-                            include: {
-                                subtasks: true,
-                                tags: true,
-                                pomodoroSessions: {
-                                    where: { type: "FOCUS" },
-                                    select: { duration: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                tasks: {
-                    select: {
-                        status: true,
-                        pomodoroSessions: {
-                            where: { type: "FOCUS" },
-                            select: { duration: true },
-                        },
-                    },
-                },
-            },
         });
 
         if (!project) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
         }
 
-        // Compute stats
-        const totalTasks = project.tasks.length;
-        const completedTasks = project.tasks.filter(
-            (t) => t.status === "COMPLETED"
-        ).length;
-        const totalFocusTime = project.tasks.reduce(
-            (sum, t) =>
-                sum + t.pomodoroSessions.reduce((s, ps) => s + ps.duration, 0),
-            0
-        );
+        // Sum focus time across all tasks in the project (from Pomodoro Sessions)
+        const focusTimeResult = await prisma.pomodoroSession.aggregate({
+            where: { 
+                type: "FOCUS",
+                task: { projectId: params.id }
+            },
+            _sum: {
+                duration: true,
+            },
+        });
 
         return NextResponse.json({
             ...project,
-            totalTasks,
-            completedTasks,
-            totalFocusTime,
+            totalTasks: (project as any).totalTasks || 0,
+            completedTasks: (project as any).completedTasks || 0,
+            totalFocusTime: focusTimeResult._sum.duration || 0,
         });
     } catch (error: any) {
         if (error.digest === 'DYNAMIC_SERVER_USAGE' || error.message?.includes('Dynamic server usage')) {

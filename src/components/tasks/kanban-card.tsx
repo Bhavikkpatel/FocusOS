@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { format } from "date-fns";
-import { Calendar, Clock, GripVertical, Repeat } from "lucide-react";
+import { Calendar, Clock, GripVertical, Repeat, Paperclip, CheckSquare } from "lucide-react";
 import { TaskWithSessions } from "@/hooks/use-tasks";
 import { cn } from "@/lib/utils";
 import { useTimerStore } from "@/store/timer";
@@ -21,10 +21,11 @@ interface KanbanCardProps {
     onSelect: (task: TaskWithSessions) => void;
 }
 
-export function KanbanCard({ task, onSelect }: KanbanCardProps) {
-    const { currentTaskId, isRunning } = useTimerStore();
-    const isActive = currentTaskId === task.id && isRunning;
+import React from "react";
 
+export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
+    const { currentTaskId, isRunning } = useTimerStore();
+    
     const {
         attributes,
         listeners,
@@ -32,7 +33,11 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: task.id, data: { task } });
+    } = useSortable({ id: task?.id || 'temp', data: { task } });
+
+    if (!task) return null;
+
+    const isActive = currentTaskId === task.id && isRunning;
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -98,9 +103,26 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
                         <span>{format(new Date(task.dueDate), "MMM d")}</span>
                     </div>
                 )}
-                <div className="flex items-center gap-1 shrink-0">
-                    <Clock className="h-3 w-3" />
-                    <span>{task.completedPomodoros}/{task.estimatedPomodoros}</span>
+                {/* Counts - Ghost Metrics */}
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 shrink-0">
+                        <Clock className="h-3 w-3" />
+                        <span>{task.completedPomodoros}/{task.estimatedPomodoros ?? 0}</span>
+                    </div>
+
+                    {task._count && task._count.subtasks > 0 && (
+                        <div className="flex items-center gap-1 shrink-0 text-muted-foreground/80">
+                            <CheckSquare className="h-3 w-3" />
+                            <span>{task._count.subtasks}</span>
+                        </div>
+                    )}
+
+                    {task._count && task._count.attachments > 0 && (
+                        <div className="flex items-center gap-1 shrink-0 text-muted-foreground/80">
+                            <Paperclip className="h-3 w-3" />
+                            <span>{task._count.attachments}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tags moved to footer */}
@@ -124,4 +146,6 @@ export function KanbanCard({ task, onSelect }: KanbanCardProps) {
             </div>
         </div>
     );
-}
+});
+
+KanbanCard.displayName = "KanbanCard";

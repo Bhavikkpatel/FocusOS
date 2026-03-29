@@ -33,7 +33,7 @@ export function UnallocatedSidebar({}: UnallocatedSidebarProps) {
         tagId: tagId === "ALL" ? undefined : tagId,
     });
 
-    const tasks = data?.pages.flatMap((page) => page.tasks) || [];
+    const tasks = React.useMemo(() => data?.pages.flatMap((page) => page.tasks) || [], [data]);
 
     React.useEffect(() => {
         // Only use FullCalendar Draggable for FullCalendar views (Month, Week Grid etc)

@@ -158,6 +158,8 @@ model Task {
   @@index([userId, status])
   @@index([userId, project])
   @@index([projectId])
+  @@index([projectId, status])
+  @@index([columnId])
   @@index([columnId, columnOrder])
 }
 
@@ -170,6 +172,9 @@ model Project {
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  totalTasks     Int @default(0)
+  completedTasks Int @default(0)
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   columns          Column[]
@@ -190,6 +195,7 @@ model Column {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks   Task[]
 
+  @@index([projectId])
   @@index([projectId, sortOrder])
 }
 
