@@ -59,7 +59,7 @@ export function Navbar() {
                                     asChild
                                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 font-bold shadow-xl shadow-primary/10"
                                 >
-                                    <Link href="/timer">Go to Workspace</Link>
+                                    <Link href="/app">Go to Workspace</Link>
                                 </Button>
                             ) : (
                                 <a 
