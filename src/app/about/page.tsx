@@ -65,7 +65,7 @@ const OATH_ITEMS = [
     },
     {
         title: "Own Your Data",
-        description: "Fully self-hostable. We support Cloudflare R2 and Supabase because we believe your tools should never hold your progress hostage.",
+        description: "Fully self-hostable. We support S3-compatible storage and PostgreSQL because we believe your tools should never hold your progress hostage.",
         icon: Database
     },
     {

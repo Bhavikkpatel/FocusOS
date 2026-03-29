@@ -6,7 +6,7 @@ echo "🚀 Setting up FocusOS developer environment..."
 if [ ! -f .env ]; then
   echo "📄 Creating .env file from .env.example..."
   cp .env.example .env
-  echo "⚠️  IMPORTANT: Please update .env with your real Supabase and Cloudflare R2 credentials."
+  echo "⚠️  IMPORTANT: Please update .env with your real database and storage credentials."
 else
   echo "✅ .env file already exists."
 fi

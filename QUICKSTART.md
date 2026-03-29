@@ -59,27 +59,12 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
 
-NEXT_PUBLIC_SUPABASE_URL="https://your-project-id.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-
-R2_ACCOUNT_ID="your-cloudflare-account-id"
-R2_ACCESS_KEY_ID="your-r2-access-key-id"
-R2_SECRET_ACCESS_KEY="your-r2-secret-access-key"
-R2_BUCKET_NAME="your-r2-bucket-name"
-NEXT_PUBLIC_R2_PUBLIC_URL="https://pub-xxxxxx.r2.dev"
+# S3 Compatible Storage (Optional)
+R2_ACCESS_KEY_ID="your-access-key-id"
+R2_SECRET_ACCESS_KEY="your-secret-access-key"
+R2_BUCKET_NAME="your-bucket-name"
+R2_ENDPOINT="your-s3-endpoint"
 ```
-
-### 4.1 Supabase Setup
-1. Create a project at [Supabase](https://supabase.com).
-2. Go to **Project Settings** > **API**.
-3. Copy the **Project URL** and the **anon** public API key.
-
-### 4.2 Cloudflare R2 Setup
-1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) > **R2**.
-2. Create a new Bucket.
-3. Once created, click **Settings** on the bucket to enable **Public Access** (if needed) and get the public URL.
-4. Go back to the R2 overview and click **Manage R2 API Tokens** to create an API token with `Object Read & Write` permissions.
-5. Copy the Access Key ID and Secret Access Key. Find your Account ID on the Cloudflare dashboard sidebar.
 
 ### 5. Setup Database Schema
 
@@ -151,7 +136,7 @@ npx prisma migrate deploy
 
 ### Recommended Platforms
 - **Frontend**: Vercel, Railway, Render
-- **Database**: Supabase, Neon, Railway PostgreSQL
+- **Database**: PostgreSQL (Any provider)
 
 ## Features Overview
 

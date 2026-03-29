@@ -65,10 +65,10 @@ npm run dev
 
 ## 🛡️ Deployment
 
-### Vercel / Cloudflare Pages
+### Vercel / Deployment Platforms
 
 1. Fork this repository.
-2. Link your repository to Vercel/Cloudflare.
+2. Link your repository to your preferred deployment platform.
 3. Add your Environment Variables.
 4. Set the build command to `npm run build` and the output directory to `.next`.
 
@@ -81,8 +81,6 @@ FocusOS is a community-driven sanctuary. We value **Execution** over corporate f
 - **Found a bug?** Open an Issue.
 - **Have an idea?** Start a Discussion.
 - **Want to build?** PRs are welcome. 
-
-See the [Features Page](https://focusos.io/features) and [Our Story](https://focusos.io/about) for more depth.
 
 ---
 
