@@ -59,11 +59,6 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
 
-# S3 Compatible Storage (Optional)
-R2_ACCESS_KEY_ID="your-access-key-id"
-R2_SECRET_ACCESS_KEY="your-secret-access-key"
-R2_BUCKET_NAME="your-bucket-name"
-R2_ENDPOINT="your-s3-endpoint"
 ```
 
 ### 5. Setup Database Schema
