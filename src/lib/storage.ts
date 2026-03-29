@@ -14,7 +14,7 @@ const s3Configured =
     process.env.R2_BUCKET_NAME;
 
 // R2_ENDPOINT should be the base account URL WITHOUT the bucket:
-// e.g. https://0312a93b5b948165b1c6d6c7b680b616.r2.cloudflarestorage.com
+// e.g. https://<id>.r2.cloudflarestorage.com
 // The bucket name is appended via BUCKET_NAME separately
 const s3Client = s3Configured ? new S3Client({
     region: process.env.R2_REGION || "auto",
@@ -29,9 +29,9 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME || "focus-os";
 const LOCAL_PREFIX = "local:";
 
 /**
- * Upload a file to S3/R2 (or local in dev).
+ * Upload a file to S3-compatible storage (or local in dev).
  * Returns a `key` — either:
- *   - an S3 object key like `65e555a6-....png` (for R2 files)
+ *   - an S3 object key like `65e555a6-....png` (for S3 files)
  *   - a local path like `local:/uploads/filename.png` (for dev)
  */
 export async function saveFile(file: File): Promise<{ key: string; size: number; name: string; mimeType: string }> {
@@ -40,7 +40,7 @@ export async function saveFile(file: File): Promise<{ key: string; size: number;
     const fileExtension = path.extname(file.name);
     const fileName = `${crypto.randomUUID()}${fileExtension}`;
 
-    // Use S3/R2 if configured and not explicitly local
+    // Use S3 compatible storage if configured and not explicitly local
     if (s3Client && storageType === "S3") {
         try {
             const command = new PutObjectCommand({
@@ -148,6 +148,6 @@ export async function deleteFile(key: string) {
         await s3Client.send(command);
         console.log(`[STORAGE] Deleted key=${key}`);
     } catch (error) {
-        console.error(`Failed to delete file from R2: ${key}`, error);
+        console.error(`Failed to delete file from S3: ${key}`, error);
     }
 }

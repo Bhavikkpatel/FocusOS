@@ -61,7 +61,7 @@ const FEATURE_GROUPS = [
             { name: "Unallocated Sidebar", description: "Keep your unassigned tasks visible and ready to be slotted into your day.", status: "completed" },
             { name: "Focus Music", description: "Ambient background study music integrated directly into the workspace.", status: "in-progress" },
             { name: "2-Second Capture", description: "Command-style interface for capturing tasks at the speed of thought.", status: "completed" },
-            { name: "Secure Storage", description: "Cloudflare R2 integration for attachments, PDFs, and deep dive context.", status: "completed" }
+            { name: "Secure Storage", description: "S3-compatible storage integration for attachments, PDFs, and deep dive context.", status: "completed" }
         ]
     }
 ];
