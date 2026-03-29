@@ -9,7 +9,7 @@ FocusOS is a minimalist, keyboard-first, and distraction-free execution system b
 - **Execution over Management**: No infinite folders. No metric traps. Just pick a task and enter the flow.
 - **Ghost UI**: The interface adapts to your state, fading away when you are focused.
 - **Privacy First**: Fully self-hostable with **AGPLv3** open-source code.
-- **Modern Stack**: Built with Next.js 14, Prisma, PostgreSQL (Supabase), and Cloudflare R2.
+- **Modern Stack**: Built with Next.js 14, Prisma, and PostgreSQL.
 
 ---
 
@@ -21,9 +21,8 @@ FocusOS is designed to be deployed and owned by you. Follow these steps to spin 
 
 - **Node.js** (v20 or higher)
 - **PNPM** or **NPM**
-- **PostgreSQL** (We recommend [Supabase](https://supabase.com))
+- **PostgreSQL** (Database)
 - **Google Auth** (For secure sign-in via NextAuth)
-- **Cloudflare R2** (Optional, for task attachments)
 
 ### 2. Clone and Install
 
@@ -47,11 +46,6 @@ NEXTAUTH_URL="http://localhost:3000"
 GOOGLE_CLIENT_ID="your-id"
 GOOGLE_CLIENT_SECRET="your-secret"
 
-# Storage (Optional)
-R2_ACCESS_KEY_ID="..."
-R2_SECRET_ACCESS_KEY="..."
-R2_BUCKET_NAME="..."
-R2_ENDPOINT="..."
 ```
 
 ### 4. Database Setup
