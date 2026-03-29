@@ -26,10 +26,6 @@ import React from "react";
 export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
     const { currentTaskId, isRunning } = useTimerStore();
     
-    if (!task) return null;
-
-    const isActive = currentTaskId === task.id && isRunning;
-
     const {
         attributes,
         listeners,
@@ -37,7 +33,11 @@ export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: task.id, data: { task } });
+    } = useSortable({ id: task?.id || 'temp', data: { task } });
+
+    if (!task) return null;
+
+    const isActive = currentTaskId === task.id && isRunning;
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -147,3 +147,5 @@ export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
         </div>
     );
 });
+
+KanbanCard.displayName = "KanbanCard";

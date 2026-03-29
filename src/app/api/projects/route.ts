@@ -62,11 +62,11 @@ export async function GET() {
             // totalTasks and completedTasks are now on the model
             // totalFocusTime is not yet on the model, we could aggregate it separately 
             // but for the list view, we might want to defer or use 0 for now to fix the crash.
-            const totalTasks = project.totalTasks || 0;
-            const completedTasks = project.completedTasks || 0;
+            const totalTasks = (project as any).totalTasks || 0;
+            const completedTasks = (project as any).completedTasks || 0;
             const totalFocusTime = 0; // Aggregation to be added later or deferred
 
-            const { _count: _c, ...rest } = project;
+            const { _count: _, ...rest } = project;
             return {
                 ...rest,
                 totalTasks,

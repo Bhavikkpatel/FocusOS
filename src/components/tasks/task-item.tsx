@@ -81,11 +81,6 @@ export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) =
     const deleteTask = useDeleteTask();
     const { start, currentPreset, currentTaskId, isRunning, pause, reset } = useTimerStore();
 
-    if (!task) return null;
-
-    const isActive = currentTaskId === task.id && isRunning;
-    const isCompleted = task.status === "COMPLETED";
-
     // Status display config
     const statusConfig: Record<string, { label: string; style: string }> = {
         TODO: { label: "To Do", style: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
@@ -96,18 +91,20 @@ export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) =
     };
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [title, setTitle] = useState(task.title);
+    const [title, setTitle] = useState(task?.title || "");
     const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-
-
-
 
     useEffect(() => {
         if (isEditingTitle && inputRef.current) {
             inputRef.current.focus();
         }
     }, [isEditingTitle]);
+
+    if (!task) return null;
+
+    const isActive = currentTaskId === task.id && isRunning;
+    const isCompleted = task.status === "COMPLETED";
 
     const statusCycle = ["TODO", "IN_PROGRESS", "READY_FOR_REVIEW", "COMPLETED"] as const;
     const handleToggle = () => {
@@ -540,3 +537,5 @@ export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) =
         </>
     );
 });
+
+TaskItem.displayName = "TaskItem";
