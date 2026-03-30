@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/context-menu";
 import { useUpdateTask, useDeleteTask, TaskWithSessions } from "@/hooks/use-tasks";
 import { useTimerStore } from "@/store/timer";
+import { useRouter } from "next/navigation";
 
 interface TaskItemProps {
     task: TaskWithSessions;
@@ -101,7 +102,13 @@ export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) =
         }
     }, [isEditingTitle]);
 
+    const router = useRouter();
+
     if (!task) return null;
+
+    const prefetchTask = () => {
+        router.prefetch(`/tasks/${task.id}`);
+    };
 
     const isActive = currentTaskId === task.id && isRunning;
     const isCompleted = task.status === "COMPLETED";
@@ -223,6 +230,7 @@ export const TaskItem = React.memo(({ task, onEdit, onSelect }: TaskItemProps) =
                                 isCompleted && "opacity-60 grayscale"
                             )}
                             onClick={() => onSelect(task)}
+                            onMouseEnter={prefetchTask}
                         >
 
 

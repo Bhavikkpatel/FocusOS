@@ -25,8 +25,7 @@ docker-compose up -d
 docker ps
 ```
 
-**Option B - Hosted Database**:
-- Use Supabase, Neon, or Railway
+**Option B - PostgreSQL (Local or Managed)**:
 - Get connection string
 - Update `.env` → `DATABASE_URL`
 

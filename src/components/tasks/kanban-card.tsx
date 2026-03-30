@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Calendar, Clock, GripVertical, Repeat, Paperclip, CheckSquare } from "lucide-react";
 import { TaskWithSessions } from "@/hooks/use-tasks";
@@ -35,7 +36,13 @@ export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
         isDragging,
     } = useSortable({ id: task?.id || 'temp', data: { task } });
 
+    const router = useRouter();
+    
     if (!task) return null;
+
+    const prefetchTask = () => {
+        router.prefetch(`/tasks/${task.id}`);
+    };
 
     const isActive = currentTaskId === task.id && isRunning;
 
@@ -58,6 +65,7 @@ export const KanbanCard = React.memo(({ task, onSelect }: KanbanCardProps) => {
                 isActive && "ring-2 ring-primary border-primary bg-primary/5 shadow-md"
             )}
             onClick={() => onSelect(task)}
+            onMouseEnter={prefetchTask}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     onSelect(task);
