@@ -165,7 +165,7 @@ export function Hero() {
                         target="_blank"
                         className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-4 shadow-2xl hover:bg-white/10 transition-colors group"
                     >
-                         <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> Anti-Gravity Engine
+                         <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> POWERED BY COMMUNITY
                     </a>
 
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.85]">
