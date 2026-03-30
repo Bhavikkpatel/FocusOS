@@ -440,16 +440,6 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                     >
                                                         <RotateCcw className="h-8 w-8" />
                                                     </Button>
-                                                    
-                                                    <Button 
-                                                        size="icon" 
-                                                        variant="outline" 
-                                                        className="h-20 w-20 rounded-full border-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
-                                                        onClick={() => setFocusMode(true)}
-                                                        title="Enter Fullscreen Focus"
-                                                    >
-                                                        <Maximize2 className="h-8 w-8" />
-                                                    </Button>
                                                 </div>
                                             )}
                                         </div>

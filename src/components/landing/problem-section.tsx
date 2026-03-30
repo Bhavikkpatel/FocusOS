@@ -72,10 +72,10 @@ export function ProblemSection() {
                                         )}
                                     </AnimatePresence>
                                 </span>.
-                                You need a tool that optimizes for execution.
+                                You need the **Anti-Gravity Engine**.
                             </p>
                             <p>
-                                FocusOS was built as an open-source fortress, not a commercial file cabinet. It&apos;s a community-driven sanctuary that holds back the noise so your work can finally breathe.
+                                FocusOS was engineered as a high-performance execution layer, not a commercial file cabinet. It&apos;s a professional-grade sanctuary designed to counteract the weight of digital noise—allowing your work to finally achieve escape velocity.
                             </p>
                         </div>
                     </motion.div>

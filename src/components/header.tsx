@@ -390,12 +390,12 @@ export function Header() {
                     size="sm"
                     className="gap-2 h-9 text-slate-500 hover:text-primary hover:bg-primary/5 font-bold px-3 transition-all group"
                     onClick={() => {
-                        const { start, setFocusMode, setZenithMode } = useTimerStore.getState();
-                        setZenithMode(true);
+                        const { start, setFocusMode, setAntiGravityMode } = useTimerStore.getState();
+                        setAntiGravityMode(true);
                         setFocusMode(true);
                         start(25, "FOCUS", undefined);
                     }}
-                    title="Start Instant Deep Session (25m)"
+                    title="Ignite Anti-Gravity Engine (25m)"
                 >
                     <div className="relative">
                         <Zap className="h-4 w-4 transition-all group-hover:fill-current" />

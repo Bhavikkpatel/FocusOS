@@ -93,15 +93,24 @@ export function Footer() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-4 text-center">
-                    <p className="text-xs text-slate-700 font-medium">
-                        © 2026 FocusOS. Designed for thinkers and executors.
-                    </p>
+                <div className="flex flex-col items-center gap-6 text-center">
+                    <div className="space-y-2">
+                        <p className="text-xs text-white font-bold tracking-widest uppercase">
+                            Bhavikk Patel
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-medium max-w-xs leading-relaxed">
+                            Software Engineer @ <strong className="text-slate-400">Intel</strong> | Ex-<strong className="text-slate-400">Zoho</strong>.  
+                            Focused on high-performance execution environments and minimalist system design.
+                        </p>
+                    </div>
                     <div className="px-4 py-1.5 rounded-full bg-white/[0.02] border border-white/5">
                         <span className="text-[10px] font-mono text-primary font-bold tracking-widest">
-                            SYSTEM_STATUS: FLOWING.
+                            SYSTEM_STATUS: ESCAPE_VELOCITY.
                         </span>
                     </div>
+                    <p className="text-[10px] text-slate-800 font-mono tracking-widest">
+                        © 2026 FocusOS. ANTI-GRAVITY ENGINE V1.0
+                    </p>
                 </div>
             </div>
         </footer>

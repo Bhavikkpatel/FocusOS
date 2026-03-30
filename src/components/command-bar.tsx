@@ -36,7 +36,7 @@ export function CommandBar() {
     const { data: results, isLoading } = useGlobalSearch(debouncedQuery);
     const [isGhosted, setIsGhosted] = useState(false);
     const router = useRouter();
-    const { start, setFocusMode, setZenithMode } = useTimerStore();
+    const { start } = useTimerStore();
     const { mutate: createTask } = useCreateTask();
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -139,10 +139,8 @@ export function CommandBar() {
 
     const handleLaunch = useCallback((taskId: string, duration: number = 25) => {
         setCommandCaptureOpen(false);
-        setZenithMode(true);
-        setFocusMode(true);
         start(duration, "FOCUS", taskId);
-    }, [setCommandCaptureOpen, setZenithMode, setFocusMode, start]);
+    }, [setCommandCaptureOpen, start]);
 
     return (
         <AnimatePresence>

@@ -12,14 +12,12 @@ interface HeroTaskProps {
 }
 
 export function HeroTask({ task }: HeroTaskProps) {
-    const { start, setFocusMode, setZenithMode } = useTimerStore();
+    const { start } = useTimerStore();
     const [quickAddTitle, setQuickAddTitle] = useState("");
     const createTask = useCreateTask();
 
     const handleStartFocus = () => {
         if (!task) return;
-        setZenithMode(true);
-        setFocusMode(true);
         start(task.pomodoroDuration || 25, "FOCUS", task.id);
     };
 

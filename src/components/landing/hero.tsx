@@ -83,7 +83,7 @@ export function Hero() {
     return (
         <section className="relative bg-[#0A0A0B]">
             {/* Hero Copy Section */}
-            <div className="relative min-h-screen flex flex-col items-center justify-center px-4 z-10 w-full max-w-7xl mx-auto text-center space-y-12 overflow-hidden">
+            <div className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 z-10 w-full max-w-7xl mx-auto text-center space-y-12 overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] h-[600px] bg-primary/10 blur-[130px] rounded-full pointer-events-none" />
                 
                 {/* Background Large Text Decor */}
@@ -165,15 +165,15 @@ export function Hero() {
                         target="_blank"
                         className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-4 shadow-2xl hover:bg-white/10 transition-colors group"
                     >
-                         <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> Source Available
+                         <GithubIcon className="h-3 w-3 group-hover:scale-110 transition-transform" /> Anti-Gravity Engine
                     </a>
 
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.85]">
-                        Silence the noise.<br /><span className="text-primary italic font-light">Reclaim your flow.</span>
+                        Silence the noise.<br /><span className="text-primary italic font-light">Enter Anti-Gravity.</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed mt-6">
-                        FocusOS is a community-first open source sanctuary. <br/>
-                        <span className="text-slate-500 font-mono text-sm uppercase tracking-widest">Built for the community, by the community.</span>
+                        FocusOS is a high-tier execution environment for builders. <br/>
+                        <span className="text-slate-500 font-mono text-sm uppercase tracking-widest">Designed for Deep Work. Zero Visual Noise. Sub-Millisecond Focus.</span>
                     </p>
                 </motion.div>
 
@@ -199,7 +199,7 @@ export function Hero() {
                     transition={{ delay: 1, duration: 1 }}
                     className="absolute bottom-12 left-0 right-0 flex flex-col items-center justify-center animate-bounce gap-2 text-slate-500"
                 >
-                    <span className="text-[9px] font-bold uppercase tracking-[0.3em] leading-none">Scroll to Enter the Zone</span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.3em] leading-none">Scroll to Ignite Engine</span>
                     <div className="h-4 w-px bg-slate-800" />
                 </motion.div>
             </div>
@@ -208,7 +208,7 @@ export function Hero() {
             <div ref={containerRef} className="relative h-[300vh] mt-24">
                 <motion.div
                     style={{ backgroundColor: bgColor, opacity: finalFadeOpacity }}
-                    className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden px-6 box-border"
+                    className="sticky top-0 h-[100dvh] w-full flex flex-col items-center justify-center overflow-hidden px-6 box-border"
                 >
                     {/* ── Phase 1: Chaos Icons (dissolve as user scrolls) ── */}
                     <ChaosIcon scrollYProgress={scrollYProgress} label="12 unread" icon="✉" color="text-red-400" xFrom="20%" xTo="130%" top="15%" fadeEnd={0.1} />
@@ -218,13 +218,13 @@ export function Hero() {
                     <ChaosIcon scrollYProgress={scrollYProgress} label="Meeting in 5 min" icon="⏰" color="text-purple-400" xFrom="-5%" xTo="120%" top="48%" fadeEnd={0.1} />
                     <ChaosIcon scrollYProgress={scrollYProgress} label="Slack: 47 DMs" icon="⚡" color="text-yellow-400" xFrom="35%" xTo="-25%" top="82%" fadeEnd={0.1} />
 
-                    {/* ── The Zenith UI Mockup ── */}
-                    <div className="relative w-full max-w-6xl mx-auto z-30 sm:scale-100 scale-[0.5] sm:origin-center origin-top">
+                    {/* ── The Anti-Gravity Engine Mockup ── */}
+                    <div className="relative w-full max-w-6xl mx-auto z-30 scale-100 sm:origin-center origin-center pt-10 sm:pt-0">
                         <motion.div
                             style={{ scale: mockupScale }}
-                            className="relative mx-auto rounded-[2rem] md:rounded-3xl border border-white/5 bg-white/5 p-3 md:p-6 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)] transition-all"
+                            className="relative mx-auto rounded-[2.5rem] md:rounded-3xl border border-white/5 bg-white/5 p-2 md:p-6 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)] transition-all"
                         >
-                            <div className="aspect-[16/9] w-full rounded-2xl overflow-hidden bg-[#0F111A] border border-white/5 relative shadow-inner flex">
+                            <div className="aspect-[9/16] sm:aspect-[16/9] w-full rounded-[2rem] md:rounded-2xl overflow-hidden bg-[#0F111A] border border-white/5 relative shadow-inner flex">
                                 
                                 {/* 1. Left Sidebar → slides left */}
                                 <motion.div 
@@ -248,54 +248,54 @@ export function Hero() {
                                     {/* Recording dot */}
                                     <motion.div
                                         style={{ opacity: uiOpacity, x: slideLeft }}
-                                        className="absolute top-6 left-8 flex items-center gap-4 origin-top-left z-20 pointer-events-none"
+                                        className="absolute top-4 left-4 md:top-6 md:left-8 flex items-center gap-4 origin-top-left z-20 pointer-events-none"
                                     >
-                                        <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                                        <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-red-400 animate-pulse" />
                                     </motion.div>
 
                                     {/* 2. Top Header → slides up */}
                                     <motion.div 
                                         style={{ opacity: uiOpacity, y: slideUp }}
-                                        className="h-16 border-b border-white/5 flex items-center justify-between px-8 z-10 pl-16 overflow-hidden"
+                                        className="h-12 md:h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 z-10 pl-10 md:pl-16 overflow-hidden"
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-white font-bold text-base leading-none">Tasks</span>
+                                        <div className="flex items-center gap-2 md:gap-4">
+                                            <span className="text-white font-bold text-sm md:text-base leading-none">Tasks</span>
                                             <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold hidden md:block">Today is Mar 22</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="px-3 py-1.5 rounded-full border border-white/10 text-[10px] font-bold text-white flex gap-2 items-center bg-white/5">
-                                                <div className="h-2 w-2 rounded-full bg-amber-500" /> High Energy
+                                        <div className="flex items-center gap-2 md:gap-4">
+                                            <div className="px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-white/10 text-[8px] md:text-[10px] font-bold text-white flex gap-1.5 md:gap-2 items-center bg-white/5">
+                                                <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-amber-500" /> High Energy
                                             </div>
-                                            <div className="h-8 w-8 rounded-full bg-white/10" />
+                                            <div className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-white/10 hidden sm:block" />
                                         </div>
                                     </motion.div>
 
                                     {/* 3. Context bar → slides right */}
                                     <motion.div 
                                         style={{ opacity: uiOpacity, x: slideRight }}
-                                        className="px-8 py-5 flex items-center justify-between z-10"
+                                        className="px-4 md:px-8 py-3 md:py-5 flex items-center justify-between z-10 gap-2 relative"
                                     >
-                                        <div className="text-white font-bold text-xl truncate max-w-[30%]">
-                                            new event creation, should be able...
+                                        <div className="text-white font-bold text-xl truncate w-[30%] hidden md:block invisible">
+                                            new event creation...
                                         </div>
-                                        <div className="bg-black/40 border border-white/5 rounded-full flex items-center p-1">
-                                            <div className="px-6 py-1.5 rounded-full bg-primary text-white text-[10px] font-bold tracking-[0.2em] uppercase">Focus</div>
-                                            <div className="px-5 py-1.5 text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase">Details</div>
-                                            <div className="px-5 py-1.5 text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase">History</div>
+                                        <div className="bg-black/40 border border-white/5 rounded-full flex items-center p-0.5 md:p-1 px-1 absolute left-1/2 -translate-x-1/2 transition-all">
+                                            <div className="px-3 md:px-6 py-1 md:py-1.5 rounded-full bg-primary text-white text-[7px] md:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">Focus</div>
+                                            <div className="px-2 md:px-5 py-1 md:py-1.5 text-slate-400 text-[7px] md:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">Details</div>
+                                            <div className="px-2 md:px-5 py-1 md:py-1.5 text-slate-400 text-[7px] md:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap hidden sm:block">History</div>
                                         </div>
-                                        <div className="w-[30%] flex justify-end">
-                                            <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white tracking-widest uppercase">In Progress</div>
+                                        <div className="w-auto md:w-[30%] flex justify-end ml-auto">
+                                            <div className="px-2 md:px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[7px] md:text-xs font-bold text-white tracking-widest uppercase whitespace-nowrap">In Progress</div>
                                         </div>
                                     </motion.div>
 
                                     {/* 4. Center Stage — always visible, pulls to center */}
                                     <div className="flex-1 flex flex-col items-center justify-center relative z-20 overflow-hidden">
-                                        <motion.div style={{ scale: titleScale, y: titleY }} className="flex flex-col items-center text-center w-full max-w-2xl px-6">
-                                            <h2 className="text-xl md:text-3xl font-bold text-white leading-tight mb-8">
+                                        <motion.div style={{ scale: titleScale, y: titleY }} className="flex flex-col items-center text-center w-full max-w-2xl px-4 md:px-6">
+                                            <h2 className="text-sm md:text-3xl font-bold text-white leading-tight mb-4 md:mb-8 line-clamp-2 px-4">
                                                 revisiting open-source roadmap, community first approach
                                             </h2>
                                             
-                                            <div className="font-extrabold text-[5rem] md:text-[8.5rem] flex justify-center text-white tabular-nums tracking-tighter leading-none mb-10">
+                                            <div className="font-extrabold text-[4.5rem] md:text-[8.5rem] flex justify-center text-white tabular-nums tracking-tighter leading-none mb-10">
                                                 24:53
                                             </div>
 
@@ -314,9 +314,9 @@ export function Hero() {
                                     {/* 5. Mission Checklist → slides down */}
                                     <motion.div 
                                         style={{ opacity: uiOpacity, y: slideDown }}
-                                        className="absolute bottom-6 left-0 right-0 z-10 space-y-2.5 hidden md:block px-12"
+                                        className="absolute bottom-6 md:bottom-6 left-0 right-0 z-10 space-y-2.5 px-6 md:px-12"
                                     >
-                                        <div className="flex justify-between items-center max-w-lg mx-auto px-1">
+                                        <div className="flex justify-between items-center max-w-lg mx-auto md:px-1 mb-2 md:mb-0">
                                             <div className="text-[9px] text-slate-500 font-bold tracking-[0.15em] uppercase flex items-center gap-2">
                                                 <div className="h-3.5 w-3.5 rounded-sm border border-slate-600 border-dashed" /> Mission Checklist
                                             </div>
@@ -330,7 +330,7 @@ export function Hero() {
                                     {/* Ghost UI Indicator */}
                                     <motion.div 
                                         style={{ opacity: ghostTextOpacity }}
-                                        className="absolute bottom-8 right-10 font-mono text-[10px] text-slate-600 uppercase tracking-widest font-bold pointer-events-none z-30"
+                                        className="absolute bottom-6 right-6 md:bottom-8 md:right-10 font-mono text-[9px] md:text-[10px] text-slate-600 uppercase tracking-widest font-bold pointer-events-none z-30"
                                     >
                                         Ghost UI Active
                                     </motion.div>

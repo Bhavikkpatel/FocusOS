@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTimerStore } from "@/store/timer";
 import { usePathname } from "next/navigation";
 import { useTasks } from "@/hooks/use-tasks";
-import { Play, Pause, X, Timer, Maximize2 } from "lucide-react";
+import { Play, Pause, X, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
@@ -20,7 +20,6 @@ export function FloatingTimer() {
         pause,
         resume,
         reset,
-        setFocusMode,
         currentCalendarEventId,
     } = useTimerStore();
     const pathname = usePathname();
@@ -138,18 +137,6 @@ export function FloatingTimer() {
                                 ) : (
                                     <Play className="h-4 w-4" />
                                 )}
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setFocusMode(true); }}
-                                className={cn(
-                                    "rounded-full p-1.5 transition-colors",
-                                    isFocus
-                                        ? "hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600"
-                                        : "hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600"
-                                )}
-                                title="Enter Focus Mode"
-                            >
-                                <Maximize2 className="h-4 w-4" />
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); reset(); }}

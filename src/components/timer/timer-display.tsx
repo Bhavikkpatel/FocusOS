@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, SkipForward, Maximize2 } from "lucide-react";
+import { Play, Pause, RotateCcw, SkipForward } from "lucide-react";
 import { useTimerStore } from "@/store/timer";
 import { useThemeStore } from "@/store/theme";
 import { formatDuration, calculateProgress } from "@/lib/utils";
@@ -26,7 +26,6 @@ export function TimerDisplay() {
         resume,
         reset,
         skip,
-        setFocusMode,
     } = useTimerStore();
 
     // Initialize worker on mount
@@ -187,24 +186,6 @@ export function TimerDisplay() {
                         </Button>
                     </div>
 
-                    {/* Return to Focus Mode */}
-                    {(isRunning || isPaused) && (
-                        <div className="flex justify-center pt-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setFocusMode(true)}
-                                className="gap-2 rounded-xl border-2 font-bold uppercase tracking-widest text-[10px]"
-                                style={{
-                                    borderColor: colors.accent + '40',
-                                    color: colors.accent,
-                                }}
-                            >
-                                <Maximize2 className="h-3 w-3" />
-                                Return to Focus Mode
-                            </Button>
-                        </div>
-                    )}
 
                     {/* Current Preset Info */}
                     {currentPreset && (

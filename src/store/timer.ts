@@ -34,7 +34,7 @@ export interface TimerState {
     estimatedPomodoros: number | null;
     lastUpdated: number;         // timestamp
     sessionToRate: string | null;
-    isZenithMode: boolean;
+    isAntiGravityMode: boolean;
     sessionDistractions: string[];
     deepWorkSessionId: string | null;
 
@@ -74,8 +74,8 @@ export interface TimerState {
     setConfirmingNewSession: (state: { duration: number; type: SessionType; taskId: string } | null) => void;
     confirmNewSession: () => void;
     setSessionToRate: (sessionId: string | null) => void;
-    setZenithMode: (val: boolean) => void;
-    toggleZenithMode: () => void;
+    setAntiGravityMode: (val: boolean) => void;
+    toggleAntiGravityMode: () => void;
     energyLevel: "HIGH" | "LOW";
     setEnergyLevel: (level: "HIGH" | "LOW") => void;
 }
@@ -105,7 +105,7 @@ export const useTimerStore = create<TimerState>()(
                 lastUpdated: Date.now(),
                 presets: [],
                 worker: null,
-                isZenithMode: true,
+                isAntiGravityMode: true,
                 energyLevel: "HIGH",
                 setEnergyLevel: (level: "HIGH" | "LOW") => set({ energyLevel: level }),
                 sessionDistractions: [],
@@ -212,23 +212,23 @@ export const useTimerStore = create<TimerState>()(
                         isCompletionDialogOpen: false,
                         sessionDistractions: [],
                         // Feature: Centralized focus prompt logic
-                        isFocusPromptOpen: type === "FOCUS" && !state.isFocusModeOpen
+                        // Decoupled: Only show prompt if starting a session WITHOUT a taskId (Deep Session)
+                        isFocusPromptOpen: type === "FOCUS" && !state.isFocusModeOpen && !taskId
                     });
 
-                    // Start Deep Work Session if focusing and not already in one, 
-                    // OR if the taskId has changed (we want a fresh session for a new task)
-                    const isNewTask = taskId && state.currentTaskId !== taskId;
-                    if (type === "FOCUS" && (!state.deepWorkSessionId || isNewTask)) {
+                    // Start Deep Work Session ONLY if it's an explicit Deep Session (no taskId)
+                    // Regular task focus sessions (with taskId) will no longer trigger DeepWorkSession entries
+                    if (type === "FOCUS" && !taskId && !state.deepWorkSessionId) {
                         fetch("/api/deep-work/start", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ taskId }) // Removed incorrect projectId: state.currentPreset?.id
+                            body: JSON.stringify({ taskId: undefined }) 
                         })
                         .then(res => res.json())
                         .then(data => {
                             if (data?.id) {
                                 set({ deepWorkSessionId: data.id });
-                                console.log(`[TimerStore] Deep work session started for task ${taskId}: ${data.id}`);
+                                console.log(`[TimerStore] Deep work session started: ${data.id}`);
                             }
                         })
                         .catch(err => console.error("Error starting deep work session:", err));
@@ -474,8 +474,8 @@ export const useTimerStore = create<TimerState>()(
                     set({ isConfirmingNewSession: null });
                 },
                 setSessionToRate: (sessionId: string | null) => set({ sessionToRate: sessionId }),
-                setZenithMode: (val) => set({ isZenithMode: val }),
-                toggleZenithMode: () => set((state) => ({ isZenithMode: !state.isZenithMode })),
+                setAntiGravityMode: (val) => set({ isAntiGravityMode: val }),
+                toggleAntiGravityMode: () => set((state) => ({ isAntiGravityMode: !state.isAntiGravityMode })),
             }),
             {
                 name: "timer-storage",
@@ -491,7 +491,7 @@ export const useTimerStore = create<TimerState>()(
                     currentTaskId: state.currentTaskId,
                     estimatedPomodoros: state.estimatedPomodoros,
                     lastUpdated: state.lastUpdated,
-                    isZenithMode: state.isZenithMode,
+                    isAntiGravityMode: state.isAntiGravityMode,
                     deepWorkSessionId: state.deepWorkSessionId,
                     currentCalendarEventId: state.currentCalendarEventId,
                     hasNewDistraction: state.hasNewDistraction,

@@ -22,14 +22,12 @@ interface ActiveProjectsProps {
 }
 
 export function ActiveProjects({ projects }: ActiveProjectsProps) {
-    const { start, setFocusMode, setZenithMode } = useTimerStore();
+    const { start } = useTimerStore();
 
     const handlePlay = (e: React.MouseEvent, project: ProjectStats) => {
         e.preventDefault();
         e.stopPropagation();
         if (!project.oldestTaskId) return;
-        setZenithMode(true);
-        setFocusMode(true);
         start(project.oldestTaskDuration, "FOCUS", project.oldestTaskId);
     };
 

@@ -18,7 +18,7 @@ function TimelineMockup() {
                     className="h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center px-4"
                 >
                     <div className="w-full flex items-center justify-between">
-                        <span className="text-[11px] text-blue-300 font-bold truncate">Deep Work Phase</span>
+                        <span className="text-[11px] text-blue-300 font-bold truncate">Anti-Gravity Focus</span>
                         <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
                     </div>
                 </motion.div>
@@ -145,7 +145,7 @@ const FEATURES = [
         id: "energy",
         tag: "Energy Batching",
         title: "See the truth of your time.",
-        description: "FocusOS organizes your day by your battery level, separating deep and shallow work.",
+        description: "FocusOS organizes your day by your battery level, separating high-intensity execution and shallow maintenance.",
         className: "md:col-span-1 min-h-[260px]",
         color: "text-amber-400",
         bg: "bg-amber-400/5",
@@ -178,7 +178,7 @@ const FEATURES = [
 
 export function BentoBox() {
     return (
-        <section className="py-32 max-w-7xl mx-auto px-6">
+        <section className="py-16 md:py-32 max-w-7xl mx-auto px-6">
             <div className="space-y-6 max-w-3xl mb-12">
                 <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-fit">
                     <Github className="h-3 w-3" /> Fully Auditable Source

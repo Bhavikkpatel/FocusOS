@@ -25,11 +25,11 @@ const FEATURE_GROUPS = [
         title: "Deep Work & Focus",
         icon: Target,
         features: [
-            { name: "Zenith Focus Mode", description: "Immersive full-screen environment for absolute concentration.", status: "completed" },
-            { name: "Ghost UI", description: "Interface elements dissolve during deep focus to reduce distractions.", status: "completed" },
-            { name: "Distraction Scratchpad", description: "Capture intrusive thoughts instantly using '!' or '?' keys without leaving flow.", status: "in-progress" },
-            { name: "Built-in Pomodoro", description: "Integrated timer tied directly to your tasks and analytics.", status: "completed" },
-            { name: "Contextual Tabs", description: "Switch between Execute, Compose, and Reflect modes based on your current need.", status: "completed" }
+            { name: "Anti-Gravity Engine", description: "High-tier execution environment with dynamic opacity and zero visual noise.", status: "completed" },
+            { name: "Ghost UI Protocol", description: "Interface elements dissolve during deep focus to protect your concentration.", status: "completed" },
+            { name: "Distraction Scratchpad", description: "Capture intrusive thoughts instantly using '!' or '?' keys without leaving flow.", status: "completed" },
+            { name: "Built-in Timer", description: "High-precision timer tied directly to your tasks and performance analytics.", status: "completed" },
+            { name: "Execution Modes", description: "Switch between Execute, Compose, and Reflect protocols based on your energy levels.", status: "completed" }
         ]
     },
     {

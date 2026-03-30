@@ -101,10 +101,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         </div>
                         <div className="space-y-1">
                             <DialogTitle className="text-2xl font-bold tracking-tight">
-                                {isLogin ? "Welcome Back" : "Create Sanctuary"}
+                                {isLogin ? "Engine Access" : "Ignite Engine"}
                             </DialogTitle>
                             <DialogDescription className="text-slate-400 text-sm">
-                                {isLogin ? "Resume your deep work sessions" : "Start building your focus architecture"}
+                                {isLogin ? "Resume your high-tier execution" : "Initialize your Anti-Gravity environment"}
                             </DialogDescription>
                         </div>
                     </DialogHeader>

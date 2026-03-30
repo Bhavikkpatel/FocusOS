@@ -31,8 +31,8 @@ export function FocusMode() {
         sessionType,
         isVictory,
         updateTimerState,
-        isZenithMode,
-        toggleZenithMode,
+        isAntiGravityMode,
+        toggleAntiGravityMode,
         isPaused,
         start,
         addInterruption,
@@ -206,25 +206,25 @@ export function FocusMode() {
                 exit={{ opacity: 0 }}
                 className={cn(
                     "fixed inset-0 z-[100] flex flex-col transition-colors duration-1000",
-                    isZenithMode ? "bg-black/95 backdrop-blur-3xl" : "bg-background/95 backdrop-blur-xl"
+                    isAntiGravityMode ? "bg-black/95 backdrop-blur-3xl" : "bg-background/95 backdrop-blur-xl"
                 )}
             >
                 {/* Zenith Mode Toggle & Exit */}
                 <div className={cn(
                     "absolute top-6 right-6 flex items-center gap-3 z-[110] transition-opacity duration-1000",
-                    isZenithMode && isInactive ? "opacity-20" : "opacity-100"
+                    isAntiGravityMode && isInactive ? "opacity-20" : "opacity-100"
                 )}>
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={toggleZenithMode}
+                        onClick={toggleAntiGravityMode}
                         className={cn(
                             "rounded-full transition-all",
-                            isZenithMode ? "text-slate-500 hover:text-white hover:bg-white/10" : "text-muted-foreground hover:bg-muted"
+                            isAntiGravityMode ? "text-slate-500 hover:text-white hover:bg-white/10" : "text-muted-foreground hover:bg-muted"
                         )}
-                        title={isZenithMode ? "Standard Mode" : "Zenith Mode"}
+                        title={isAntiGravityMode ? "Standard Mode" : "Anti-Gravity Mode"}
                     >
-                        {isZenithMode ? <ZapOff className="h-5 w-5" /> : <Zap className="h-5 w-5 fill-primary/20 text-primary" />}
+                        {isAntiGravityMode ? <ZapOff className="h-5 w-5" /> : <Zap className="h-5 w-5 fill-primary/20 text-primary" />}
                     </Button>
                     <Button
                         variant="ghost"
@@ -232,14 +232,14 @@ export function FocusMode() {
                         onClick={() => setFocusMode(false)}
                         className={cn(
                             "rounded-full transition-all",
-                            isZenithMode ? "text-slate-500 hover:text-white hover:bg-white/10" : "text-muted-foreground hover:bg-muted"
+                            isAntiGravityMode ? "text-slate-500 hover:text-white hover:bg-white/10" : "text-muted-foreground hover:bg-muted"
                         )}
                     >
                         <Minimize2 className="h-5 w-5" />
                     </Button>
                 </div>
 
-                {!isZenithMode ? (
+                {!isAntiGravityMode ? (
                     <>
                         {/* Standard Layout */}
                         {/* Header */}
@@ -415,14 +415,14 @@ export function FocusMode() {
                                 isInactive ? "opacity-20" : "opacity-100"
                             )}>
                                 <span 
-                                    className="text-[8rem] sm:text-[10rem] font-black tracking-tighter tabular-nums leading-none text-white/90"
+                                    className="text-[4.5rem] sm:text-[8rem] lg:text-[10rem] font-black tracking-tighter tabular-nums leading-none text-white/90"
                                     style={{ fontFamily: "'JetBrains Mono', monospace" }}
                                 >
                                     {formatTime(elapsed)}
                                 </span>
-                                <div className="flex items-center gap-2 text-primary font-bold tracking-[0.5em] uppercase text-sm mt-[-1rem]">
-                                    <span className={cn("inline-block w-2 h-2 rounded-full", isRunning ? "bg-primary animate-pulse" : "bg-slate-600")} />
-                                    {sessionType === "FOCUS" ? "Zenith Focus" : "Rest Mode"}
+                                <div className="flex items-center gap-2 text-primary font-bold tracking-[0.5em] uppercase text-[10px] sm:text-sm mt-0 sm:mt-[-1rem]">
+                                    <span className={cn("inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", isRunning ? "bg-primary animate-pulse" : "bg-slate-600")} />
+                                    {sessionType === "FOCUS" ? "Anti-Gravity Focus" : "Rest Mode"}
                                 </div>
                             </div>
 
