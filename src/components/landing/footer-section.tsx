@@ -109,7 +109,7 @@ export function Footer() {
                         </span>
                     </div>
                     <p className="text-[10px] text-slate-800 font-mono tracking-widest">
-                        © 2026 FocusOS. ANTI-GRAVITY ENGINE V1.0
+                        © 2026 FocusOS. POWERED BY COMMUNITY.
                     </p>
                 </div>
             </div>
