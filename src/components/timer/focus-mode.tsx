@@ -13,7 +13,7 @@ import {
     ListChecks, Zap, ZapOff, ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUpdateTask } from "@/hooks/use-tasks";
 import { toast } from "sonner";
 import { ReflectionFlow } from "./reflection-flow";
@@ -115,6 +115,8 @@ export function FocusMode() {
 
     // Ghost UI: Inactivity Tracking
     const [isInactive, setIsInactive] = useState(false);
+    const prevOpenRef = useRef(isFocusModeOpen);
+
     useEffect(() => {
         if (!isFocusModeOpen) return;
         
@@ -143,6 +145,9 @@ export function FocusMode() {
 
     // Timer Integration: Auto-start/pause
     useEffect(() => {
+        const wasOpen = prevOpenRef.current;
+        prevOpenRef.current = isFocusModeOpen;
+
         if (isFocusModeOpen) {
             // Auto-start if a task is active and not already running
             if (currentTaskId && !isRunning && !isPaused) {
@@ -151,8 +156,8 @@ export function FocusMode() {
                 start(duration, "FOCUS", currentTaskId);
             }
         } else {
-            // Auto-pause when exiting
-            if (isRunning) {
+            // Auto-pause ONLY when switching from Zenith mode to background
+            if (wasOpen && isRunning) {
                 pause();
             }
         }
