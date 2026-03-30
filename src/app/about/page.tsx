@@ -226,7 +226,7 @@ export default function AboutPage() {
                     <div className="pt-20">
                         <div className="flex items-center justify-center gap-8 opacity-40 hover:opacity-100 transition-opacity">
                             <div className="flex items-center gap-2 text-xs font-mono tracking-widest">
-                                <Users className="h-4 w-4" /> 50+ CONTRIBUTIONS
+                                <Users className="h-4 w-4" /> 1 CONTRIBUTION
                             </div>
                             <div className="w-1 h-1 rounded-full bg-slate-800" />
                             <div className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase">
