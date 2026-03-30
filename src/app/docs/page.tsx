@@ -19,8 +19,7 @@ const SETUP_STEPS = [
         description: "Ensure your environment is ready for the Anti-Gravity engine.",
         items: [
             "Node.js v20 or higher",
-            "NPM or PNPM",
-            "Google Cloud Project (for Auth)"
+            "NPM or PNPM"
         ],
         icon: Shield
     },
@@ -36,8 +35,6 @@ const SETUP_STEPS = [
         env: [
             "DATABASE_URL=\"postgres://...\"",
             "NEXTAUTH_SECRET=\"your-secret\"",
-            "GOOGLE_CLIENT_ID=\"your-id\"",
-            "GOOGLE_CLIENT_SECRET=\"your-secret\"",
             "NEXTAUTH_URL=\"http://localhost:3000\""
         ],
         icon: Globe
