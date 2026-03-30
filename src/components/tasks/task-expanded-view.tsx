@@ -429,19 +429,27 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                 )}
                                             </Button>
 
-                                            {isTaskRunning && (
-                                                <div className="flex items-center gap-4">
-                                                    <Button 
-                                                        size="icon" 
-                                                        variant="outline" 
-                                                        className="h-20 w-20 rounded-full border-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
-                                                        onClick={reset}
-                                                        title="Reset Timer"
-                                                    >
-                                                        <RotateCcw className="h-8 w-8" />
-                                                    </Button>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-4">
+                                                <Button 
+                                                    size="icon" 
+                                                    variant="outline" 
+                                                    className="h-20 w-20 rounded-full border-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+                                                    onClick={reset}
+                                                    title="Reset Timer"
+                                                >
+                                                    <RotateCcw className="h-8 w-8" />
+                                                </Button>
+
+                                                <Button 
+                                                    size="icon" 
+                                                    variant="outline" 
+                                                    className="h-20 w-20 rounded-full border-4 hover:bg-primary/10 hover:border-primary/50 transition-all" 
+                                                    onClick={() => setFocusMode(true)}
+                                                    title="Enter zenith mode"
+                                                >
+                                                    <Maximize2 className="h-8 w-8" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
 
