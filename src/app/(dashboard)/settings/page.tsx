@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { redirect } from "next/navigation";
 import { TagManagement } from "@/components/settings/tag-management";
-import { Settings as SettingsIcon, Tag as TagIcon, Palette, Bell } from "lucide-react";
+import { PreferencesSettings } from "@/components/settings/preferences-settings";
+import { Settings as SettingsIcon, Tag as TagIcon, Palette, Bell, Sliders } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function SettingsPage() {
@@ -19,8 +20,12 @@ export default async function SettingsPage() {
                     <p className="text-slate-500 font-medium">Manage your workspace preferences and organization</p>
                 </div>
 
-                <Tabs defaultValue="tags" className="space-y-6">
+                <Tabs defaultValue="preferences" className="space-y-6">
                     <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-1 rounded-xl">
+                        <TabsTrigger value="preferences" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm rounded-lg px-4 py-2">
+                            <Sliders className="h-4 w-4" />
+                            Preferences
+                        </TabsTrigger>
                         <TabsTrigger value="tags" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm rounded-lg px-4 py-2">
                             <TagIcon className="h-4 w-4" />
                             Tags
@@ -34,6 +39,10 @@ export default async function SettingsPage() {
                             Notifications
                         </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="preferences" className="focus-visible:outline-none ring-0">
+                        <PreferencesSettings />
+                    </TabsContent>
 
                     <TabsContent value="tags" className="focus-visible:outline-none ring-0">
                         <TagManagement />

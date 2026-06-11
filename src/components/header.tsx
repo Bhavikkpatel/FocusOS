@@ -21,6 +21,7 @@ import { GlobalSearch } from "@/components/global-search";
 import { useSidebarStore } from "@/store/sidebar";
 import { useLayoutStore } from "@/store/layout";
 import { useTimerStore } from "@/store/timer";
+import { useSettings } from "@/store/settings";
 import { ProjectDialog } from "./projects/project-dialog";
 import { cn } from "@/lib/utils";
 import { useTags } from "@/hooks/use-tags";
@@ -68,6 +69,7 @@ export function Header() {
         setProjectFilters,
         resetProjectFilters
     } = useLayoutStore();
+    const { enablePomodoro, enableHighEnergySession } = useSettings();
 
     // Dynamic Title Logic
     const getTitle = () => {
@@ -367,42 +369,46 @@ export function Header() {
                 </div>
 
                 {/* Energy Toggle */}
-                <button
-                    onClick={() => setLowEnergyMode(!lowEnergyMode)}
-                    className={cn(
-                        "p-2 rounded-xl transition-all duration-300 flex items-center gap-2 px-3 mr-2",
-                        lowEnergyMode 
-                            ? "bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" 
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    )}
-                    title={lowEnergyMode ? "Low Energy Mode Active" : "High Energy Mode"}
-                >
-                    <Zap className={cn("h-4 w-4", lowEnergyMode && "fill-current")} />
-                    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
-                        {lowEnergyMode ? "Low Energy" : "High Energy"}
-                    </span>
-                </button>
+                {enableHighEnergySession && (
+                    <button
+                        onClick={() => setLowEnergyMode(!lowEnergyMode)}
+                        className={cn(
+                            "p-2 rounded-xl transition-all duration-300 flex items-center gap-2 px-3 mr-2",
+                            lowEnergyMode 
+                                ? "bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" 
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        )}
+                        title={lowEnergyMode ? "Low Energy Mode Active" : "High Energy Mode"}
+                    >
+                        <Zap className={cn("h-4 w-4", lowEnergyMode && "fill-current")} />
+                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
+                            {lowEnergyMode ? "Low Energy" : "High Energy"}
+                        </span>
+                    </button>
+                )}
 
 
                 {/* Deep Work / Launch Button */}
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 h-9 text-slate-500 hover:text-primary hover:bg-primary/5 font-bold px-3 transition-all group"
-                    onClick={() => {
-                        const { start, setFocusMode, setAntiGravityMode } = useTimerStore.getState();
-                        setAntiGravityMode(true);
-                        setFocusMode(true);
-                        start(25, "FOCUS", undefined);
-                    }}
-                    title="Ignite Anti-Gravity Engine (25m)"
-                >
-                    <div className="relative">
-                        <Zap className="h-4 w-4 transition-all group-hover:fill-current" />
-                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
-                    </div>
-                    <span className="hidden lg:inline text-[11px] font-black uppercase tracking-wider">Deep Session</span>
-                </Button>
+                {enablePomodoro && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 h-9 text-slate-500 hover:text-primary hover:bg-primary/5 font-bold px-3 transition-all group"
+                        onClick={() => {
+                            const { start, setFocusMode, setAntiGravityMode } = useTimerStore.getState();
+                            setAntiGravityMode(true);
+                            setFocusMode(true);
+                            start(25, "FOCUS", undefined);
+                        }}
+                        title="Ignite Anti-Gravity Engine (25m)"
+                    >
+                        <div className="relative">
+                            <Zap className="h-4 w-4 transition-all group-hover:fill-current" />
+                            <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
+                        </div>
+                        <span className="hidden lg:inline text-[11px] font-black uppercase tracking-wider">Deep Session</span>
+                    </Button>
+                )}
 
                 {/* Global New Task (Show on Dashboard or if not in project detail) */}
                 {(pathname === "/app" || pathname === "/tasks") && (

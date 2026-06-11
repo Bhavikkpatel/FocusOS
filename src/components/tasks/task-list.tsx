@@ -17,7 +17,7 @@ import { useLayoutStore } from "@/store/layout";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { LoadingBox } from "@/components/ui/loading-state";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 
 
 type ViewMode = "list" | "kanban";
@@ -355,10 +355,10 @@ export function TaskList() {
                 <TabsContent value="active" className="mt-0 outline-none">
                     {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
-                            <LoadingBox text="ORCHESTRATING TASKS..." className="border-none bg-transparent" />
+                            <LoadingSpinner spinnerSize={32} />
                         </div>
                     ) : viewMode === "kanban" ? (
-                        <KanbanBoard tasks={kanbanTasks} onSelectTask={handleSelectTask} />
+                        <KanbanBoard tasks={kanbanTasks} onSelectTask={handleSelectTask} onEdit={handleEdit} />
                     ) : (
                         <TaskListView 
                             groupBy={groupBy} 
@@ -379,7 +379,7 @@ export function TaskList() {
                 <TabsContent value="completed" className="mt-0 outline-none">
                     {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
-                            <LoadingBox text="FETCHING ARCHIVES..." className="border-none bg-transparent" />
+                            <LoadingSpinner spinnerSize={32} />
                         </div>
                     ) : (
                         <TaskListView 
@@ -402,7 +402,7 @@ export function TaskList() {
                 <TabsContent value="archived" className="mt-0 outline-none">
                     {isLoading ? (
                         <div className="py-20 flex items-center justify-center">
-                            <LoadingBox text="RETRIVING HISTORY..." className="border-none bg-transparent" />
+                            <LoadingSpinner spinnerSize={32} />
                         </div>
                     ) : (
                         <TaskListView 

@@ -32,6 +32,7 @@ import { LoadingSpinner } from "@/components/ui/loading-state";
 import { cn } from "@/lib/utils";
 import { KanbanCard } from "@/components/tasks/kanban-card";
 import { TaskColumnSkeleton } from "@/components/ui/task-skeleton";
+import { TaskDialog } from "@/components/tasks/task-dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -119,6 +120,7 @@ function KanbanColumn({
     projectId,
     onSelectTask,
     projectFilters,
+    onEdit,
 }: {
     column: { id: string; name: string; sortOrder: number };
     tasks: any[];
@@ -126,6 +128,7 @@ function KanbanColumn({
     projectId: string;
     onSelectTask: (task: any) => void;
     projectFilters: any;
+    onEdit?: (task: any) => void;
 }) {
     const [newTitle, setNewTitle] = useState("");
     const [isEditingName, setIsEditingName] = useState(false);
@@ -327,6 +330,7 @@ function KanbanColumn({
                                         <KanbanCard
                                             task={task}
                                             onSelect={onSelectTask}
+                                            onEdit={onEdit}
                                         />
                                     </div>
                                 );
@@ -391,6 +395,13 @@ export function ProjectKanban({
     const [localTasks, setLocalTasks] = useState<Record<string, any[]>>(tasks);
     const [activeTask, setActiveTask] = useState<any>(null);
     const [newColumnName, setNewColumnName] = useState("");
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [taskToEdit, setTaskToEdit] = useState<any>(null);
+
+    const handleEdit = (task: any) => {
+        setTaskToEdit(task);
+        setIsDialogOpen(true);
+    };
 
     // Sync local state when tasks update
     useEffect(() => {
@@ -568,6 +579,7 @@ export function ProjectKanban({
                             projectId={project.id}
                             onSelectTask={(t) => onSelectTask(t.id)}
                             projectFilters={projectFilters}
+                            onEdit={handleEdit}
                         />
                     ))}
 
@@ -615,11 +627,19 @@ export function ProjectKanban({
                             <KanbanCard
                                 task={activeTask}
                                 onSelect={() => { }}
+                                onEdit={handleEdit}
                             />
                         </div>
                     ) : null}
                 </DragOverlay>
             </DndContext>
+
+            <TaskDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                taskToEdit={taskToEdit}
+                defaultProject={project.id}
+            />
         </>
     );
 }

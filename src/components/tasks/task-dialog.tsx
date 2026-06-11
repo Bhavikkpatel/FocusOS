@@ -103,8 +103,8 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
             form.reset({
                 title: taskToEdit.title,
                 description: taskToEdit.description || "",
-                priority: taskToEdit.priority,
-                estimatedPomodoros: taskToEdit.estimatedPomodoros,
+                priority: taskToEdit.priority || "MEDIUM",
+                estimatedPomodoros: taskToEdit.estimatedPomodoros || 1,
                 project: taskToEdit.projectId || "",
                 categoryId: (taskToEdit as any).categoryId || null,
                 dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate) : null,
@@ -173,7 +173,9 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
 
                 <div className="max-h-[85vh] overflow-y-auto">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                            console.error("TaskDialog form validation failed:", errors);
+                        })}>
                             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Left Column: Info */}
                                 <div className="space-y-6">
@@ -390,7 +392,7 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="h-8 w-8 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"
-                                                                onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                                                                onClick={() => field.onChange(Math.max(1, (Number(field.value) || 1) - 1))}
                                                             >
                                                                 <Minus className="h-4 w-4" />
                                                             </Button>
@@ -403,7 +405,7 @@ export function TaskDialog({ open, onOpenChange, taskToEdit, defaultProject }: T
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="h-8 w-8 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"
-                                                                onClick={() => field.onChange(Math.min(20, field.value + 1))}
+                                                                onClick={() => field.onChange(Math.min(20, (Number(field.value) || 1) + 1))}
                                                             >
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { HeroTask } from "@/components/dashboard/hero-task";
@@ -10,15 +10,18 @@ import { WeeklyFocusChart } from "@/components/dashboard/weekly-focus-chart";
 import { ProjectDistributionChart } from "@/components/dashboard/project-distribution-chart";
 import { ProductivitySummary } from "@/components/dashboard/productivity-summary";
 import { DailyProgressRing } from "@/components/dashboard/daily-progress-ring";
-import { LoadingBox } from "@/components/ui/loading-state";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { LayoutDashboard, Rocket, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CapturedThoughts } from "@/components/dashboard/captured-thoughts";
+import { useSettings } from "@/store/settings";
 
 export default function DashboardPage() {
     const { data, isLoading, error } = useDashboard();
     const [activeTab, setActiveTab] = useState<"OVERVIEW" | "INSIGHTS">("OVERVIEW");
+    const { enableInsights } = useSettings();
+    
     const { data: distractions = [] } = useQuery({
         queryKey: ["distractions"],
         queryFn: async () => {
@@ -28,9 +31,15 @@ export default function DashboardPage() {
         }
     });
 
+    useEffect(() => {
+        if (!enableInsights && activeTab === "INSIGHTS") {
+            setActiveTab("OVERVIEW");
+        }
+    }, [enableInsights, activeTab]);
+
     const tabs = [
         { id: "OVERVIEW", label: "Launchpad", icon: Rocket, badge: distractions.length > 0 ? distractions.length : null },
-        { id: "INSIGHTS", label: "Insights", icon: BarChart3 },
+        ...(enableInsights ? [{ id: "INSIGHTS", label: "Insights", icon: BarChart3 }] : []),
     ];
 
     if (error) {
@@ -103,8 +112,8 @@ export default function DashboardPage() {
             </div>
 
             {isLoading ? (
-                <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <LoadingBox text="ORCHESTRATING LAUNCHPAD..." className="border-none bg-transparent" />
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <LoadingSpinner spinnerSize={32} />
                 </div>
             ) : data && (
                 <AnimatePresence mode="wait">
