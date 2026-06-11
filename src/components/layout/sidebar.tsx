@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useSidebarStore } from "@/store/sidebar";
+import { useSettings } from "@/store/settings";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navigation = [
@@ -42,6 +43,13 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
     const pathname = usePathname();
     const { data: session } = useSession();
     const { isCollapsed, toggleCollapse } = useSidebarStore();
+    const { enableAnalytics } = useSettings();
+
+    const displayName = session?.user?.name || (session?.user?.email ? session?.user?.email.split("@")[0] : null) || "User";
+
+    const filteredNavigation = navigation.filter(
+        (item) => item.name !== "Analytics" || enableAnalytics
+    );
 
     return (
         <motion.aside 
@@ -91,7 +99,7 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-1 custom-scrollbar">
-                {navigation.map((item) => {
+                {filteredNavigation.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (
                         <Link
@@ -153,16 +161,15 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                             isCollapsed && !isMobile && "justify-center gap-0"
                         )}>
                             <Avatar className={cn("h-9 w-9 border-2 border-white dark:border-slate-700 flex-shrink-0", isCollapsed && !isMobile && "mx-auto")}>
-                                <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
-                                <AvatarFallback>{session?.user?.name?.[0] || "U"}</AvatarFallback>
+                                <AvatarImage src={session?.user?.image || ""} alt={displayName} />
+                                <AvatarFallback>{displayName[0]?.toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                             {(!isCollapsed || isMobile) && (
                                 <>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                                            {session?.user?.name || "User"}
+                                            {displayName}
                                         </p>
-                                        <p className="text-xs text-slate-500 truncate">Pro Plan</p>
                                     </div>
                                     <ChevronUp className="h-4 w-4 text-slate-400 group-hover:text-slate-600" />
                                 </>
@@ -173,7 +180,7 @@ function SidebarContent({ onClose, isMobile = false }: { onClose?: () => void; i
                         <DropdownMenuLabel className="font-normal mb-1">
                             <div className="flex flex-col space-y-2 py-1">
                                 <p className="text-sm font-bold leading-none text-slate-900 dark:text-white">
-                                    {session?.user?.name}
+                                    {displayName}
                                 </p>
                                 <p className="text-xs leading-none text-slate-500 font-medium">
                                     {session?.user?.email}

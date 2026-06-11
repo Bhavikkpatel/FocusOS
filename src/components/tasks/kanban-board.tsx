@@ -80,10 +80,12 @@ function KanbanColumn({
     column,
     tasks,
     onSelect,
+    onEdit,
 }: {
     column: typeof COLUMNS[number];
     tasks: TaskWithSessions[];
     onSelect: (task: TaskWithSessions) => void;
+    onEdit?: (task: TaskWithSessions) => void;
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const Icon = column.icon;
@@ -125,6 +127,7 @@ function KanbanColumn({
                             key={task.id}
                             task={task}
                             onSelect={onSelect}
+                            onEdit={onEdit}
                         />
                     ))}
                 </SortableContext>
@@ -142,11 +145,13 @@ function KanbanColumn({
 interface KanbanBoardProps {
     tasks: TaskWithSessions[];
     onSelectTask: (id: string | null) => void;
+    onEdit?: (task: TaskWithSessions) => void;
 }
 
 export function KanbanBoard({ 
     tasks,
-    onSelectTask
+    onSelectTask,
+    onEdit
 }: KanbanBoardProps) {
     const { mutate: updateTask } = useUpdateTask();
     const [localTasks, setLocalTasks] = useState<TaskWithSessions[]>(tasks);
@@ -276,6 +281,7 @@ export function KanbanBoard({
                             column={column}
                             tasks={tasksByStatus[column.id] || []}
                             onSelect={(t) => onSelectTask(t.id)}
+                            onEdit={onEdit}
                         />
                     ))}
                 </div>
@@ -286,6 +292,7 @@ export function KanbanBoard({
                             <KanbanCard
                                 task={activeTask}
                                 onSelect={() => { }}
+                                onEdit={onEdit}
                             />
                         </div>
                     ) : null}

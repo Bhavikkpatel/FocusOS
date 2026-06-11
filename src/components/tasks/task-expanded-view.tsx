@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import {
     Play, Pause, RotateCcw, Target, Activity,
-    Trash2, X, Plus, Maximize2, Archive,
+    Trash2, X, Plus, Maximize2, Archive, Edit,
     StickyNote, History as HistoryIcon, ListChecks, CalendarIcon, Repeat,
     Paperclip, Link as LinkIcon, FileIcon, Loader2,
     Clock, AlertCircle
@@ -15,9 +15,13 @@ import { AttachmentPreview } from "@/components/tasks/attachment-preview";
 import { TaskWithSessions, useUpdateTask } from "@/hooks/use-tasks";
 import { useSubtasks, useCreateSubtask, useUpdateSubtask, useDeleteSubtask } from "@/hooks/use-subtasks";
 import { useAttachments, useAddAttachment, useDeleteAttachment, useUploadFile } from "@/hooks/use-attachments";
+import { useCategories } from "@/hooks/use-categories";
+import { TagSelector } from "./tags/tag-selector";
 import { useTimerStore } from "@/store/timer";
+import { useSettings } from "@/store/settings";
 import { SessionTimeline } from "@/components/tasks/session-timeline";
 import { DayRibbon } from "@/components/tasks/day-ribbon";
+import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -61,10 +65,42 @@ interface TaskExpandedViewProps {
 
 export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpandedViewProps) {
     const { mutate: updateTask } = useUpdateTask();
+    const { data: categories = [] } = useCategories();
     const [notes, setNotes] = useState(task.notes || "");
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [titleValue, setTitleValue] = useState(task.title);
+
+    // Sync title state when switching tasks
+    useEffect(() => {
+        setTitleValue(task.title);
+    }, [task.id, task.title]);
+
+    const handleTitleSave = () => {
+        const trimmed = titleValue.trim();
+        if (trimmed && trimmed !== task.title) {
+            updateTask({ id: task.id, title: trimmed });
+        }
+        setIsEditingTitle(false);
+    };
+
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
     const [showCompletionDialog, setShowCompletionDialog] = useState(false);
-    const [activeTab, setActiveTab] = useState<"FOCUS" | "DETAILS" | "HISTORY">("FOCUS");
+    
+    const { enablePomodoro, showHistoryView, showAvailabilityRibbon } = useSettings();
+    const [activeTab, setActiveTab] = useState<"FOCUS" | "DETAILS" | "HISTORY">(
+        enablePomodoro ? "FOCUS" : "DETAILS"
+    );
+
+    // Sync tab choices if settings change while view is open
+    useEffect(() => {
+        if (!enablePomodoro && activeTab === "FOCUS") {
+            setActiveTab("DETAILS");
+        }
+        if (!showHistoryView && activeTab === "HISTORY") {
+            setActiveTab("DETAILS");
+        }
+    }, [enablePomodoro, showHistoryView, activeTab]);
     const [isInactive, setIsInactive] = useState(false);
     const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -255,20 +291,44 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                     "flex items-center justify-between px-4 sm:px-6 min-h-20 py-4 border-b sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-40 transition-all duration-500",
                     isInactive && activeTab === "FOCUS" && "opacity-0 pointer-events-none -translate-y-4"
                 )}>
-                    {/* Left Section: Title */}
-                    <div className="flex-1 min-w-0 pr-4">
-                        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white line-clamp-2 leading-tight">
-                            {task.title}
-                        </h2>
+                    {/* Left Section: Title (Inline editable) */}
+                    <div className="flex-1 min-w-0 pr-4 group/title relative">
+                        {isEditingTitle ? (
+                            <Input
+                                value={titleValue}
+                                onChange={(e) => setTitleValue(e.target.value)}
+                                onBlur={handleTitleSave}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleTitleSave();
+                                    if (e.key === "Escape") {
+                                        setTitleValue(task.title);
+                                        setIsEditingTitle(false);
+                                    }
+                                }}
+                                className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800 border-2 border-primary/50 rounded-xl px-3 py-1.5 h-auto focus-visible:ring-0 focus-visible:border-primary w-full"
+                                autoFocus
+                            />
+                        ) : (
+                            <div 
+                                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl p-1 -m-1 transition-all w-fit" 
+                                onClick={() => setIsEditingTitle(true)}
+                                title="Click to rename task"
+                            >
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                                    {task.title}
+                                </h2>
+                                <Edit className="h-4 w-4 text-slate-400 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Center Section: Tabs (Story Update) */}
                     <div className="hidden lg:flex flex-1 justify-center">
                         <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#161618] p-1 rounded-2xl border border-slate-200 dark:border-white/5">
                             {[
-                                { id: "FOCUS", label: "Focus", icon: Target },
+                                ...(enablePomodoro ? [{ id: "FOCUS", label: "Focus", icon: Target }] : []),
                                 { id: "DETAILS", label: "Details", icon: ListChecks },
-                                { id: "HISTORY", label: "History", icon: HistoryIcon },
+                                ...(showHistoryView ? [{ id: "HISTORY", label: "History", icon: HistoryIcon }] : []),
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -282,9 +342,9 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                 >
                                     {activeTab === tab.id && (
                                         <motion.div
-                                            layoutId="activeTaskDetailTab"
-                                            className="absolute inset-0 bg-primary rounded-xl"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            layoutId="activeTabIndicatorDesktop"
+                                            className="absolute inset-0 bg-white dark:bg-white rounded-xl shadow-md"
+                                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                         />
                                     )}
                                     <span className="relative z-10 flex items-center gap-2">
@@ -322,6 +382,16 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                         <Button
                             variant="outline"
                             size="icon"
+                            className="h-10 w-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all"
+                            onClick={() => setIsEditDialogOpen(true)}
+                            title="Edit Task Details"
+                        >
+                            <Edit className="h-5 w-5" />
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
                             className="h-10 w-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-amber-500/50 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-muted-foreground hover:text-amber-600 transition-all"
                             onClick={() => setShowArchiveDialog(true)}
                             title="Archive Task"
@@ -348,9 +418,9 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                 )}>
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#161618] p-1 rounded-2xl border border-slate-200 dark:border-white/5 mx-auto">
                         {[
-                            { id: "FOCUS", label: "Focus", icon: Target },
+                            ...(enablePomodoro ? [{ id: "FOCUS", label: "Focus", icon: Target }] : []),
                             { id: "DETAILS", label: "Details", icon: ListChecks },
-                            { id: "HISTORY", label: "History", icon: HistoryIcon },
+                            ...(showHistoryView ? [{ id: "HISTORY", label: "History", icon: HistoryIcon }] : []),
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -364,9 +434,9 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                             >
                                 {activeTab === tab.id && (
                                     <motion.div
-                                        layoutId="activeTaskDetailTabMobile"
-                                        className="absolute inset-0 bg-primary rounded-xl"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        layoutId="activeTabIndicatorMobile"
+                                        className="absolute inset-0 bg-white dark:bg-white rounded-xl shadow-md"
+                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                     />
                                 )}
                                 <span className="relative z-10 flex items-center gap-2">
@@ -638,9 +708,11 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                     {/* Right Pane: Metadata & Attachments */}
                                     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
                                         <div className="p-8 space-y-10">
-                                            <DayRibbon taskId={task.id} taskTitle={task.title} />
+                                            {showAvailabilityRibbon && (
+                                                <DayRibbon taskId={task.id} taskTitle={task.title} />
+                                            )}
 
-                                            {/* Metadata Section (with Contextual Visibility) */}
+                                            {/* Metadata Section */}
                                             <section className="space-y-6">
                                                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-1">
                                                     <Activity className="h-3.5 w-3.5" />
@@ -648,8 +720,29 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                 </div>
                                                 
                                                 <div className="space-y-4">
-                                                    {/* Priority Selector (Opacity 20% -> 100%) */}
-                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+                                                    {/* Category Selector */}
+                                                    <div>
+                                                        <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Category</div>
+                                                        <Select
+                                                            value={task.categoryId || "none"}
+                                                            onValueChange={(val: string) => updateTask({ id: task.id, categoryId: val === "none" ? null : val })}
+                                                        >
+                                                            <SelectTrigger className="h-10 w-full text-xs font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                                                                <SelectValue placeholder="No Category" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="none">No Category</SelectItem>
+                                                                {categories.map((category) => (
+                                                                    <SelectItem key={category.id} value={category.id}>
+                                                                        {category.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* Priority Selector */}
+                                                    <div>
                                                         <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Priority</div>
                                                         <Select
                                                             value={task.priority}
@@ -667,8 +760,8 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                         </Select>
                                                     </div>
 
-                                                    {/* Due Date (Opacity 20% -> 100%) */}
-                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
+                                                    {/* Due Date */}
+                                                    <div>
                                                         <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Target Date</div>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
@@ -691,8 +784,41 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                                                         </Popover>
                                                     </div>
 
-                                                    {/* Recurrence (Opacity 20% -> 100%) */}
-                                                    <div className="opacity-20 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+                                                    {/* Tags Section */}
+                                                    <div>
+                                                        <div className="text-[9px] font-black uppercase text-slate-400 mb-1.5 block ml-1 tracking-widest">Tags</div>
+                                                        <div className="flex flex-wrap gap-2 items-center p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm min-h-[44px]">
+                                                            {task.tags && task.tags.length > 0 ? (
+                                                                task.tags.map((tag) => (
+                                                                    <Badge
+                                                                        key={tag.id}
+                                                                        variant="secondary"
+                                                                        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                                                                        style={{ 
+                                                                            backgroundColor: tag.color ? `${tag.color}15` : undefined, 
+                                                                            color: tag.color || undefined,
+                                                                            border: tag.color ? `1px solid ${tag.color}30` : undefined
+                                                                        }}
+                                                                    >
+                                                                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tag.color || undefined }} />
+                                                                        {tag.name}
+                                                                    </Badge>
+                                                                ))
+                                                            ) : (
+                                                                <span className="text-xs text-slate-400 font-medium italic">No tags selected</span>
+                                                            )}
+                                                            <div className="ml-auto">
+                                                                <TagSelector
+                                                                    selectedTags={task.tags || []}
+                                                                    onTagsChange={(tagIds) => updateTask({ id: task.id, tags: tagIds })}
+                                                                    variant="square-icon"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Recurrence */}
+                                                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
                                                         <div className="flex items-center gap-2">
                                                             <Repeat className="h-3.5 w-3.5 text-primary" />
                                                             <span className="text-[10px] font-black uppercase tracking-tight">Recurring</span>
@@ -961,6 +1087,12 @@ export function TaskExpandedView({ task, onClose, calendarEventId }: TaskExpande
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}
                 attachment={previewAttachment}
+            />
+
+            <TaskDialog
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                taskToEdit={task}
             />
         </motion.div>
     );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Tag as TagIcon, Check, X } from "lucide-react";
-import { LoadingSpinner, LoadingBox } from "@/components/ui/loading-state";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from "@/hooks/use-tags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +94,9 @@ export function TagManagement() {
 
     if (isLoading) {
         return (
-            <LoadingBox text="SYNCING TAGS..." className="min-h-[300px]" />
+            <div className="min-h-[300px] flex items-center justify-center">
+                <LoadingSpinner spinnerSize={32} />
+            </div>
         );
     }
 

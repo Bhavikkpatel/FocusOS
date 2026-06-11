@@ -2,7 +2,7 @@
 
 import { useTask } from "@/hooks/use-tasks";
 import { TaskExpandedView } from "@/components/tasks/task-expanded-view";
-import { TaskListSkeleton } from "@/components/tasks/task-skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLayoutStore } from "@/store/layout";
 import { useEffect } from "react";
@@ -24,8 +24,8 @@ export default function TaskDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <TaskListSkeleton />
+            <div className="flex items-center justify-center h-full min-h-[400px]">
+                <LoadingSpinner spinnerSize={32} />
             </div>
         );
     }

@@ -1,12 +1,25 @@
 "use client";
 
-import { TaskExpandedSkeleton } from "@/components/tasks/task-skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useRouter } from "next/navigation";
 
 export default function TaskLoading() {
     const router = useRouter();
     
     return (
-        <TaskExpandedSkeleton onClose={() => router.back()} />
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#0A0A0B]/80 backdrop-blur-sm border-l border-white/10">
+            <div className="absolute top-6 right-6 z-50">
+                <button 
+                    onClick={() => router.back()}
+                    className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors"
+                >
+                    <span className="sr-only">Close</span>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <LoadingSpinner spinnerSize={32} />
+        </div>
     );
 }
